@@ -89,8 +89,6 @@ struct PlayerView: View {
         }
     }
 
-    // MARK: - Gesture Handling
-
     private func handleSwipe(_ value: DragGesture.Value) {
         let horizontal = value.translation.width
         let vertical = value.translation.height
@@ -103,66 +101,42 @@ struct PlayerView: View {
                 try? await Task.sleep(for: .seconds(0.8))
                 withAnimation { seekIndicator = nil }
             }
-        } else {
-            // Vertical swipe — no brightness/volume control on macOS
-            #if os(iOS)
-            let isLeftSide = value.startLocation.x < UIScreen.main.bounds.width / 2
-            if isLeftSide {
-                let delta = -vertical / UIScreen.main.bounds.height
-                let newBrightness = max(0, min(1, UIScreen.main.brightness + delta))
-                UIScreen.main.brightness = newBrightness
-                viewModel.brightness = newBrightness
-            }
-            #endif
         }
     }
 }
 
 // MARK: - VLC Player Bridge (Cross-platform)
 
-#if os(iOS)
-private struct VLCPlayerBridge: UIViewRepresentable {
-    let viewModel: PlayerViewModel
-
-    func makeUIView(context: Context) -> VLCMediaPlayerView {
-        let view = VLCMediaPlayerView()
-        view.mediaPlayer = viewModel.vlcMediaPlayer()
-        return view
-    }
-
-    func updateUIView(_ uiView: VLCMediaPlayerView, context: Context) {}
-}
-
-private class VLCMediaPlayerView: UIView {
-    var mediaPlayer: VLCMediaPlayer?
-
-    override class var layerClass: AnyClass {
-        VLCMediaPlayer.layerClass
-    }
-
-    func attachPlayer() {
-        guard let mediaPlayer else { return }
-        mediaPlayer.delegate = nil
-        // The media player renders into the layer
-    }
-}
-#elseif os(macOS)
+#if os(macOS)
 private struct VLCPlayerBridge: NSViewRepresentable {
     let viewModel: PlayerViewModel
 
-    func makeNSView(context: Context) -> VLCMediaPlayerNSView {
-        let view = VLCMediaPlayerNSView()
-        view.mediaPlayer = viewModel.vlcMediaPlayer()
+    func makeNSView(context: Context) -> VLCVideoView {
+        let videoView = VLCVideoView()
+        videoView.fillScreen = true
+        viewModel.attachVideoView(videoView)
+        return videoView
+    }
+
+    func updateNSView(_ nsView: VLCVideoView, context: Context) {}
+}
+#elseif os(iOS)
+private struct VLCPlayerBridge: UIViewRepresentable {
+    let viewModel: PlayerViewModel
+
+    func makeUIView(context: Context) -> VLCPlayerUIView {
+        let view = VLCPlayerUIView()
+        viewModel.attachDrawable(view)
         return view
     }
 
-    func updateNSView(_ nsView: VLCMediaPlayerNSView, context: Context) {}
+    func updateUIView(_ uiView: VLCPlayerUIView, context: Context) {}
 }
 
-private class VLCMediaPlayerNSView: NSView {
-    var mediaPlayer: VLCMediaPlayer?
-
-    override var wantsUpdateLayer: Bool { true }
+/// UIView that conforms to VLCDrawable protocol for VLCKit rendering.
+private class VLCPlayerUIView: UIView {
+    // UIView already satisfies VLCDrawable via addSubview(_:) and bounds
+    // but we declare conformance explicitly to pass to the engine.
 }
 #endif
 
@@ -269,7 +243,6 @@ private struct SeekBar: View {
     let onSeek: (Double) -> Void
 
     @State private var scrubTime: Double?
-    @State private var isDragging = false
 
     var body: some View {
         GeometryReader { geo in
@@ -292,12 +265,10 @@ private struct SeekBar: View {
             .gesture(
                 DragGesture(minimumDistance: 0)
                     .onChanged { value in
-                        isDragging = true
                         let fraction = max(0, min(1, value.location.x / geo.size.width))
                         scrubTime = fraction * duration
                     }
                     .onEnded { _ in
-                        isDragging = false
                         if let scrubTime {
                             onSeek(scrubTime)
                         }
@@ -347,8 +318,6 @@ private struct SeekHUD: View {
             .background(.black.opacity(0.6), in: RoundedRectangle(cornerRadius: 8))
     }
 }
-
-// MARK: - Seek Indicator Model
 
 private struct SeekIndicator: Equatable {
     let text: String

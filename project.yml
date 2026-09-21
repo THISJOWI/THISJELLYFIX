@@ -6,6 +6,10 @@ options:
     macOS: "14.0"
     tvOS: "17.0"
     visionOS: "1.0"
+packages:
+  VLCKitSPM:
+    url: https://github.com/virtualox/vlckit-spm.git
+    from: 4.0.0-alpha.21
 settings:
   base:
     SWIFT_VERSION: "5.10"
@@ -23,11 +27,22 @@ targets:
     sources: [Sources/ThisJellyFixNetworking]
     dependencies: [{ target: Core-iOS }]
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixNetworking, PRODUCT_NAME: ThisJellyFixNetworking } }
+  Playback-iOS:
+    type: framework
+    platform: iOS
+    sources: [Sources/ThisJellyFixPlayback]
+    dependencies:
+      - target: Core-iOS
+      - package: VLCKitSPM
+    settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixPlayback, PRODUCT_NAME: ThisJellyFixPlayback } }
   Feature-iOS:
     type: framework
     platform: iOS
     sources: [Sources/ThisJellyFixFeature]
-    dependencies: [{ target: Core-iOS }, { target: Networking-iOS }]
+    dependencies:
+      - target: Core-iOS
+      - target: Networking-iOS
+      - target: Playback-iOS
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixFeature, PRODUCT_NAME: ThisJellyFixFeature } }
   thisjellyfix-iOS:
     type: application
@@ -37,6 +52,8 @@ targets:
       - target: Core-iOS
         embed: true
       - target: Networking-iOS
+        embed: true
+      - target: Playback-iOS
         embed: true
       - target: Feature-iOS
         embed: true
@@ -53,11 +70,22 @@ targets:
     sources: [Sources/ThisJellyFixNetworking]
     dependencies: [{ target: Core-macOS }]
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixNetworking, PRODUCT_NAME: ThisJellyFixNetworking } }
+  Playback-macOS:
+    type: framework
+    platform: macOS
+    sources: [Sources/ThisJellyFixPlayback]
+    dependencies:
+      - target: Core-macOS
+      - package: VLCKitSPM
+    settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixPlayback, PRODUCT_NAME: ThisJellyFixPlayback } }
   Feature-macOS:
     type: framework
     platform: macOS
     sources: [Sources/ThisJellyFixFeature]
-    dependencies: [{ target: Core-macOS }, { target: Networking-macOS }]
+    dependencies:
+      - target: Core-macOS
+      - target: Networking-macOS
+      - target: Playback-macOS
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixFeature, PRODUCT_NAME: ThisJellyFixFeature } }
   thisjellyfix-macOS:
     type: application
@@ -67,6 +95,8 @@ targets:
       - target: Core-macOS
         embed: true
       - target: Networking-macOS
+        embed: true
+      - target: Playback-macOS
         embed: true
       - target: Feature-macOS
         embed: true
@@ -83,11 +113,22 @@ targets:
     sources: [Sources/ThisJellyFixNetworking]
     dependencies: [{ target: Core-tvOS }]
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixNetworking, PRODUCT_NAME: ThisJellyFixNetworking } }
+  Playback-tvOS:
+    type: framework
+    platform: tvOS
+    sources: [Sources/ThisJellyFixPlayback]
+    dependencies:
+      - target: Core-tvOS
+      - package: VLCKitSPM
+    settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixPlayback, PRODUCT_NAME: ThisJellyFixPlayback } }
   Feature-tvOS:
     type: framework
     platform: tvOS
     sources: [Sources/ThisJellyFixFeature]
-    dependencies: [{ target: Core-tvOS }, { target: Networking-tvOS }]
+    dependencies:
+      - target: Core-tvOS
+      - target: Networking-tvOS
+      - target: Playback-tvOS
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixFeature, PRODUCT_NAME: ThisJellyFixFeature } }
   thisjellyfix-tvOS:
     type: application
@@ -97,6 +138,8 @@ targets:
       - target: Core-tvOS
         embed: true
       - target: Networking-tvOS
+        embed: true
+      - target: Playback-tvOS
         embed: true
       - target: Feature-tvOS
         embed: true
@@ -113,11 +156,22 @@ targets:
     sources: [Sources/ThisJellyFixNetworking]
     dependencies: [{ target: Core-visionOS }]
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixNetworking, PRODUCT_NAME: ThisJellyFixNetworking } }
+  Playback-visionOS:
+    type: framework
+    platform: visionOS
+    sources: [Sources/ThisJellyFixPlayback]
+    dependencies:
+      - target: Core-visionOS
+      - package: VLCKitSPM
+    settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixPlayback, PRODUCT_NAME: ThisJellyFixPlayback } }
   Feature-visionOS:
     type: framework
     platform: visionOS
     sources: [Sources/ThisJellyFixFeature]
-    dependencies: [{ target: Core-visionOS }, { target: Networking-visionOS }]
+    dependencies:
+      - target: Core-visionOS
+      - target: Networking-visionOS
+      - target: Playback-visionOS
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixFeature, PRODUCT_NAME: ThisJellyFixFeature } }
   thisjellyfix-visionOS:
     type: application
@@ -127,6 +181,8 @@ targets:
       - target: Core-visionOS
         embed: true
       - target: Networking-visionOS
+        embed: true
+      - target: Playback-visionOS
         embed: true
       - target: Feature-visionOS
         embed: true

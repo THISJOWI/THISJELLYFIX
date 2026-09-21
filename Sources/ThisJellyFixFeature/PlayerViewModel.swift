@@ -137,4 +137,18 @@ final class PlayerViewModel {
     func vlcMediaPlayer() -> VLCMediaPlayer {
         engine.vlcMediaPlayer()
     }
+
+    #if os(macOS)
+    /// Attach a VLCVideoView (macOS) as the video output.
+    func attachVideoView(_ view: VLCVideoView) {
+        engine.vlcMediaPlayer().setVideoView(view)
+    }
+    #endif
+
+    #if os(iOS)
+    /// Attach a UIView (iOS) as the video output.
+    func attachDrawable(_ view: UIView) {
+        engine.vlcMediaPlayer().drawable = view
+    }
+    #endif
 }
