@@ -53,8 +53,9 @@ final class JellyfinLibraryClientTests: XCTestCase {
         )
 
         let request = session.capturedRequest
-        let auth = request?.value(forHTTPHeaderField: "MediaBrowser") ?? ""
+        let auth = request?.value(forHTTPHeaderField: "X-Emby-Authorization") ?? ""
         XCTAssertTrue(auth.contains("mytoken"))
+        XCTAssertTrue(auth.contains("Token="))
     }
 }
 

@@ -82,10 +82,9 @@ public struct JellyfinLibraryClient: JellyfinLibraryProviding {
         var request = URLRequest(url: url)
         request.timeoutInterval = 15
         request.setValue(
-            "MediaBrowser Client=\"thisjellyfix\", Device=\"\(deviceOS)\", DeviceId=\"\", Version=\"0.1\"",
+            "MediaBrowser Client=\"thisjellyfix\", Device=\"\(deviceOS)\", DeviceId=\"\", Version=\"0.1\", Token=\"\(token)\"",
             forHTTPHeaderField: "X-Emby-Authorization"
         )
-        request.setValue("MediaBrowser Token=\"\(token)\"", forHTTPHeaderField: "MediaBrowser")
 
         let (data, response) = try await session.data(for: request)
 

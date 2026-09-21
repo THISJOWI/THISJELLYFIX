@@ -71,7 +71,7 @@ public struct JellyfinAuthClient: JellyfinAuthenticating {
         serverURL: URL,
         deviceId: String
     ) async throws -> AuthenticationResult {
-        let endpoint = serverURL.appending(path: "Users/AuthenticateByName")
+        let endpoint = serverURL.appendingPathComponent("Users/AuthenticateByName")
 
         var request = URLRequest(url: endpoint)
         request.httpMethod = "POST"
