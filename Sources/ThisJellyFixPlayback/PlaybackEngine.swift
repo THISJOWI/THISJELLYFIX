@@ -8,6 +8,16 @@ public protocol PlaybackEngine: Sendable {
     func play() async
     func pause() async
     func stop() async
+    func seek(to seconds: Double) async
+    func setPlaybackRate(_ rate: Float) async
+    func selectAudioTrack(index: Int) async
+    func selectSubtitleTrack(index: Int) async
+    func loadExternalSubtitle(url: URL) async
+    var availableAudioTracks: [AudioTrack] { get async }
+    var availableSubtitleTracks: [SubtitleTrack] { get async }
+    var currentTime: Double { get async }
+    var duration: Double { get async }
+    var isPlaying: Bool { get async }
 }
 
 public enum PlaybackEngineKind: String, Sendable {

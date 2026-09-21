@@ -13,14 +13,17 @@ let package = Package(
         .library(name: "ThisJellyFixFeature", targets: ["ThisJellyFixFeature"]),
         .library(name: "ThisJellyFixPlayback", targets: ["ThisJellyFixPlayback"])
     ],
+    dependencies: [
+        .package(url: "https://github.com/virtualox/vlckit-spm.git", from: "4.0.0-alpha.21")
+    ],
     targets: [
         .target(name: "ThisJellyFixCore"),
         .target(name: "ThisJellyFixNetworking", dependencies: ["ThisJellyFixCore"]),
         .target(
             name: "ThisJellyFixFeature",
-            dependencies: ["ThisJellyFixCore", "ThisJellyFixNetworking"]
+            dependencies: ["ThisJellyFixCore", "ThisJellyFixNetworking", "ThisJellyFixPlayback"]
         ),
-        .target(name: "ThisJellyFixPlayback", dependencies: ["ThisJellyFixCore"]),
+        .target(name: "ThisJellyFixPlayback", dependencies: ["ThisJellyFixCore", .product(name: "VLCKitSPM", package: "vlckit-spm")]),
         .testTarget(name: "ThisJellyFixCoreTests", dependencies: ["ThisJellyFixCore"]),
         .testTarget(
             name: "ThisJellyFixNetworkingTests",

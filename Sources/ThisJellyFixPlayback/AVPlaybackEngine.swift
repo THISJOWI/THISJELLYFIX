@@ -32,11 +32,29 @@ public final class AVPlaybackEngine: PlaybackEngine, @unchecked Sendable {
         currentStreamURL = nil
     }
 
-    // MARK: - Properties
-
-    public var isPlaying: Bool {
-        player?.rate != 0 && player != nil
+    public func seek(to seconds: Double) async {
+        let time = CMTime(seconds: seconds, preferredTimescale: 600)
+        await player?.seek(to: time)
     }
+
+    public func setPlaybackRate(_ rate: Float) async {
+        player?.rate = rate
+    }
+
+    public func selectAudioTrack(index: Int) async {
+        // AVPlayer does not support track selection
+    }
+
+    public func selectSubtitleTrack(index: Int) async {
+        // AVPlayer does not support track selection
+    }
+
+    public func loadExternalSubtitle(url: URL) async {
+        // AVPlayer does not support external subtitles
+    }
+
+    public var availableAudioTracks: [AudioTrack] { [] }
+    public var availableSubtitleTracks: [SubtitleTrack] { [] }
 
     public var currentTime: Double {
         player?.currentTime().seconds ?? 0
@@ -46,11 +64,8 @@ public final class AVPlaybackEngine: PlaybackEngine, @unchecked Sendable {
         player?.currentItem?.duration.seconds ?? 0
     }
 
-    public func seek(to seconds: Double) {
-        let time = CMTime(seconds: seconds, preferredTimescale: 600)
-        Task {
-            await player?.seek(to: time)
-        }
+    public var isPlaying: Bool {
+        player?.rate != 0 && player != nil
     }
 
     /// Returns the underlying AVPlayer for use with AVPlayerViewController.
