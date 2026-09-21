@@ -39,17 +39,3 @@ public struct LibraryView: Codable, Sendable, Equatable, Identifiable {
         case collectionType = "CollectionType"
     }
 }
-
-struct JellyfinItemsResponse: Decodable {
-    let items: [JellyfinMediaItem]
-    enum CodingKeys: String, CodingKey {
-        case items = "Items"
-    }
-}
-
-struct JellyfinViewsResponse: Decodable {
-    let items: [LibraryView]
-    enum CodingKeys: String, CodingKey {
-        case items = "Items"
-    }
-}
