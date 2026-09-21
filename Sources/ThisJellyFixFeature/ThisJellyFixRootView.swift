@@ -5,6 +5,7 @@ import ThisJellyFixNetworking
 
 public struct ThisJellyFixRootView: View {
     @State private var model = ServerConnectionModel()
+    @State private var authModel = AuthModel()
 
     public init() {}
 
@@ -18,14 +19,42 @@ public struct ThisJellyFixRootView: View {
             .ignoresSafeArea()
 
             if let server = model.server {
-                MareaHomeView(server: server, onDisconnect: model.disconnect)
+                if authModel.isAuthenticated {
+                    MareaHomeView(
+                        server: server,
+                        user: authModel.currentUser,
+                        onLogout: {
+                            authModel.logout()
+                        },
+                        onDisconnect: {
+                            authModel.logout()
+                            model.disconnect()
+                        }
+                    )
+                } else {
+                    LoginView(
+                        serverName: server.name,
+                        serverURL: server.baseURL,
+                        authModel: authModel
+                    )
+                }
             } else {
                 ServerConnectionView(model: model)
             }
         }
         .preferredColorScheme(.dark)
+        .task {
+            await restoreSessionIfNeeded()
+        }
+    }
+
+    private func restoreSessionIfNeeded() async {
+        guard let server = model.server else { return }
+        _ = await authModel.restoreSession(serverURL: server.baseURL)
     }
 }
+
+// MARK: - Server Connection
 
 @MainActor
 @Observable
@@ -61,6 +90,8 @@ final class ServerConnectionModel {
         errorMessage = nil
     }
 }
+
+// MARK: - Server Connection View
 
 private struct ServerConnectionView: View {
     @Bindable var model: ServerConnectionModel
@@ -113,8 +144,12 @@ private struct ServerConnectionView: View {
     }
 }
 
+// MARK: - Home View (placeholder)
+
 private struct MareaHomeView: View {
     let server: JellyfinServer
+    let user: JellyfinUser?
+    let onLogout: () -> Void
     let onDisconnect: () -> Void
 
     var body: some View {
@@ -125,9 +160,20 @@ private struct MareaHomeView: View {
                         .font(.largeTitle.bold())
                     Text(server.name)
                         .foregroundStyle(.secondary)
+                    if let user {
+                        Text("Conectado como \(user.name)")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
                 }
                 Spacer()
-                Button("Desconectar", action: onDisconnect)
+                Menu {
+                    Button("Cerrar sesión", action: onLogout)
+                    Button("Desconectar servidor", action: onDisconnect)
+                } label: {
+                    Image(systemName: "person.crop.circle.fill")
+                        .font(.title2)
+                }
             }
 
             ContentUnavailableView(
