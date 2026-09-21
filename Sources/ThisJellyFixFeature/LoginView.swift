@@ -5,9 +5,26 @@ struct LoginView: View {
     let serverName: String
     let serverURL: URL
     @Bindable var authModel: AuthModel
+    let onBack: () -> Void
 
     var body: some View {
         VStack(spacing: 24) {
+            // Back button
+            HStack {
+                Button {
+                    onBack()
+                } label: {
+                    HStack(spacing: 4) {
+                        Image(systemName: "chevron.left")
+                        Text("Servidor")
+                    }
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(.cyan)
+                Spacer()
+            }
+            .frame(maxWidth: 380)
+
             // Header
             VStack(spacing: 8) {
                 Image("AppIcon")

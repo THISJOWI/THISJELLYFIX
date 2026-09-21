@@ -50,7 +50,8 @@ public struct ThisJellyFixRootView: View {
                     LoginView(
                         serverName: server.name,
                         serverURL: server.baseURL,
-                        authModel: authModel
+                        authModel: authModel,
+                        onBack: { model.disconnect() }
                     )
                 }
             } else {
@@ -133,7 +134,7 @@ private struct ServerConnectionView: View {
                 .shadow(color: .cyan.opacity(0.3), radius: 12)
 
             VStack(spacing: 8) {
-                Text("thisjellyfix")
+                Text("THISJELLYFIX")
                     .font(.largeTitle.bold())
                 Text("Tu biblioteca. A tu manera.")
                     .foregroundStyle(.secondary)

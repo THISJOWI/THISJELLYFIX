@@ -21,7 +21,7 @@ public struct JellyfinPlaybackClient: JellyfinPlaybackProviding {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(
             "MediaBrowser Client=\"thisjellyfix\", Device=\"\(deviceOS)\", DeviceId=\"\", Version=\"0.1\", Token=\"\(token)\"",
-            forHTTPHeaderField: "X-Emby-Authorization"
+            forHTTPHeaderField: "Authorization"
         )
 
         let body = ["UserId": userId]

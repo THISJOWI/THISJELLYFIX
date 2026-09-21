@@ -40,7 +40,7 @@ public struct JellyfinServerProbe: JellyfinServerProbing {
         let endpoint = baseURL.appending(path: "System/Info/Public")
         var request = URLRequest(url: endpoint)
         request.timeoutInterval = 12
-        request.setValue("thisjellyfix/0.1", forHTTPHeaderField: "X-Emby-Authorization")
+        request.setValue("thisjellyfix/0.1", forHTTPHeaderField: "Authorization")
 
         let (data, response) = try await session.data(for: request)
         guard let httpResponse = response as? HTTPURLResponse else {

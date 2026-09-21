@@ -90,7 +90,7 @@ final class JellyfinAuthClientTests: XCTestCase {
         let request = mockSession.capturedRequest
         XCTAssertEqual(request?.httpMethod, "POST")
         XCTAssertEqual(request?.value(forHTTPHeaderField: "Content-Type"), "application/json")
-        let authHeader = request?.value(forHTTPHeaderField: "X-Emby-Authorization") ?? ""
+        let authHeader = request?.value(forHTTPHeaderField: "Authorization") ?? ""
         XCTAssertTrue(authHeader.contains("thisjellyfix"))
         XCTAssertTrue(authHeader.contains("dev-123"))
     }

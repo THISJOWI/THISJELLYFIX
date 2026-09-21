@@ -78,7 +78,7 @@ public struct JellyfinAuthClient: JellyfinAuthenticating {
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(
             authorizationHeader(deviceId: deviceId),
-            forHTTPHeaderField: "X-Emby-Authorization"
+            forHTTPHeaderField: "Authorization"
         )
 
         let body = ["Username": username, "Pw": password]
