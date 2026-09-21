@@ -9,12 +9,17 @@ struct PlayerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = PlayerViewModel()
     @State private var seekIndicator: SeekIndicator?
+    #if os(macOS)
+    @State private var hostWindow: NSWindow?
+    #endif
 
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
 
-            VLCPlayerBridge(viewModel: viewModel)
+            VLCPlayerBridge(viewModel: viewModel, onWindowReady: { window in
+                hostWindow = window
+            })
                 .ignoresSafeArea()
                 .onTapGesture {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -35,7 +40,7 @@ struct PlayerView: View {
                     onDismiss: { dismiss() },
                     onToggleFullscreen: {
                         #if os(macOS)
-                        NSApp.keyWindow?.toggleFullScreen(nil)
+                        hostWindow?.toggleFullScreen(nil)
                         #endif
                     }
                 )
@@ -62,8 +67,7 @@ struct PlayerView: View {
         .onAppear {
             Task {
                 await viewModel.prepareStream(url: streamURL)
-                // Small delay so VLC drawable attachment finishes in updateNSView/updateUIView
-                try? await Task.sleep(for: .milliseconds(100))
+                try? await Task.sleep(for: .milliseconds(200))
                 await viewModel.togglePlayPause()
                 viewModel.startUpdating()
             }
@@ -117,6 +121,7 @@ struct PlayerView: View {
 #if os(macOS)
 private struct VLCPlayerBridge: NSViewRepresentable {
     let viewModel: PlayerViewModel
+    let onWindowReady: (NSWindow?) -> Void
 
     func makeNSView(context: Context) -> VLCVideoView {
         let videoView = VLCVideoView()
@@ -125,13 +130,17 @@ private struct VLCPlayerBridge: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: VLCVideoView, context: Context) {
-        // Attach drawable on update, after view is in hierarchy
         viewModel.attachDrawable(nsView)
+        // Capture the window this view is in
+        DispatchQueue.main.async {
+            onWindowReady(nsView.window)
+        }
     }
 }
 #elseif os(iOS)
 private struct VLCPlayerBridge: UIViewRepresentable {
     let viewModel: PlayerViewModel
+    let onWindowReady: (Any?) -> Void = { _ in }
 
     func makeUIView(context: Context) -> VLCPlayerUIView {
         let view = VLCPlayerUIView()
@@ -143,7 +152,6 @@ private struct VLCPlayerBridge: UIViewRepresentable {
     }
 }
 
-/// UIView that VLCKit renders into.
 private class VLCPlayerUIView: UIView {}
 #endif
 

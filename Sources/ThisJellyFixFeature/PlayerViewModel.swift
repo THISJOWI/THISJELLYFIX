@@ -28,17 +28,11 @@ final class PlayerViewModel {
     var showQualityPicker = false
     var errorMessage: String?
 
-    // MARK: - Brightness & Volume
-    #if os(iOS)
-    var brightness: CGFloat = UIScreen.main.brightness
-    #else
-    var brightness: CGFloat = 0.5
-    #endif
-    var systemVolume: Float = 1.0
-
     // MARK: - Dependencies
     private let engine: VLCPlaybackEngine
     private var updateTimer: Timer?
+    private var tracksLoaded = false
+    private var trackLoadAttempts = 0
 
     init(engine: VLCPlaybackEngine = VLCPlaybackEngine()) {
         self.engine = engine
@@ -50,8 +44,6 @@ final class PlayerViewModel {
         do {
             let request = PlaybackRequest(itemID: "", streamURL: url)
             try await engine.prepare(request)
-            // Don't load tracks here — VLC hasn't parsed them yet.
-            // Tracks will be loaded by startUpdating() after play begins.
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -70,8 +62,7 @@ final class PlayerViewModel {
         isSeeking = true
         currentTime = seconds
         await engine.seek(to: seconds)
-        // Give VLC time to process the seek before resuming timer updates
-        try? await Task.sleep(for: .milliseconds(200))
+        try? await Task.sleep(for: .milliseconds(300))
         isSeeking = false
     }
 
@@ -110,8 +101,6 @@ final class PlayerViewModel {
 
     // MARK: - Timer
 
-    private var tracksLoaded = false
-
     func startUpdating() {
         updateTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
@@ -121,10 +110,15 @@ final class PlayerViewModel {
                 self.duration = await self.engine.duration
                 self.isPlaying = await self.engine.isPlaying
 
-                // Load tracks once VLC has parsed the media (duration > 0)
-                if !self.tracksLoaded, self.duration > 0 {
-                    self.tracksLoaded = true
-                    await self.loadTracks()
+                // Retry loading tracks until they appear (VLC needs time to parse)
+                if !self.tracksLoaded {
+                    self.trackLoadAttempts += 1
+                    let audioCount = await self.engine.audioTrackCount
+                    let textCount = await self.engine.textTrackCount
+                    if audioCount > 0 || textCount > 0 || self.trackLoadAttempts > 20 {
+                        self.tracksLoaded = true
+                        await self.loadTracks()
+                    }
                 }
             }
         }
@@ -147,12 +141,10 @@ final class PlayerViewModel {
         stopUpdating()
     }
 
-    /// Expose the underlying VLCMediaPlayer for rendering.
     func vlcMediaPlayer() -> VLCMediaPlayer {
         engine.vlcMediaPlayer()
     }
 
-    /// Attach a view as the video output using the drawable property.
     #if os(macOS)
     func attachDrawable(_ view: Any) {
         engine.vlcMediaPlayer().drawable = view

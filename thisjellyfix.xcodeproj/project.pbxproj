@@ -497,38 +497,38 @@
 
 /* Begin PBXFileReference section */
 		0070D0D9221BE56B2567FE64 /* PlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewModel.swift; sourceTree = "<group>"; };
-		043C1E8AA788346A3AA0558A /* Playback-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Playback-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
-		08D186E415A343598A9C5A82 /* Playback-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Playback-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
-		0F734B1401D9FD0BC14D69A3 /* Feature-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		043C1E8AA788346A3AA0558A /* Playback-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Playback-iOS.framework"; path = ThisJellyFixPlayback.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		08D186E415A343598A9C5A82 /* Playback-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Playback-tvOS.framework"; path = ThisJellyFixPlayback.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		0F734B1401D9FD0BC14D69A3 /* Feature-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Feature-macOS.framework"; path = ThisJellyFixFeature.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		1299D0FC3ECE91B5827C8AAD /* JellyfinUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinUser.swift; sourceTree = "<group>"; };
 		1AE0C6C290BD2E1075089FE0 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
-		209CE81E708E8DBA8360ADF7 /* thisjellyfix-tvOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "thisjellyfix-tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		28669C5F3B409CC65EA7F335 /* Playback-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Playback-visionOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
-		29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		209CE81E708E8DBA8360ADF7 /* thisjellyfix-tvOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; name = "thisjellyfix-tvOS.app"; path = thisjellyfix.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		28669C5F3B409CC65EA7F335 /* Playback-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Playback-visionOS.framework"; path = ThisJellyFixPlayback.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Feature-iOS.framework"; path = ThisJellyFixFeature.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		2BD2F14F7A3887C5A6291362 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Core-tvOS.framework"; path = ThisJellyFixCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		3624D9D9774A776D40B5625D /* ThisJellyFixMacOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixMacOSApp.swift; sourceTree = "<group>"; };
-		49EE84CA45240060666F0145 /* thisjellyfix-visionOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "thisjellyfix-visionOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		49EE84CA45240060666F0145 /* thisjellyfix-visionOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; name = "thisjellyfix-visionOS.app"; path = thisjellyfix.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BEB7F8477231F3435F0C3EF /* MediaCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaCardView.swift; sourceTree = "<group>"; };
 		4F425D217A1D9AD7631FECD8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		5076E777F614BB593845047D /* thisjellyfix-iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "thisjellyfix-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
-		51695B1995A40FA7BE06F2FD /* Networking-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5076E777F614BB593845047D /* thisjellyfix-iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; name = "thisjellyfix-iOS.app"; path = thisjellyfix.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		51695B1995A40FA7BE06F2FD /* Networking-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Networking-tvOS.framework"; path = ThisJellyFixNetworking.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		54122B1375204F29118DED99 /* JellyfinServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinServer.swift; sourceTree = "<group>"; };
-		68BDC3A07BB7DFB622E67F67 /* Networking-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
-		6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		68BDC3A07BB7DFB622E67F67 /* Networking-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Networking-macOS.framework"; path = ThisJellyFixNetworking.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Core-macOS.framework"; path = ThisJellyFixCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		703D40341AFC8475EC1F03D6 /* JellyfinAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinAuthClient.swift; sourceTree = "<group>"; };
 		708CC6C4AD140C5FD530E54A /* JellyfinPlaybackClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinPlaybackClient.swift; sourceTree = "<group>"; };
 		771C356E05590A913549B4C7 /* AuthModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthModel.swift; sourceTree = "<group>"; };
-		8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-visionOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Core-visionOS.framework"; path = ThisJellyFixCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		90CB900DFBF613262ADEB1FE /* PlaybackEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackEngine.swift; sourceTree = "<group>"; };
-		966A418CD1DDCC6DB532C337 /* thisjellyfix-macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "thisjellyfix-macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		966A418CD1DDCC6DB532C337 /* thisjellyfix-macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = "thisjellyfix-macOS.app"; path = thisjellyfix.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		97E9EEA43F53F2987FA00763 /* Tracks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tracks.swift; sourceTree = "<group>"; };
 		9DA2D836A9A324A150CEED71 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9EE3D2B8C7BBD9638113273F /* JellyfinItemDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinItemDetail.swift; sourceTree = "<group>"; };
-		A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
-		A9120E3D0C3E4801FF21A328 /* Playback-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Playback-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
-		A9627EED1BAD19BE4D412F23 /* Feature-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
-		A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-visionOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Networking-iOS.framework"; path = ThisJellyFixNetworking.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A9120E3D0C3E4801FF21A328 /* Playback-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Playback-macOS.framework"; path = ThisJellyFixPlayback.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A9627EED1BAD19BE4D412F23 /* Feature-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Feature-tvOS.framework"; path = ThisJellyFixFeature.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Networking-visionOS.framework"; path = ThisJellyFixNetworking.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		AAA58138FA31937A9F9027DC /* JellyfinItemDetailClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinItemDetailClient.swift; sourceTree = "<group>"; };
 		AAB7034B466503BCE33E95A1 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		AD74C3F99EEB6FB09C612704 /* ThisJellyFixVisionOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixVisionOSApp.swift; sourceTree = "<group>"; };
@@ -541,14 +541,14 @@
 		D969DEC8BCB5D66E75AF00D2 /* ImageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageView.swift; sourceTree = "<group>"; };
 		DA99768D0EA2FADC0CE71344 /* AVPlaybackEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AVPlaybackEngine.swift; sourceTree = "<group>"; };
 		DB4C1DE92983F2B02F9FAF05 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
-		E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-visionOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Feature-visionOS.framework"; path = ThisJellyFixFeature.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		E39CFC19AA8E51100A6C3ECC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		E7EB0EE4EE654F6D5845ED31 /* DetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
 		E81B3D72ECAE6007FFBAAB00 /* LibraryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryModel.swift; sourceTree = "<group>"; };
 		EE44DD8B3BAC5D66EFFFF78A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EF44E1A84B76AB6E359404F9 /* PlaybackInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackInfo.swift; sourceTree = "<group>"; };
 		F5569E8E9FF985310B2B9CB2 /* ThisJellyFixTVOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixTVOSApp.swift; sourceTree = "<group>"; };
-		F7D37A490B1735CF546E5317 /* Core-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F7D37A490B1735CF546E5317 /* Core-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; name = "Core-iOS.framework"; path = ThisJellyFixCore.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		FB471F8AF5489AF27C0A2607 /* ThisJellyFixIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixIOSApp.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -1271,8 +1271,6 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
-				TargetAttributes = {
-				};
 			};
 			buildConfigurationList = B5A4B0DE9F1D155EBCDD0083 /* Build configuration list for PBXProject "thisjellyfix" */;
 			developmentRegion = en;

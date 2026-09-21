@@ -56,14 +56,22 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
 
     public var availableAudioTracks: [AudioTrack] {
         mediaPlayer.audioTracks.enumerated().map { idx, track in
-            AudioTrack(id: idx, name: track.trackId ?? "Audio \(idx)")
+            AudioTrack(id: idx, name: track.trackName ?? track.trackId ?? "Audio \(idx)", language: track.language)
         }
     }
 
     public var availableSubtitleTracks: [SubtitleTrack] {
         mediaPlayer.textTracks.enumerated().map { idx, track in
-            SubtitleTrack(id: idx, name: track.trackId ?? "Subtitle \(idx)")
+            SubtitleTrack(id: idx, name: track.trackName ?? track.trackId ?? "Subtitle \(idx)", language: track.language)
         }
+    }
+
+    public var audioTrackCount: Int {
+        mediaPlayer.audioTracks.count
+    }
+
+    public var textTrackCount: Int {
+        mediaPlayer.textTracks.count
     }
 
     public var currentTime: Double {
