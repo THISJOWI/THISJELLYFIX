@@ -10,9 +10,12 @@ struct LoginView: View {
         VStack(spacing: 24) {
             // Header
             VStack(spacing: 8) {
-                Image(systemName: "person.circle.fill")
-                    .font(.system(size: 48))
-                    .foregroundStyle(.cyan, .mint)
+                Image("AppIcon")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 64, height: 64)
+                    .clipShape(RoundedRectangle(cornerRadius: 14))
+                    .shadow(color: .cyan.opacity(0.3), radius: 10)
 
                 Text("Iniciar sesión")
                     .font(.title.bold())

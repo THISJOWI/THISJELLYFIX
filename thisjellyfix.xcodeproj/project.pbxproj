@@ -118,6 +118,7 @@
 		A62EBA680D44BFC81C612682 /* DeviceIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C764363B3037D95ED713033C /* DeviceIdentifier.swift */; };
 		A854FBF3F93AE9F6642F1909 /* ThisJellyFixRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */; };
 		AA7FF5A27F4C97394257ADB3 /* JellyfinItemDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EE3D2B8C7BBD9638113273F /* JellyfinItemDetail.swift */; };
+		AABF84FC5FC10F6CB40D4929 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 4F425D217A1D9AD7631FECD8 /* Assets.xcassets */; };
 		AC73A689499A33380008B3F3 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE0C6C290BD2E1075089FE0 /* PlayerView.swift */; };
 		AD57344E677B8D33B20D7DD3 /* Playback-visionOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 28669C5F3B409CC65EA7F335 /* Playback-visionOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		AD9B55B7D86450B7D14F816D /* Playback-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9120E3D0C3E4801FF21A328 /* Playback-macOS.framework */; };
@@ -126,6 +127,7 @@
 		B3BC3C434EC0128A78E7DF34 /* Feature-iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		B964348FE3FDB83AFB94715A /* JellyfinLibraryClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = CAF84CCF843B7012ACFEC948 /* JellyfinLibraryClient.swift */; };
 		BB76E5924651F8CC952B759A /* LibraryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81B3D72ECAE6007FFBAAB00 /* LibraryModel.swift */; };
+		BBB004F6E562D4FCDEBA2B0E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2BD2F14F7A3887C5A6291362 /* Assets.xcassets */; };
 		C1CED74B581825F93980C94C /* JellyfinPlaybackClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708CC6C4AD140C5FD530E54A /* JellyfinPlaybackClient.swift */; };
 		C20874ED8C85EB2DBC34EB99 /* ImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D969DEC8BCB5D66E75AF00D2 /* ImageView.swift */; };
 		C3F09ABE1A5D0977D1DF697F /* ThisJellyFixIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB471F8AF5489AF27C0A2607 /* ThisJellyFixIOSApp.swift */; };
@@ -137,11 +139,13 @@
 		CC2E4F11C891157DCFE51F00 /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7EB0EE4EE654F6D5845ED31 /* DetailView.swift */; };
 		CC92E71A7766D0C54DB4E45D /* JellyfinAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 703D40341AFC8475EC1F03D6 /* JellyfinAuthClient.swift */; };
 		CD4167F21D4EB538717160AE /* AVPlaybackEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = DA99768D0EA2FADC0CE71344 /* AVPlaybackEngine.swift */; };
+		CDBC7548573DE0AB21F8D745 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = EE44DD8B3BAC5D66EFFFF78A /* Assets.xcassets */; };
 		CEF953A27F6C6524F6C0C7EF /* JellyfinAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 703D40341AFC8475EC1F03D6 /* JellyfinAuthClient.swift */; };
 		D13C00823AE2A8F2FBD52C8F /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE0C6C290BD2E1075089FE0 /* PlayerView.swift */; };
 		D25B2831FDEE556734B1C552 /* JellyfinItemDetailClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA58138FA31937A9F9027DC /* JellyfinItemDetailClient.swift */; };
 		D29500D2A60E7CAC972DC617 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB7034B466503BCE33E95A1 /* KeychainStore.swift */; };
 		D3216BE00FD54AC2D14B0ACC /* JellyfinItemDetailClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAA58138FA31937A9F9027DC /* JellyfinItemDetailClient.swift */; };
+		D3BA980A2B956F716043F00D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 9DA2D836A9A324A150CEED71 /* Assets.xcassets */; };
 		D4ABB923E6F471977DE2D87E /* JellyfinUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1299D0FC3ECE91B5827C8AAD /* JellyfinUser.swift */; };
 		D6CDE8B2B91AFCC48CE84DB9 /* VLCKitSPM in Frameworks */ = {isa = PBXBuildFile; productRef = 7EC9AFB1644A8584B8BE368F /* VLCKitSPM */; };
 		D7515041509C7FE20840D31E /* Feature-visionOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -501,10 +505,12 @@
 		209CE81E708E8DBA8360ADF7 /* thisjellyfix-tvOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "thisjellyfix-tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		28669C5F3B409CC65EA7F335 /* Playback-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Playback-visionOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2BD2F14F7A3887C5A6291362 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3624D9D9774A776D40B5625D /* ThisJellyFixMacOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixMacOSApp.swift; sourceTree = "<group>"; };
 		49EE84CA45240060666F0145 /* thisjellyfix-visionOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "thisjellyfix-visionOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BEB7F8477231F3435F0C3EF /* MediaCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaCardView.swift; sourceTree = "<group>"; };
+		4F425D217A1D9AD7631FECD8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		5076E777F614BB593845047D /* thisjellyfix-iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "thisjellyfix-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		51695B1995A40FA7BE06F2FD /* Networking-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		54122B1375204F29118DED99 /* JellyfinServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinServer.swift; sourceTree = "<group>"; };
@@ -517,6 +523,7 @@
 		90CB900DFBF613262ADEB1FE /* PlaybackEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackEngine.swift; sourceTree = "<group>"; };
 		966A418CD1DDCC6DB532C337 /* thisjellyfix-macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "thisjellyfix-macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		97E9EEA43F53F2987FA00763 /* Tracks.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Tracks.swift; sourceTree = "<group>"; };
+		9DA2D836A9A324A150CEED71 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9EE3D2B8C7BBD9638113273F /* JellyfinItemDetail.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinItemDetail.swift; sourceTree = "<group>"; };
 		A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9120E3D0C3E4801FF21A328 /* Playback-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Playback-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -538,6 +545,7 @@
 		E39CFC19AA8E51100A6C3ECC /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		E7EB0EE4EE654F6D5845ED31 /* DetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
 		E81B3D72ECAE6007FFBAAB00 /* LibraryModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LibraryModel.swift; sourceTree = "<group>"; };
+		EE44DD8B3BAC5D66EFFFF78A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		EF44E1A84B76AB6E359404F9 /* PlaybackInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackInfo.swift; sourceTree = "<group>"; };
 		F5569E8E9FF985310B2B9CB2 /* ThisJellyFixTVOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixTVOSApp.swift; sourceTree = "<group>"; };
 		F7D37A490B1735CF546E5317 /* Core-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -718,6 +726,7 @@
 		24787E28E8D694E5891B6768 /* visionOS */ = {
 			isa = PBXGroup;
 			children = (
+				9DA2D836A9A324A150CEED71 /* Assets.xcassets */,
 				AD74C3F99EEB6FB09C612704 /* ThisJellyFixVisionOSApp.swift */,
 			);
 			name = visionOS;
@@ -758,6 +767,7 @@
 		8824E463243D7EED7F382FFD /* tvOS */ = {
 			isa = PBXGroup;
 			children = (
+				2BD2F14F7A3887C5A6291362 /* Assets.xcassets */,
 				F5569E8E9FF985310B2B9CB2 /* ThisJellyFixTVOSApp.swift */,
 			);
 			name = tvOS;
@@ -767,6 +777,7 @@
 		91F9DD995CD21262208E2819 /* macOS */ = {
 			isa = PBXGroup;
 			children = (
+				4F425D217A1D9AD7631FECD8 /* Assets.xcassets */,
 				3624D9D9774A776D40B5625D /* ThisJellyFixMacOSApp.swift */,
 			);
 			name = macOS;
@@ -794,6 +805,7 @@
 		C1067EAA9E275C850CFC93C8 /* iOS */ = {
 			isa = PBXGroup;
 			children = (
+				EE44DD8B3BAC5D66EFFFF78A /* Assets.xcassets */,
 				FB471F8AF5489AF27C0A2607 /* ThisJellyFixIOSApp.swift */,
 			);
 			name = iOS;
@@ -867,6 +879,7 @@
 			buildConfigurationList = 1CB7596319F8A5232289C563 /* Build configuration list for PBXNativeTarget "thisjellyfix-iOS" */;
 			buildPhases = (
 				66CE372F84E9CED624CFA0A0 /* Sources */,
+				511206A27E4CAF3923B873CE /* Resources */,
 				4A88D010F645D68B50BBB6DF /* Frameworks */,
 				7039510C346C15EEFE1AE054 /* Embed Frameworks */,
 			);
@@ -966,6 +979,7 @@
 			buildConfigurationList = B05A8C15877A1AE7D5AE6826 /* Build configuration list for PBXNativeTarget "thisjellyfix-tvOS" */;
 			buildPhases = (
 				5123D70D47BA1C2465385F46 /* Sources */,
+				2A6E7716EC988C3D46B40A9E /* Resources */,
 				E100E09FEC83AF8ADA3CDE45 /* Frameworks */,
 				96D573DB0326F9092B05D070 /* Embed Frameworks */,
 			);
@@ -1049,6 +1063,7 @@
 			buildConfigurationList = 736A5F1A693446E75D08C631 /* Build configuration list for PBXNativeTarget "thisjellyfix-macOS" */;
 			buildPhases = (
 				C1AF1932F27188E5E5213D0C /* Sources */,
+				3B02F38FF542DF51F80C8D46 /* Resources */,
 				B5EAA26932FD93E9259060EA /* Frameworks */,
 				308B2BB95D88BAFF44EE753B /* Embed Frameworks */,
 			);
@@ -1132,6 +1147,7 @@
 			buildConfigurationList = A1AAC0F3EA39D968377E001B /* Build configuration list for PBXNativeTarget "thisjellyfix-visionOS" */;
 			buildPhases = (
 				E451CA6DF1F4094C5AA6D56C /* Sources */,
+				087543FBE1EEC462FD9A725B /* Resources */,
 				86DAA354B8418D242ECBBE59 /* Frameworks */,
 				431F18C1EE387ED6A8D4C4BB /* Embed Frameworks */,
 			);
@@ -1298,6 +1314,41 @@
 			);
 		};
 /* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		087543FBE1EEC462FD9A725B /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				D3BA980A2B956F716043F00D /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2A6E7716EC988C3D46B40A9E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				BBB004F6E562D4FCDEBA2B0E /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		3B02F38FF542DF51F80C8D46 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AABF84FC5FC10F6CB40D4929 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		511206A27E4CAF3923B873CE /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CDBC7548573DE0AB21F8D745 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
 		18746D5B89EE38B90C1FE21A /* Sources */ = {
@@ -1776,7 +1827,7 @@
 		3C40E5320EFF88AD00264B27 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-macOS";
 				COMBINE_HIDPI_IMAGES = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -2582,7 +2633,7 @@
 		D2A179C205C4FDC1FE32B6D5 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_APPICON_NAME = "AppIcon-macOS";
 				COMBINE_HIDPI_IMAGES = YES;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

@@ -32,7 +32,12 @@ struct PlayerView: View {
                 ControlsOverlay(
                     title: title,
                     viewModel: viewModel,
-                    onDismiss: { dismiss() }
+                    onDismiss: { dismiss() },
+                    onToggleFullscreen: {
+                        #if os(macOS)
+                        NSApp.keyWindow?.toggleFullScreen(nil)
+                        #endif
+                    }
                 )
                 .transition(.opacity)
             }
@@ -148,6 +153,7 @@ private struct ControlsOverlay: View {
     let title: String
     let viewModel: PlayerViewModel
     let onDismiss: () -> Void
+    let onToggleFullscreen: () -> Void
 
     var body: some View {
         VStack {
@@ -165,7 +171,15 @@ private struct ControlsOverlay: View {
                     .foregroundStyle(.white)
                     .lineLimit(1)
                 Spacer()
-                Color.clear.frame(width: 44, height: 44)
+                #if os(macOS)
+                Button(action: onToggleFullscreen) {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.title2)
+                        .foregroundStyle(.white)
+                        .padding(12)
+                        .background(.black.opacity(0.5), in: Circle())
+                }
+                #endif
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)

@@ -15,6 +15,11 @@ struct HomeView: View {
                 VStack(alignment: .leading, spacing: 28) {
                     // Header
                     HStack {
+                        Image("AppIcon")
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 36, height: 36)
+                            .clipShape(RoundedRectangle(cornerRadius: 8))
                         VStack(alignment: .leading) {
                             Text("La Marea")
                                 .font(.largeTitle.bold())

@@ -125,9 +125,12 @@ private struct ServerConnectionView: View {
 
     var body: some View {
         VStack(spacing: 22) {
-            Image(systemName: "play.rectangle.fill")
-                .font(.system(size: 56))
-                .foregroundStyle(.mint, .cyan)
+            Image("AppIcon")
+                .resizable()
+                .aspectRatio(contentMode: .fit)
+                .frame(width: 80, height: 80)
+                .clipShape(RoundedRectangle(cornerRadius: 18))
+                .shadow(color: .cyan.opacity(0.3), radius: 12)
 
             VStack(spacing: 8) {
                 Text("thisjellyfix")

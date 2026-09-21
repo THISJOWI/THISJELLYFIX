@@ -50,7 +50,8 @@ final class PlayerViewModel {
         do {
             let request = PlaybackRequest(itemID: "", streamURL: url)
             try await engine.prepare(request)
-            await loadTracks()
+            // Don't load tracks here — VLC hasn't parsed them yet.
+            // Tracks will be loaded by startUpdating() after play begins.
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -109,15 +110,22 @@ final class PlayerViewModel {
 
     // MARK: - Timer
 
+    private var tracksLoaded = false
+
     func startUpdating() {
         updateTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
-                // Don't overwrite currentTime while user is seeking
                 guard !self.isSeeking else { return }
                 self.currentTime = await self.engine.currentTime
                 self.duration = await self.engine.duration
                 self.isPlaying = await self.engine.isPlaying
+
+                // Load tracks once VLC has parsed the media (duration > 0)
+                if !self.tracksLoaded, self.duration > 0 {
+                    self.tracksLoaded = true
+                    await self.loadTracks()
+                }
             }
         }
     }
