@@ -17,6 +17,8 @@
 		0D2FBDFFC5CE95773DEBAED0 /* Networking-visionOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0F8EFA4D2DD39F03AEC17EDC /* Core-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */; };
 		101A597D9E5D6C554F5CCC25 /* JellyfinServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54122B1375204F29118DED99 /* JellyfinServer.swift */; };
+		104BFE3A6D83C76CD11FABA3 /* VLCKitSPM in Frameworks */ = {isa = PBXBuildFile; productRef = 7EB9A2F2608F083C6E983C1B /* VLCKitSPM */; };
+		11668A2184E3DC9A4498A9B5 /* VLCKitSPM in Frameworks */ = {isa = PBXBuildFile; productRef = 07FD88367D8792D8768C55F9 /* VLCKitSPM */; };
 		119FCB01434D29D48349DBE8 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB7034B466503BCE33E95A1 /* KeychainStore.swift */; };
 		11A9EAF2DC44AFE336B0EAAC /* Playback-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28669C5F3B409CC65EA7F335 /* Playback-visionOS.framework */; };
 		11B207F3A394C9676707D15B /* Core-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */; };
@@ -67,6 +69,7 @@
 		584DEDC14071311BAD4EB9A6 /* Playback-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 043C1E8AA788346A3AA0558A /* Playback-iOS.framework */; };
 		58D32FE225B92CEF7C5E82F7 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39CFC19AA8E51100A6C3ECC /* HomeView.swift */; };
 		5971FCA219A2C453F0DCF9B7 /* JellyfinItemDetail.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EE3D2B8C7BBD9638113273F /* JellyfinItemDetail.swift */; };
+		5B52227EAC854971ED063B33 /* VLCKitSPM in Frameworks */ = {isa = PBXBuildFile; productRef = FB1A4405C890116EE39E8309 /* VLCKitSPM */; };
 		5C2A213D78D8128479E9CD5A /* Feature-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */; };
 		5D6E8CAE60025A14AB6EAA43 /* PlaybackEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90CB900DFBF613262ADEB1FE /* PlaybackEngine.swift */; };
 		6337E7069B2C4DBB0BFD42C2 /* Core-iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F7D37A490B1735CF546E5317 /* Core-iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -90,6 +93,7 @@
 		809F0276A34C260BBECCF666 /* JellyfinPlaybackClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708CC6C4AD140C5FD530E54A /* JellyfinPlaybackClient.swift */; };
 		81571F78F439C1E9681ED51C /* Core-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; };
 		8262173985F2D997771C6EEA /* AuthModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 771C356E05590A913549B4C7 /* AuthModel.swift */; };
+		831ACE4C5142F5B204CADAF7 /* VLCKitSPM in Frameworks */ = {isa = PBXBuildFile; productRef = 569DAFFFCD57759DB73C74A5 /* VLCKitSPM */; };
 		839DDCF9C5E462CFC0494815 /* Core-visionOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		83EC22EF2B914DA95CCA35D7 /* PlayerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1AE0C6C290BD2E1075089FE0 /* PlayerView.swift */; };
 		842704C42612DE6FCF0B5DB1 /* MediaCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BEB7F8477231F3435F0C3EF /* MediaCardView.swift */; };
@@ -596,6 +600,7 @@
 				7575BFB94285EA121DBD6D8A /* Networking-iOS.framework in Frameworks */,
 				584DEDC14071311BAD4EB9A6 /* Playback-iOS.framework in Frameworks */,
 				3BAF3070B04167743CE6CD92 /* Feature-iOS.framework in Frameworks */,
+				831ACE4C5142F5B204CADAF7 /* VLCKitSPM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -624,6 +629,7 @@
 				97968A415A3BDC30E661150F /* Networking-visionOS.framework in Frameworks */,
 				7006DBAD90EC2FD7B7A16FCD /* Playback-visionOS.framework in Frameworks */,
 				5C2A213D78D8128479E9CD5A /* Feature-visionOS.framework in Frameworks */,
+				5B52227EAC854971ED063B33 /* VLCKitSPM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -653,6 +659,7 @@
 				3A108EA5CEF8D4E6354FF1E5 /* Networking-macOS.framework in Frameworks */,
 				AD9B55B7D86450B7D14F816D /* Playback-macOS.framework in Frameworks */,
 				14A47D69C3EBED46D23A759A /* Feature-macOS.framework in Frameworks */,
+				11668A2184E3DC9A4498A9B5 /* VLCKitSPM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -681,6 +688,7 @@
 				3AFE5BC65C7F06035EDAC29A /* Networking-tvOS.framework in Frameworks */,
 				B1E9E7272E02CB80FC137D1B /* Playback-tvOS.framework in Frameworks */,
 				229BEE17CC6D659F4D19E4A2 /* Feature-tvOS.framework in Frameworks */,
+				104BFE3A6D83C76CD11FABA3 /* VLCKitSPM in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -872,6 +880,7 @@
 			);
 			name = "thisjellyfix-iOS";
 			packageProductDependencies = (
+				569DAFFFCD57759DB73C74A5 /* VLCKitSPM */,
 			);
 			productName = "thisjellyfix-iOS";
 			productReference = 5076E777F614BB593845047D /* thisjellyfix-iOS.app */;
@@ -970,6 +979,7 @@
 			);
 			name = "thisjellyfix-tvOS";
 			packageProductDependencies = (
+				7EB9A2F2608F083C6E983C1B /* VLCKitSPM */,
 			);
 			productName = "thisjellyfix-tvOS";
 			productReference = 209CE81E708E8DBA8360ADF7 /* thisjellyfix-tvOS.app */;
@@ -1052,6 +1062,7 @@
 			);
 			name = "thisjellyfix-macOS";
 			packageProductDependencies = (
+				07FD88367D8792D8768C55F9 /* VLCKitSPM */,
 			);
 			productName = "thisjellyfix-macOS";
 			productReference = 966A418CD1DDCC6DB532C337 /* thisjellyfix-macOS.app */;
@@ -1134,6 +1145,7 @@
 			);
 			name = "thisjellyfix-visionOS";
 			packageProductDependencies = (
+				FB1A4405C890116EE39E8309 /* VLCKitSPM */,
 			);
 			productName = "thisjellyfix-visionOS";
 			productReference = 49EE84CA45240060666F0145 /* thisjellyfix-visionOS.app */;
@@ -2942,6 +2954,21 @@
 			package = 401882E418321DA022B16A61 /* XCRemoteSwiftPackageReference "vlckit-spm" */;
 			productName = VLCKitSPM;
 		};
+		07FD88367D8792D8768C55F9 /* VLCKitSPM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 401882E418321DA022B16A61 /* XCRemoteSwiftPackageReference "vlckit-spm" */;
+			productName = VLCKitSPM;
+		};
+		569DAFFFCD57759DB73C74A5 /* VLCKitSPM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 401882E418321DA022B16A61 /* XCRemoteSwiftPackageReference "vlckit-spm" */;
+			productName = VLCKitSPM;
+		};
+		7EB9A2F2608F083C6E983C1B /* VLCKitSPM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 401882E418321DA022B16A61 /* XCRemoteSwiftPackageReference "vlckit-spm" */;
+			productName = VLCKitSPM;
+		};
 		7EC9AFB1644A8584B8BE368F /* VLCKitSPM */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 401882E418321DA022B16A61 /* XCRemoteSwiftPackageReference "vlckit-spm" */;
@@ -2953,6 +2980,11 @@
 			productName = VLCKitSPM;
 		};
 		EBCAB2C3E4A2902321B57491 /* VLCKitSPM */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 401882E418321DA022B16A61 /* XCRemoteSwiftPackageReference "vlckit-spm" */;
+			productName = VLCKitSPM;
+		};
+		FB1A4405C890116EE39E8309 /* VLCKitSPM */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = 401882E418321DA022B16A61 /* XCRemoteSwiftPackageReference "vlckit-spm" */;
 			productName = VLCKitSPM;
