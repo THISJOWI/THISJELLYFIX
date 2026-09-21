@@ -47,6 +47,20 @@ struct DetailView: View {
                         // Play button
                         playButton
 
+                        // Playback error
+                        if let playbackError {
+                            HStack(spacing: 8) {
+                                Image(systemName: "exclamationmark.triangle.fill")
+                                    .foregroundStyle(.orange)
+                                Text(playbackError)
+                                    .font(.subheadline)
+                                    .foregroundStyle(.secondary)
+                            }
+                            .padding(12)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(.orange.opacity(0.1), in: RoundedRectangle(cornerRadius: 8))
+                        }
+
                         // Episodes (for series)
                         if detail.type == "Series" {
                             episodesSection
@@ -211,9 +225,22 @@ struct DetailView: View {
             )
 
             guard let source = info.mediaSources.first,
-                  let urlString = source.bestURL,
-                  let url = URL(string: urlString) else {
+                  let urlString = source.bestURL else {
                 playbackError = "No hay fuente de reproducción disponible."
+                return
+            }
+
+            // Jellyfin DirectStreamUrl doesn't include the API key — append it.
+            // TranscodingUrl already has the token baked in.
+            var components = URLComponents(string: urlString)
+            if source.directStreamUrl != nil {
+                var queryItems = components?.queryItems ?? []
+                queryItems.append(URLQueryItem(name: "ApiKey", value: token))
+                components?.queryItems = queryItems
+            }
+
+            guard let url = components?.url else {
+                playbackError = "URL de stream inválida."
                 return
             }
 

@@ -57,6 +57,8 @@ struct PlayerView: View {
         .onAppear {
             Task {
                 await viewModel.prepareStream(url: streamURL)
+                // Small delay so VLC drawable attachment finishes in updateNSView/updateUIView
+                try? await Task.sleep(for: .milliseconds(100))
                 await viewModel.togglePlayPause()
                 viewModel.startUpdating()
             }

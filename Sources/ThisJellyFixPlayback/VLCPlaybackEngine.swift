@@ -13,6 +13,9 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
     public func prepare(_ request: PlaybackRequest) async throws {
         let media = VLCMedia(url: request.streamURL)
         mediaPlayer.media = media
+
+        // Give VLC a moment to prepare the media.
+        try? await Task.sleep(for: .milliseconds(300))
     }
 
     public func play() async {
