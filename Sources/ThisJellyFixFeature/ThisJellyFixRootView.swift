@@ -24,6 +24,9 @@ public struct ThisJellyFixRootView: View {
                     if let libModel = libraryModel {
                         HomeView(
                             libraryModel: libModel,
+                            serverURL: server.baseURL,
+                            token: KeychainStore().read(key: KeychainKey.accessToken) ?? "",
+                            userId: authModel.currentUser?.id ?? "",
                             userName: authModel.currentUser?.name ?? "",
                             onLogout: {
                                 authModel.logout()

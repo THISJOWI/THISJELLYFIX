@@ -1,6 +1,6 @@
 import Foundation
 
-public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable {
+public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable, Hashable {
     public let id: String
     public let name: String
     public let type: String
