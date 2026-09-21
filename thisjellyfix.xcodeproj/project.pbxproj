@@ -1,0 +1,2119 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		056906E71EF0BABC3DDF84F4 /* JellyfinServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54122B1375204F29118DED99 /* JellyfinServer.swift */; };
+		0D2FBDFFC5CE95773DEBAED0 /* Networking-visionOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		0F8EFA4D2DD39F03AEC17EDC /* Core-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */; };
+		101A597D9E5D6C554F5CCC25 /* JellyfinServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54122B1375204F29118DED99 /* JellyfinServer.swift */; };
+		11B207F3A394C9676707D15B /* Core-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */; };
+		14A47D69C3EBED46D23A759A /* Feature-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F734B1401D9FD0BC14D69A3 /* Feature-macOS.framework */; };
+		1A25A36A4022B5C9148F8CCD /* JellyfinServerProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */; };
+		1C9D4E334AB64CAD850DA35F /* Feature-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0F734B1401D9FD0BC14D69A3 /* Feature-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		229BEE17CC6D659F4D19E4A2 /* Feature-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9627EED1BAD19BE4D412F23 /* Feature-tvOS.framework */; };
+		2605FFA8F307D37B33C2387B /* ThisJellyFixTVOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5569E8E9FF985310B2B9CB2 /* ThisJellyFixTVOSApp.swift */; };
+		277F1018752A65C5CCA2F0D5 /* ThisJellyFixRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */; };
+		2FCA1EF38BB9E1BC6D984761 /* Networking-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51695B1995A40FA7BE06F2FD /* Networking-tvOS.framework */; };
+		3A108EA5CEF8D4E6354FF1E5 /* Networking-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 68BDC3A07BB7DFB622E67F67 /* Networking-macOS.framework */; };
+		3AFE5BC65C7F06035EDAC29A /* Networking-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51695B1995A40FA7BE06F2FD /* Networking-tvOS.framework */; };
+		3BAF3070B04167743CE6CD92 /* Feature-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */; };
+		3FEA79735CBE26BCAAEF7AE4 /* Core-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */; };
+		416FB7CBE18F5C34EA32D758 /* Networking-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 68BDC3A07BB7DFB622E67F67 /* Networking-macOS.framework */; };
+		44220C3EDDC8F138FB3B7810 /* Networking-tvOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 51695B1995A40FA7BE06F2FD /* Networking-tvOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		4518653DBFBBFAF9B7AD2C74 /* Networking-iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		47364B651D586F18F0BA8BF9 /* Core-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7D37A490B1735CF546E5317 /* Core-iOS.framework */; };
+		4E860FAC7F62BDF970B968C2 /* Core-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7D37A490B1735CF546E5317 /* Core-iOS.framework */; };
+		5C2A213D78D8128479E9CD5A /* Feature-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */; };
+		6337E7069B2C4DBB0BFD42C2 /* Core-iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F7D37A490B1735CF546E5317 /* Core-iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		7575BFB94285EA121DBD6D8A /* Networking-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */; };
+		761EB034F73748987E6F6B7A /* Core-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */; };
+		77CB8273B067D4BC7D51E4C7 /* Core-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7D37A490B1735CF546E5317 /* Core-iOS.framework */; };
+		7AAB8AD15AF87B0D941AA224 /* Networking-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */; };
+		7D02F10BE9A808E675DC8DA6 /* ThisJellyFixRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */; };
+		839DDCF9C5E462CFC0494815 /* Core-visionOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		857B8E3E2AF4A411115431D2 /* Core-tvOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		862325827AB6E9E1FF5FFCB8 /* Feature-tvOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A9627EED1BAD19BE4D412F23 /* Feature-tvOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		8D7B92C76CEBD509755FA2FB /* Networking-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 68BDC3A07BB7DFB622E67F67 /* Networking-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		9489C1859C6F6416E386835B /* JellyfinServerProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */; };
+		97968A415A3BDC30E661150F /* Networking-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */; };
+		9F4FC6B85ADD8851B21105E1 /* Core-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; };
+		A854FBF3F93AE9F6642F1909 /* ThisJellyFixRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */; };
+		B3BC3C434EC0128A78E7DF34 /* Feature-iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C3F09ABE1A5D0977D1DF697F /* ThisJellyFixIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB471F8AF5489AF27C0A2607 /* ThisJellyFixIOSApp.swift */; };
+		C40C110ECF5197EB78CC2A8A /* Core-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		D7515041509C7FE20840D31E /* Feature-visionOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		DA7084D8F901761420F0BEB3 /* Core-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */; };
+		DD235AD5688A65D0ADC12BBF /* Networking-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */; };
+		DE4D9FD511576139DE2B86A8 /* ThisJellyFixRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */; };
+		DEA5AF950ECB457EFBBAA147 /* JellyfinServerProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */; };
+		DF1F39BA80822C8A30DF5292 /* ThisJellyFixMacOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3624D9D9774A776D40B5625D /* ThisJellyFixMacOSApp.swift */; };
+		E02793B804DBE25C6BD44743 /* ThisJellyFixVisionOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD74C3F99EEB6FB09C612704 /* ThisJellyFixVisionOSApp.swift */; };
+		E074E85182B5703EB3E28008 /* JellyfinServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54122B1375204F29118DED99 /* JellyfinServer.swift */; };
+		E47FB120D7BFCA930B89AB11 /* Core-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */; };
+		EFECCFD4537FC63BB40CDA0A /* JellyfinServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54122B1375204F29118DED99 /* JellyfinServer.swift */; };
+		F119FC3380D0B095A4C7621C /* Core-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; };
+		F183B07B46F0BEACF447C5FE /* Core-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; };
+		F3E486280585142650F1C422 /* JellyfinServerProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		0C995F9B9B31523E06F16B7F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2EE52148A8E27B8A70EA2C4E;
+			remoteInfo = "Core-iOS";
+		};
+		2740D2FC968BA0DA36D34854 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 29DB5EBE083C13EA893CA93B;
+			remoteInfo = "Core-tvOS";
+		};
+		39A53113A5D8AA889F515F30 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FA2253E4269C8D8C7EAA11DF;
+			remoteInfo = "Core-visionOS";
+		};
+		48AECC07CF1CFB23862EAFF8 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 29DB5EBE083C13EA893CA93B;
+			remoteInfo = "Core-tvOS";
+		};
+		503FBED6BAFEBA0EBA9F2648 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6CB5B3EF9260B9ADD5A25548;
+			remoteInfo = "Networking-macOS";
+		};
+		5728AA231A00F5DAA5DCF237 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 05F916F4780D98D515EC86D2;
+			remoteInfo = "Networking-tvOS";
+		};
+		5CFD9FE192EE9B02B6D3502E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E2F9AE89CE7D548F8719F10E;
+			remoteInfo = "Networking-iOS";
+		};
+		61E864937E1D3DED83C18215 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8DB7EA2C056CC57434752787;
+			remoteInfo = "Networking-visionOS";
+		};
+		68FF21C960C4B0E17040492E /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 14858F0D2915307F3888D6BE;
+			remoteInfo = "Feature-visionOS";
+		};
+		77DBA77C62FC57C2A8814495 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FA2253E4269C8D8C7EAA11DF;
+			remoteInfo = "Core-visionOS";
+		};
+		7C852FB2C1C2BF926F66EA99 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4C1D9F67B4ED5BD8530AE467;
+			remoteInfo = "Core-macOS";
+		};
+		8571493935A5C0331907D01C /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2EE52148A8E27B8A70EA2C4E;
+			remoteInfo = "Core-iOS";
+		};
+		85C90FE1FD39481AE996EAC7 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 830DDA9E219404DD8F9FFCCC;
+			remoteInfo = "Feature-macOS";
+		};
+		86925EFF1C618FF85767A036 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 2EE52148A8E27B8A70EA2C4E;
+			remoteInfo = "Core-iOS";
+		};
+		879D041969909A68C7B1704D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 6CB5B3EF9260B9ADD5A25548;
+			remoteInfo = "Networking-macOS";
+		};
+		90652765B8AE880965C37ADC /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = FA2253E4269C8D8C7EAA11DF;
+			remoteInfo = "Core-visionOS";
+		};
+		9B4D675A4AD77B6A87700849 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 5A9AF7833E200A6E046A3664;
+			remoteInfo = "Feature-tvOS";
+		};
+		A0CFCA382917ABEB8BD61FD0 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 29DB5EBE083C13EA893CA93B;
+			remoteInfo = "Core-tvOS";
+		};
+		A792E99905DE19949DEFCD7A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 05F916F4780D98D515EC86D2;
+			remoteInfo = "Networking-tvOS";
+		};
+		C45261F0C1B1050EEA866E2A /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 358AE2F5990897CC31C7C9BD;
+			remoteInfo = "Feature-iOS";
+		};
+		E926E4ED2BF7C044928F3801 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 8DB7EA2C056CC57434752787;
+			remoteInfo = "Networking-visionOS";
+		};
+		EA6E6CD43950003939ADBE5B /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E2F9AE89CE7D548F8719F10E;
+			remoteInfo = "Networking-iOS";
+		};
+		ED9AB69772310E32D7C58200 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4C1D9F67B4ED5BD8530AE467;
+			remoteInfo = "Core-macOS";
+		};
+		F599E62CCA4B9163099E74B6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 0349CCD79E1239DAAC0A6408 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 4C1D9F67B4ED5BD8530AE467;
+			remoteInfo = "Core-macOS";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		308B2BB95D88BAFF44EE753B /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				C40C110ECF5197EB78CC2A8A /* Core-macOS.framework in Embed Frameworks */,
+				8D7B92C76CEBD509755FA2FB /* Networking-macOS.framework in Embed Frameworks */,
+				1C9D4E334AB64CAD850DA35F /* Feature-macOS.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		431F18C1EE387ED6A8D4C4BB /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				839DDCF9C5E462CFC0494815 /* Core-visionOS.framework in Embed Frameworks */,
+				0D2FBDFFC5CE95773DEBAED0 /* Networking-visionOS.framework in Embed Frameworks */,
+				D7515041509C7FE20840D31E /* Feature-visionOS.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		7039510C346C15EEFE1AE054 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				6337E7069B2C4DBB0BFD42C2 /* Core-iOS.framework in Embed Frameworks */,
+				4518653DBFBBFAF9B7AD2C74 /* Networking-iOS.framework in Embed Frameworks */,
+				B3BC3C434EC0128A78E7DF34 /* Feature-iOS.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		96D573DB0326F9092B05D070 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				857B8E3E2AF4A411115431D2 /* Core-tvOS.framework in Embed Frameworks */,
+				44220C3EDDC8F138FB3B7810 /* Networking-tvOS.framework in Embed Frameworks */,
+				862325827AB6E9E1FF5FFCB8 /* Feature-tvOS.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		0F734B1401D9FD0BC14D69A3 /* Feature-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		209CE81E708E8DBA8360ADF7 /* thisjellyfix-tvOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "thisjellyfix-tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		3624D9D9774A776D40B5625D /* ThisJellyFixMacOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixMacOSApp.swift; sourceTree = "<group>"; };
+		49EE84CA45240060666F0145 /* thisjellyfix-visionOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "thisjellyfix-visionOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		5076E777F614BB593845047D /* thisjellyfix-iOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "thisjellyfix-iOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		51695B1995A40FA7BE06F2FD /* Networking-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		54122B1375204F29118DED99 /* JellyfinServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinServer.swift; sourceTree = "<group>"; };
+		68BDC3A07BB7DFB622E67F67 /* Networking-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-visionOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		966A418CD1DDCC6DB532C337 /* thisjellyfix-macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "thisjellyfix-macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A9627EED1BAD19BE4D412F23 /* Feature-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-visionOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD74C3F99EEB6FB09C612704 /* ThisJellyFixVisionOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixVisionOSApp.swift; sourceTree = "<group>"; };
+		BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinServerProbe.swift; sourceTree = "<group>"; };
+		CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixRootView.swift; sourceTree = "<group>"; };
+		E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-visionOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		F5569E8E9FF985310B2B9CB2 /* ThisJellyFixTVOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixTVOSApp.swift; sourceTree = "<group>"; };
+		F7D37A490B1735CF546E5317 /* Core-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		FB471F8AF5489AF27C0A2607 /* ThisJellyFixIOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixIOSApp.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		0C05FD6A4FE558ABAA4C3CA8 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				77CB8273B067D4BC7D51E4C7 /* Core-iOS.framework in Frameworks */,
+				7AAB8AD15AF87B0D941AA224 /* Networking-iOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		176AA4C0392E7B9AD2E51818 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F183B07B46F0BEACF447C5FE /* Core-visionOS.framework in Frameworks */,
+				DD235AD5688A65D0ADC12BBF /* Networking-visionOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		2C435E3FA03CB695F0BCCA34 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DA7084D8F901761420F0BEB3 /* Core-macOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		305B9FC599F306AC3487BAC3 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				761EB034F73748987E6F6B7A /* Core-macOS.framework in Frameworks */,
+				416FB7CBE18F5C34EA32D758 /* Networking-macOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4A88D010F645D68B50BBB6DF /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				4E860FAC7F62BDF970B968C2 /* Core-iOS.framework in Frameworks */,
+				7575BFB94285EA121DBD6D8A /* Networking-iOS.framework in Frameworks */,
+				3BAF3070B04167743CE6CD92 /* Feature-iOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		8634F074FD395488C7BD6EF1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				0F8EFA4D2DD39F03AEC17EDC /* Core-tvOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		86DAA354B8418D242ECBBE59 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F119FC3380D0B095A4C7621C /* Core-visionOS.framework in Frameworks */,
+				97968A415A3BDC30E661150F /* Networking-visionOS.framework in Frameworks */,
+				5C2A213D78D8128479E9CD5A /* Feature-visionOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		902B6047F773AD0C53B9F31C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				11B207F3A394C9676707D15B /* Core-tvOS.framework in Frameworks */,
+				2FCA1EF38BB9E1BC6D984761 /* Networking-tvOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		95B3385201B13A8647AB50EA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				47364B651D586F18F0BA8BF9 /* Core-iOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B5EAA26932FD93E9259060EA /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				3FEA79735CBE26BCAAEF7AE4 /* Core-macOS.framework in Frameworks */,
+				3A108EA5CEF8D4E6354FF1E5 /* Networking-macOS.framework in Frameworks */,
+				14A47D69C3EBED46D23A759A /* Feature-macOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BC5BD4ED7F229B9C7B91D60F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9F4FC6B85ADD8851B21105E1 /* Core-visionOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E100E09FEC83AF8ADA3CDE45 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E47FB120D7BFCA930B89AB11 /* Core-tvOS.framework in Frameworks */,
+				3AFE5BC65C7F06035EDAC29A /* Networking-tvOS.framework in Frameworks */,
+				229BEE17CC6D659F4D19E4A2 /* Feature-tvOS.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		24787E28E8D694E5891B6768 /* visionOS */ = {
+			isa = PBXGroup;
+			children = (
+				AD74C3F99EEB6FB09C612704 /* ThisJellyFixVisionOSApp.swift */,
+			);
+			name = visionOS;
+			path = Apps/visionOS;
+			sourceTree = "<group>";
+		};
+		32E3C2F8AFCD3110D3D2EEED /* ThisJellyFixCore */ = {
+			isa = PBXGroup;
+			children = (
+				54122B1375204F29118DED99 /* JellyfinServer.swift */,
+			);
+			name = ThisJellyFixCore;
+			path = Sources/ThisJellyFixCore;
+			sourceTree = "<group>";
+		};
+		631A402641AD0BC43D5FBD12 = {
+			isa = PBXGroup;
+			children = (
+				C1067EAA9E275C850CFC93C8 /* iOS */,
+				91F9DD995CD21262208E2819 /* macOS */,
+				32E3C2F8AFCD3110D3D2EEED /* ThisJellyFixCore */,
+				B2C3164452EC7A6BFACA58D9 /* ThisJellyFixFeature */,
+				DF521D6064B5707950345FB0 /* ThisJellyFixNetworking */,
+				8824E463243D7EED7F382FFD /* tvOS */,
+				24787E28E8D694E5891B6768 /* visionOS */,
+				FC470C1DD62DDEC5BF00B77C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		8824E463243D7EED7F382FFD /* tvOS */ = {
+			isa = PBXGroup;
+			children = (
+				F5569E8E9FF985310B2B9CB2 /* ThisJellyFixTVOSApp.swift */,
+			);
+			name = tvOS;
+			path = Apps/tvOS;
+			sourceTree = "<group>";
+		};
+		91F9DD995CD21262208E2819 /* macOS */ = {
+			isa = PBXGroup;
+			children = (
+				3624D9D9774A776D40B5625D /* ThisJellyFixMacOSApp.swift */,
+			);
+			name = macOS;
+			path = Apps/macOS;
+			sourceTree = "<group>";
+		};
+		B2C3164452EC7A6BFACA58D9 /* ThisJellyFixFeature */ = {
+			isa = PBXGroup;
+			children = (
+				CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */,
+			);
+			name = ThisJellyFixFeature;
+			path = Sources/ThisJellyFixFeature;
+			sourceTree = "<group>";
+		};
+		C1067EAA9E275C850CFC93C8 /* iOS */ = {
+			isa = PBXGroup;
+			children = (
+				FB471F8AF5489AF27C0A2607 /* ThisJellyFixIOSApp.swift */,
+			);
+			name = iOS;
+			path = Apps/iOS;
+			sourceTree = "<group>";
+		};
+		DF521D6064B5707950345FB0 /* ThisJellyFixNetworking */ = {
+			isa = PBXGroup;
+			children = (
+				BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */,
+			);
+			name = ThisJellyFixNetworking;
+			path = Sources/ThisJellyFixNetworking;
+			sourceTree = "<group>";
+		};
+		FC470C1DD62DDEC5BF00B77C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				F7D37A490B1735CF546E5317 /* Core-iOS.framework */,
+				6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */,
+				33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */,
+				8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */,
+				29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */,
+				0F734B1401D9FD0BC14D69A3 /* Feature-macOS.framework */,
+				A9627EED1BAD19BE4D412F23 /* Feature-tvOS.framework */,
+				E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */,
+				A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */,
+				68BDC3A07BB7DFB622E67F67 /* Networking-macOS.framework */,
+				51695B1995A40FA7BE06F2FD /* Networking-tvOS.framework */,
+				A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */,
+				5076E777F614BB593845047D /* thisjellyfix-iOS.app */,
+				966A418CD1DDCC6DB532C337 /* thisjellyfix-macOS.app */,
+				209CE81E708E8DBA8360ADF7 /* thisjellyfix-tvOS.app */,
+				49EE84CA45240060666F0145 /* thisjellyfix-visionOS.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		05F916F4780D98D515EC86D2 /* Networking-tvOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 466590EEEDAF097F4C53BB7D /* Build configuration list for PBXNativeTarget "Networking-tvOS" */;
+			buildPhases = (
+				D0A83608854C36F45BCF8E7E /* Sources */,
+				8634F074FD395488C7BD6EF1 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				695F82BA12501888D7B38A89 /* PBXTargetDependency */,
+			);
+			name = "Networking-tvOS";
+			packageProductDependencies = (
+			);
+			productName = "Networking-tvOS";
+			productReference = 51695B1995A40FA7BE06F2FD /* Networking-tvOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		090DFEB4D011F060BFFA1879 /* thisjellyfix-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1CB7596319F8A5232289C563 /* Build configuration list for PBXNativeTarget "thisjellyfix-iOS" */;
+			buildPhases = (
+				66CE372F84E9CED624CFA0A0 /* Sources */,
+				4A88D010F645D68B50BBB6DF /* Frameworks */,
+				7039510C346C15EEFE1AE054 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9624DFA0C12A653E25D667E1 /* PBXTargetDependency */,
+				ED3A889D5A7689720560FF10 /* PBXTargetDependency */,
+				1D71369AE0758144008ACA68 /* PBXTargetDependency */,
+			);
+			name = "thisjellyfix-iOS";
+			packageProductDependencies = (
+			);
+			productName = "thisjellyfix-iOS";
+			productReference = 5076E777F614BB593845047D /* thisjellyfix-iOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		14858F0D2915307F3888D6BE /* Feature-visionOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 72C618649E37ECC9AFC1E9E9 /* Build configuration list for PBXNativeTarget "Feature-visionOS" */;
+			buildPhases = (
+				F65F98C48090CEAFE6D91186 /* Sources */,
+				176AA4C0392E7B9AD2E51818 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				3BFC6C2E4C2EA0A066AAB862 /* PBXTargetDependency */,
+				35B0C6F9A63EECF00F9B997B /* PBXTargetDependency */,
+			);
+			name = "Feature-visionOS";
+			packageProductDependencies = (
+			);
+			productName = "Feature-visionOS";
+			productReference = E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		29DB5EBE083C13EA893CA93B /* Core-tvOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 17E5ED6E4FE9F373107BC586 /* Build configuration list for PBXNativeTarget "Core-tvOS" */;
+			buildPhases = (
+				75A6B87B0965DC61378540D2 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Core-tvOS";
+			packageProductDependencies = (
+			);
+			productName = "Core-tvOS";
+			productReference = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		2EE52148A8E27B8A70EA2C4E /* Core-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 9F9690CE96777D6410454B3F /* Build configuration list for PBXNativeTarget "Core-iOS" */;
+			buildPhases = (
+				CCD5E42FE1EB137717C58F06 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Core-iOS";
+			packageProductDependencies = (
+			);
+			productName = "Core-iOS";
+			productReference = F7D37A490B1735CF546E5317 /* Core-iOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		3335A0DE431013B44E3EF424 /* thisjellyfix-tvOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B05A8C15877A1AE7D5AE6826 /* Build configuration list for PBXNativeTarget "thisjellyfix-tvOS" */;
+			buildPhases = (
+				5123D70D47BA1C2465385F46 /* Sources */,
+				E100E09FEC83AF8ADA3CDE45 /* Frameworks */,
+				96D573DB0326F9092B05D070 /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				781AB5E2E2AB7CB77628D4FF /* PBXTargetDependency */,
+				4A33F2A417DBD7FAD869E804 /* PBXTargetDependency */,
+				95A9E1C2A34EC47B4C6EFA64 /* PBXTargetDependency */,
+			);
+			name = "thisjellyfix-tvOS";
+			packageProductDependencies = (
+			);
+			productName = "thisjellyfix-tvOS";
+			productReference = 209CE81E708E8DBA8360ADF7 /* thisjellyfix-tvOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		358AE2F5990897CC31C7C9BD /* Feature-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 662F54E3B76D91F096673A2D /* Build configuration list for PBXNativeTarget "Feature-iOS" */;
+			buildPhases = (
+				18CCF41460EACEFB9F3F2525 /* Sources */,
+				0C05FD6A4FE558ABAA4C3CA8 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9E4059E506032F14322EB786 /* PBXTargetDependency */,
+				B3D592410C679970A0FC5483 /* PBXTargetDependency */,
+			);
+			name = "Feature-iOS";
+			packageProductDependencies = (
+			);
+			productName = "Feature-iOS";
+			productReference = 29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		4C1D9F67B4ED5BD8530AE467 /* Core-macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 2F7EB80D2C5EBB2F4486702C /* Build configuration list for PBXNativeTarget "Core-macOS" */;
+			buildPhases = (
+				4FF37DA42C146DB87C5ECF70 /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Core-macOS";
+			packageProductDependencies = (
+			);
+			productName = "Core-macOS";
+			productReference = 6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		5A9AF7833E200A6E046A3664 /* Feature-tvOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 1D725518BCEBA4C89E2E3E08 /* Build configuration list for PBXNativeTarget "Feature-tvOS" */;
+			buildPhases = (
+				5F684FAEB7B0B11F15F2EB76 /* Sources */,
+				902B6047F773AD0C53B9F31C /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FC5ECED77530C8569CEF0C0F /* PBXTargetDependency */,
+				113C03E6E854E46B7EBBC7FA /* PBXTargetDependency */,
+			);
+			name = "Feature-tvOS";
+			packageProductDependencies = (
+			);
+			productName = "Feature-tvOS";
+			productReference = A9627EED1BAD19BE4D412F23 /* Feature-tvOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		64E9A39C57C79F16B5734167 /* thisjellyfix-macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 736A5F1A693446E75D08C631 /* Build configuration list for PBXNativeTarget "thisjellyfix-macOS" */;
+			buildPhases = (
+				C1AF1932F27188E5E5213D0C /* Sources */,
+				B5EAA26932FD93E9259060EA /* Frameworks */,
+				308B2BB95D88BAFF44EE753B /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				12F6B7D82D37C69C5EE79EF6 /* PBXTargetDependency */,
+				2BC941D56DA49D7AEF034760 /* PBXTargetDependency */,
+				7E896B86DE8BB9D28378B2CE /* PBXTargetDependency */,
+			);
+			name = "thisjellyfix-macOS";
+			packageProductDependencies = (
+			);
+			productName = "thisjellyfix-macOS";
+			productReference = 966A418CD1DDCC6DB532C337 /* thisjellyfix-macOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		6CB5B3EF9260B9ADD5A25548 /* Networking-macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CF659214767E8C115B07F080 /* Build configuration list for PBXNativeTarget "Networking-macOS" */;
+			buildPhases = (
+				5F325E945B1366D65338F104 /* Sources */,
+				2C435E3FA03CB695F0BCCA34 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E9079684B7590B70CAB2F984 /* PBXTargetDependency */,
+			);
+			name = "Networking-macOS";
+			packageProductDependencies = (
+			);
+			productName = "Networking-macOS";
+			productReference = 68BDC3A07BB7DFB622E67F67 /* Networking-macOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		830DDA9E219404DD8F9FFCCC /* Feature-macOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8B48F25F8BDBD740317A8CA7 /* Build configuration list for PBXNativeTarget "Feature-macOS" */;
+			buildPhases = (
+				75510ADD5426C3C67DF9A07D /* Sources */,
+				305B9FC599F306AC3487BAC3 /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				FB541D0AE5AAE608ADA38F9D /* PBXTargetDependency */,
+				478C8FAAC3139E94DEB7A5C2 /* PBXTargetDependency */,
+			);
+			name = "Feature-macOS";
+			packageProductDependencies = (
+			);
+			productName = "Feature-macOS";
+			productReference = 0F734B1401D9FD0BC14D69A3 /* Feature-macOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		8DB7EA2C056CC57434752787 /* Networking-visionOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B2C4E33EBA5BE46F20B5517D /* Build configuration list for PBXNativeTarget "Networking-visionOS" */;
+			buildPhases = (
+				FD18FB3E6FE9501570D7A6A6 /* Sources */,
+				BC5BD4ED7F229B9C7B91D60F /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				9A3C6F407F930931C6D5B934 /* PBXTargetDependency */,
+			);
+			name = "Networking-visionOS";
+			packageProductDependencies = (
+			);
+			productName = "Networking-visionOS";
+			productReference = A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		90D78AF4658722237CE7E6D5 /* thisjellyfix-visionOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1AAC0F3EA39D968377E001B /* Build configuration list for PBXNativeTarget "thisjellyfix-visionOS" */;
+			buildPhases = (
+				E451CA6DF1F4094C5AA6D56C /* Sources */,
+				86DAA354B8418D242ECBBE59 /* Frameworks */,
+				431F18C1EE387ED6A8D4C4BB /* Embed Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A8D5B18C61839BE8719DD84B /* PBXTargetDependency */,
+				E9A7596EF5BA16107BFD3B12 /* PBXTargetDependency */,
+				350F23D36343529EB6E2A2E6 /* PBXTargetDependency */,
+			);
+			name = "thisjellyfix-visionOS";
+			packageProductDependencies = (
+			);
+			productName = "thisjellyfix-visionOS";
+			productReference = 49EE84CA45240060666F0145 /* thisjellyfix-visionOS.app */;
+			productType = "com.apple.product-type.application";
+		};
+		E2F9AE89CE7D548F8719F10E /* Networking-iOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CAE91B08ABFA9E3BF83CA9C6 /* Build configuration list for PBXNativeTarget "Networking-iOS" */;
+			buildPhases = (
+				27F802760850D94FC9E9D45B /* Sources */,
+				95B3385201B13A8647AB50EA /* Frameworks */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				0FA44256D6E6A0F1F7899F26 /* PBXTargetDependency */,
+			);
+			name = "Networking-iOS";
+			packageProductDependencies = (
+			);
+			productName = "Networking-iOS";
+			productReference = A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+		FA2253E4269C8D8C7EAA11DF /* Core-visionOS */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A1C005E699EB4AA622F37C31 /* Build configuration list for PBXNativeTarget "Core-visionOS" */;
+			buildPhases = (
+				BE6F9D0B27D40A53480C6F3D /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = "Core-visionOS";
+			packageProductDependencies = (
+			);
+			productName = "Core-visionOS";
+			productReference = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */;
+			productType = "com.apple.product-type.framework";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		0349CCD79E1239DAAC0A6408 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+				};
+			};
+			buildConfigurationList = B5A4B0DE9F1D155EBCDD0083 /* Build configuration list for PBXProject "thisjellyfix" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				Base,
+				en,
+			);
+			mainGroup = 631A402641AD0BC43D5FBD12;
+			minimizedProjectReferenceProxies = 1;
+			preferredProjectObjectVersion = 77;
+			productRefGroup = FC470C1DD62DDEC5BF00B77C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				2EE52148A8E27B8A70EA2C4E /* Core-iOS */,
+				4C1D9F67B4ED5BD8530AE467 /* Core-macOS */,
+				29DB5EBE083C13EA893CA93B /* Core-tvOS */,
+				FA2253E4269C8D8C7EAA11DF /* Core-visionOS */,
+				358AE2F5990897CC31C7C9BD /* Feature-iOS */,
+				830DDA9E219404DD8F9FFCCC /* Feature-macOS */,
+				5A9AF7833E200A6E046A3664 /* Feature-tvOS */,
+				14858F0D2915307F3888D6BE /* Feature-visionOS */,
+				E2F9AE89CE7D548F8719F10E /* Networking-iOS */,
+				6CB5B3EF9260B9ADD5A25548 /* Networking-macOS */,
+				05F916F4780D98D515EC86D2 /* Networking-tvOS */,
+				8DB7EA2C056CC57434752787 /* Networking-visionOS */,
+				090DFEB4D011F060BFFA1879 /* thisjellyfix-iOS */,
+				64E9A39C57C79F16B5734167 /* thisjellyfix-macOS */,
+				3335A0DE431013B44E3EF424 /* thisjellyfix-tvOS */,
+				90D78AF4658722237CE7E6D5 /* thisjellyfix-visionOS */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		18CCF41460EACEFB9F3F2525 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A854FBF3F93AE9F6642F1909 /* ThisJellyFixRootView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		27F802760850D94FC9E9D45B /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				9489C1859C6F6416E386835B /* JellyfinServerProbe.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		4FF37DA42C146DB87C5ECF70 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E074E85182B5703EB3E28008 /* JellyfinServer.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5123D70D47BA1C2465385F46 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				2605FFA8F307D37B33C2387B /* ThisJellyFixTVOSApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5F325E945B1366D65338F104 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DEA5AF950ECB457EFBBAA147 /* JellyfinServerProbe.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		5F684FAEB7B0B11F15F2EB76 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				7D02F10BE9A808E675DC8DA6 /* ThisJellyFixRootView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		66CE372F84E9CED624CFA0A0 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C3F09ABE1A5D0977D1DF697F /* ThisJellyFixIOSApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		75510ADD5426C3C67DF9A07D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				277F1018752A65C5CCA2F0D5 /* ThisJellyFixRootView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		75A6B87B0965DC61378540D2 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				056906E71EF0BABC3DDF84F4 /* JellyfinServer.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		BE6F9D0B27D40A53480C6F3D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				101A597D9E5D6C554F5CCC25 /* JellyfinServer.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C1AF1932F27188E5E5213D0C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DF1F39BA80822C8A30DF5292 /* ThisJellyFixMacOSApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		CCD5E42FE1EB137717C58F06 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				EFECCFD4537FC63BB40CDA0A /* JellyfinServer.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		D0A83608854C36F45BCF8E7E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F3E486280585142650F1C422 /* JellyfinServerProbe.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E451CA6DF1F4094C5AA6D56C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E02793B804DBE25C6BD44743 /* ThisJellyFixVisionOSApp.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		F65F98C48090CEAFE6D91186 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				DE4D9FD511576139DE2B86A8 /* ThisJellyFixRootView.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		FD18FB3E6FE9501570D7A6A6 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				1A25A36A4022B5C9148F8CCD /* JellyfinServerProbe.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		0FA44256D6E6A0F1F7899F26 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2EE52148A8E27B8A70EA2C4E /* Core-iOS */;
+			targetProxy = 0C995F9B9B31523E06F16B7F /* PBXContainerItemProxy */;
+		};
+		113C03E6E854E46B7EBBC7FA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 05F916F4780D98D515EC86D2 /* Networking-tvOS */;
+			targetProxy = 5728AA231A00F5DAA5DCF237 /* PBXContainerItemProxy */;
+		};
+		12F6B7D82D37C69C5EE79EF6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4C1D9F67B4ED5BD8530AE467 /* Core-macOS */;
+			targetProxy = ED9AB69772310E32D7C58200 /* PBXContainerItemProxy */;
+		};
+		1D71369AE0758144008ACA68 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 358AE2F5990897CC31C7C9BD /* Feature-iOS */;
+			targetProxy = C45261F0C1B1050EEA866E2A /* PBXContainerItemProxy */;
+		};
+		2BC941D56DA49D7AEF034760 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6CB5B3EF9260B9ADD5A25548 /* Networking-macOS */;
+			targetProxy = 879D041969909A68C7B1704D /* PBXContainerItemProxy */;
+		};
+		350F23D36343529EB6E2A2E6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 14858F0D2915307F3888D6BE /* Feature-visionOS */;
+			targetProxy = 68FF21C960C4B0E17040492E /* PBXContainerItemProxy */;
+		};
+		35B0C6F9A63EECF00F9B997B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8DB7EA2C056CC57434752787 /* Networking-visionOS */;
+			targetProxy = E926E4ED2BF7C044928F3801 /* PBXContainerItemProxy */;
+		};
+		3BFC6C2E4C2EA0A066AAB862 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FA2253E4269C8D8C7EAA11DF /* Core-visionOS */;
+			targetProxy = 77DBA77C62FC57C2A8814495 /* PBXContainerItemProxy */;
+		};
+		478C8FAAC3139E94DEB7A5C2 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 6CB5B3EF9260B9ADD5A25548 /* Networking-macOS */;
+			targetProxy = 503FBED6BAFEBA0EBA9F2648 /* PBXContainerItemProxy */;
+		};
+		4A33F2A417DBD7FAD869E804 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 05F916F4780D98D515EC86D2 /* Networking-tvOS */;
+			targetProxy = A792E99905DE19949DEFCD7A /* PBXContainerItemProxy */;
+		};
+		695F82BA12501888D7B38A89 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 29DB5EBE083C13EA893CA93B /* Core-tvOS */;
+			targetProxy = 2740D2FC968BA0DA36D34854 /* PBXContainerItemProxy */;
+		};
+		781AB5E2E2AB7CB77628D4FF /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 29DB5EBE083C13EA893CA93B /* Core-tvOS */;
+			targetProxy = 48AECC07CF1CFB23862EAFF8 /* PBXContainerItemProxy */;
+		};
+		7E896B86DE8BB9D28378B2CE /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 830DDA9E219404DD8F9FFCCC /* Feature-macOS */;
+			targetProxy = 85C90FE1FD39481AE996EAC7 /* PBXContainerItemProxy */;
+		};
+		95A9E1C2A34EC47B4C6EFA64 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 5A9AF7833E200A6E046A3664 /* Feature-tvOS */;
+			targetProxy = 9B4D675A4AD77B6A87700849 /* PBXContainerItemProxy */;
+		};
+		9624DFA0C12A653E25D667E1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2EE52148A8E27B8A70EA2C4E /* Core-iOS */;
+			targetProxy = 8571493935A5C0331907D01C /* PBXContainerItemProxy */;
+		};
+		9A3C6F407F930931C6D5B934 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FA2253E4269C8D8C7EAA11DF /* Core-visionOS */;
+			targetProxy = 39A53113A5D8AA889F515F30 /* PBXContainerItemProxy */;
+		};
+		9E4059E506032F14322EB786 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 2EE52148A8E27B8A70EA2C4E /* Core-iOS */;
+			targetProxy = 86925EFF1C618FF85767A036 /* PBXContainerItemProxy */;
+		};
+		A8D5B18C61839BE8719DD84B /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = FA2253E4269C8D8C7EAA11DF /* Core-visionOS */;
+			targetProxy = 90652765B8AE880965C37ADC /* PBXContainerItemProxy */;
+		};
+		B3D592410C679970A0FC5483 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E2F9AE89CE7D548F8719F10E /* Networking-iOS */;
+			targetProxy = EA6E6CD43950003939ADBE5B /* PBXContainerItemProxy */;
+		};
+		E9079684B7590B70CAB2F984 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4C1D9F67B4ED5BD8530AE467 /* Core-macOS */;
+			targetProxy = 7C852FB2C1C2BF926F66EA99 /* PBXContainerItemProxy */;
+		};
+		E9A7596EF5BA16107BFD3B12 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 8DB7EA2C056CC57434752787 /* Networking-visionOS */;
+			targetProxy = 61E864937E1D3DED83C18215 /* PBXContainerItemProxy */;
+		};
+		ED3A889D5A7689720560FF10 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E2F9AE89CE7D548F8719F10E /* Networking-iOS */;
+			targetProxy = 5CFD9FE192EE9B02B6D3502E /* PBXContainerItemProxy */;
+		};
+		FB541D0AE5AAE608ADA38F9D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 4C1D9F67B4ED5BD8530AE467 /* Core-macOS */;
+			targetProxy = F599E62CCA4B9163099E74B6 /* PBXContainerItemProxy */;
+		};
+		FC5ECED77530C8569CEF0C0F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 29DB5EBE083C13EA893CA93B /* Core-tvOS */;
+			targetProxy = A0CFCA382917ABEB8BD61FD0 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		02215B03F206AD81AE95F89D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Feature-visionOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixFeature;
+				PRODUCT_NAME = ThisJellyFixFeature;
+				SDKROOT = xros;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 7;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		0CAB18A3E13A63DBE704096F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thisjellyfix.ios;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		3C40E5320EFF88AD00264B27 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thisjellyfix.macos;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		45FB3CBD89FA402BABFAF5B1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Networking-macOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixNetworking;
+				PRODUCT_NAME = ThisJellyFixNetworking;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		5686D3D53779B8AFF98C5C63 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Feature-iOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixFeature;
+				PRODUCT_NAME = ThisJellyFixFeature;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		66337DE43F408AB9BE570994 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Core-tvOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixCore;
+				PRODUCT_NAME = ThisJellyFixCore;
+				SDKROOT = appletvos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 3;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		6849E5633C5BA56DACF22D7E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Core-visionOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixCore;
+				PRODUCT_NAME = ThisJellyFixCore;
+				SDKROOT = xros;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 7;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		68D1EAC9154A99F4D86ED004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Networking-tvOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixNetworking;
+				PRODUCT_NAME = ThisJellyFixNetworking;
+				SDKROOT = appletvos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 3;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		6FECC5F44939A2E4BF23213F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thisjellyfix.visionos;
+				SDKROOT = xros;
+				TARGETED_DEVICE_FAMILY = 7;
+			};
+			name = Debug;
+		};
+		779527B2C7762E0E02868480 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Feature-macOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixFeature;
+				PRODUCT_NAME = ThisJellyFixFeature;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		7C42E960A55E8E2819AC10C9 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Networking-visionOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixNetworking;
+				PRODUCT_NAME = ThisJellyFixNetworking;
+				SDKROOT = xros;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 7;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		7E59709D528650349AF28A9D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Core-iOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixCore;
+				PRODUCT_NAME = ThisJellyFixCore;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		806EAAD44E400B63AA730215 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thisjellyfix.tvos;
+				SDKROOT = appletvos;
+				TARGETED_DEVICE_FAMILY = 3;
+			};
+			name = Debug;
+		};
+		88EC29689C457CE71771BC9B /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Core-tvOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixCore;
+				PRODUCT_NAME = ThisJellyFixCore;
+				SDKROOT = appletvos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 3;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		8ACBF8FD793128C72BA3AD39 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				PRODUCT_NAME = thisjellyfix;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+				SWIFT_VERSION = 5.10;
+				TVOS_DEPLOYMENT_TARGET = 17.0;
+				XROS_DEPLOYMENT_TARGET = 1.0;
+			};
+			name = Release;
+		};
+		9088F7B1686202A1B197A267 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++14";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu11;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"$(inherited)",
+					"DEBUG=1",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				PRODUCT_NAME = thisjellyfix;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+				SWIFT_VERSION = 5.10;
+				TVOS_DEPLOYMENT_TARGET = 17.0;
+				XROS_DEPLOYMENT_TARGET = 1.0;
+			};
+			name = Debug;
+		};
+		97DF0106B6C62FB09BDE30BC /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Feature-iOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixFeature;
+				PRODUCT_NAME = ThisJellyFixFeature;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		98B8083D646BBD35C590E222 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Core-iOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixCore;
+				PRODUCT_NAME = ThisJellyFixCore;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		9E097DC6E7C9689D7AF2A907 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Core-visionOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixCore;
+				PRODUCT_NAME = ThisJellyFixCore;
+				SDKROOT = xros;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 7;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		A0AA8D3D39692220885F47FD /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Feature-macOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixFeature;
+				PRODUCT_NAME = ThisJellyFixFeature;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		B68545FA091E79592742BEBE /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Networking-tvOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixNetworking;
+				PRODUCT_NAME = ThisJellyFixNetworking;
+				SDKROOT = appletvos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 3;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		C2B9BE3443B6A251A946F584 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Networking-iOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixNetworking;
+				PRODUCT_NAME = ThisJellyFixNetworking;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		C8F1BF2B5A9557A696BB19EC /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Networking-visionOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixNetworking;
+				PRODUCT_NAME = ThisJellyFixNetworking;
+				SDKROOT = xros;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 7;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		CADA2B7A76F0E23089D1BC5E /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Feature-tvOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixFeature;
+				PRODUCT_NAME = ThisJellyFixFeature;
+				SDKROOT = appletvos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 3;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		CB41F3DAEF02F7A966A7A11A /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thisjellyfix.visionos;
+				SDKROOT = xros;
+				TARGETED_DEVICE_FAMILY = 7;
+			};
+			name = Release;
+		};
+		CBA327B572B6B23331F08024 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Core-macOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixCore;
+				PRODUCT_NAME = ThisJellyFixCore;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		D2A179C205C4FDC1FE32B6D5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				COMBINE_HIDPI_IMAGES = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thisjellyfix.macos;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		D5EB159BDC7F0193404CA804 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thisjellyfix.ios;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		DA3051F0B3CC1E03586EEE6C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = "App Icon & Top Shelf Image";
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.thisjellyfix.tvos;
+				SDKROOT = appletvos;
+				TARGETED_DEVICE_FAMILY = 3;
+			};
+			name = Release;
+		};
+		E58BEAABD221504CE3C6EFC0 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Networking-macOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixNetworking;
+				PRODUCT_NAME = ThisJellyFixNetworking;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		EF0E12022E0441C6E601F717 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Networking-iOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixNetworking;
+				PRODUCT_NAME = ThisJellyFixNetworking;
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+		F1708A015B043AC2160A1DC7 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Feature-visionOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixFeature;
+				PRODUCT_NAME = ThisJellyFixFeature;
+				SDKROOT = xros;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 7;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		F88412D6535D1B02318CB3C1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Feature-tvOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixFeature;
+				PRODUCT_NAME = ThisJellyFixFeature;
+				SDKROOT = appletvos;
+				SKIP_INSTALL = YES;
+				TARGETED_DEVICE_FAMILY = 3;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Release;
+		};
+		F8FCB672818D0ADC22E1990A /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "";
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEFINES_MODULE = YES;
+				DYLIB_COMPATIBILITY_VERSION = 1;
+				DYLIB_CURRENT_VERSION = 1;
+				DYLIB_INSTALL_NAME_BASE = "@rpath";
+				INSTALL_PATH = "$(LOCAL_LIBRARY_DIR)/Frameworks";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = "com.thisjellyfix.Core-macOS";
+				PRODUCT_MODULE_NAME = ThisJellyFixCore;
+				PRODUCT_NAME = ThisJellyFixCore;
+				SDKROOT = macosx;
+				SKIP_INSTALL = YES;
+				VERSIONING_SYSTEM = "apple-generic";
+			};
+			name = Debug;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		17E5ED6E4FE9F373107BC586 /* Build configuration list for PBXNativeTarget "Core-tvOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				66337DE43F408AB9BE570994 /* Debug */,
+				88EC29689C457CE71771BC9B /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		1CB7596319F8A5232289C563 /* Build configuration list for PBXNativeTarget "thisjellyfix-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				0CAB18A3E13A63DBE704096F /* Debug */,
+				D5EB159BDC7F0193404CA804 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		1D725518BCEBA4C89E2E3E08 /* Build configuration list for PBXNativeTarget "Feature-tvOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CADA2B7A76F0E23089D1BC5E /* Debug */,
+				F88412D6535D1B02318CB3C1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		2F7EB80D2C5EBB2F4486702C /* Build configuration list for PBXNativeTarget "Core-macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F8FCB672818D0ADC22E1990A /* Debug */,
+				CBA327B572B6B23331F08024 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		466590EEEDAF097F4C53BB7D /* Build configuration list for PBXNativeTarget "Networking-tvOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B68545FA091E79592742BEBE /* Debug */,
+				68D1EAC9154A99F4D86ED004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		662F54E3B76D91F096673A2D /* Build configuration list for PBXNativeTarget "Feature-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				97DF0106B6C62FB09BDE30BC /* Debug */,
+				5686D3D53779B8AFF98C5C63 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		72C618649E37ECC9AFC1E9E9 /* Build configuration list for PBXNativeTarget "Feature-visionOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				02215B03F206AD81AE95F89D /* Debug */,
+				F1708A015B043AC2160A1DC7 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		736A5F1A693446E75D08C631 /* Build configuration list for PBXNativeTarget "thisjellyfix-macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				D2A179C205C4FDC1FE32B6D5 /* Debug */,
+				3C40E5320EFF88AD00264B27 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8B48F25F8BDBD740317A8CA7 /* Build configuration list for PBXNativeTarget "Feature-macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A0AA8D3D39692220885F47FD /* Debug */,
+				779527B2C7762E0E02868480 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		9F9690CE96777D6410454B3F /* Build configuration list for PBXNativeTarget "Core-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				98B8083D646BBD35C590E222 /* Debug */,
+				7E59709D528650349AF28A9D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A1AAC0F3EA39D968377E001B /* Build configuration list for PBXNativeTarget "thisjellyfix-visionOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6FECC5F44939A2E4BF23213F /* Debug */,
+				CB41F3DAEF02F7A966A7A11A /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		A1C005E699EB4AA622F37C31 /* Build configuration list for PBXNativeTarget "Core-visionOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6849E5633C5BA56DACF22D7E /* Debug */,
+				9E097DC6E7C9689D7AF2A907 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B05A8C15877A1AE7D5AE6826 /* Build configuration list for PBXNativeTarget "thisjellyfix-tvOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				806EAAD44E400B63AA730215 /* Debug */,
+				DA3051F0B3CC1E03586EEE6C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B2C4E33EBA5BE46F20B5517D /* Build configuration list for PBXNativeTarget "Networking-visionOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				7C42E960A55E8E2819AC10C9 /* Debug */,
+				C8F1BF2B5A9557A696BB19EC /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		B5A4B0DE9F1D155EBCDD0083 /* Build configuration list for PBXProject "thisjellyfix" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				9088F7B1686202A1B197A267 /* Debug */,
+				8ACBF8FD793128C72BA3AD39 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CAE91B08ABFA9E3BF83CA9C6 /* Build configuration list for PBXNativeTarget "Networking-iOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				EF0E12022E0441C6E601F717 /* Debug */,
+				C2B9BE3443B6A251A946F584 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		CF659214767E8C115B07F080 /* Build configuration list for PBXNativeTarget "Networking-macOS" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E58BEAABD221504CE3C6EFC0 /* Debug */,
+				45FB3CBD89FA402BABFAF5B1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 0349CCD79E1239DAAC0A6408 /* Project object */;
+}
