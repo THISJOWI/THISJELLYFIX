@@ -6,6 +6,7 @@ import ThisJellyFixNetworking
 public struct ThisJellyFixRootView: View {
     @State private var model = ServerConnectionModel()
     @State private var authModel = AuthModel()
+    @State private var libraryModel: LibraryModel?
 
     public init() {}
 
@@ -20,17 +21,21 @@ public struct ThisJellyFixRootView: View {
 
             if let server = model.server {
                 if authModel.isAuthenticated {
-                    MareaHomeView(
-                        server: server,
-                        user: authModel.currentUser,
-                        onLogout: {
-                            authModel.logout()
-                        },
-                        onDisconnect: {
-                            authModel.logout()
-                            model.disconnect()
-                        }
-                    )
+                    if let libModel = libraryModel {
+                        HomeView(
+                            libraryModel: libModel,
+                            userName: authModel.currentUser?.name ?? "",
+                            onLogout: {
+                                authModel.logout()
+                                libraryModel = nil
+                            }
+                        )
+                    } else {
+                        ProgressView()
+                            .task {
+                                await createLibraryModel()
+                            }
+                    }
                 } else {
                     LoginView(
                         serverName: server.name,
@@ -43,14 +48,22 @@ public struct ThisJellyFixRootView: View {
             }
         }
         .preferredColorScheme(.dark)
-        .task {
-            await restoreSessionIfNeeded()
-        }
     }
 
-    private func restoreSessionIfNeeded() async {
-        guard let server = model.server else { return }
-        _ = await authModel.restoreSession(serverURL: server.baseURL)
+    private func createLibraryModel() async {
+        guard let server = model.server,
+              let user = authModel.currentUser else { return }
+
+        let keychain = KeychainStore()
+        guard let token = keychain.read(key: KeychainKey.accessToken) else { return }
+
+        let libModel = LibraryModel(
+            serverURL: server.baseURL,
+            userId: user.id,
+            token: token
+        )
+        libraryModel = libModel
+        await libModel.load()
     }
 }
 
@@ -139,48 +152,6 @@ private struct ServerConnectionView: View {
             .buttonStyle(.borderedProminent)
             .tint(.mint)
             .disabled(model.address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || model.isConnecting)
-        }
-        .padding(32)
-    }
-}
-
-// MARK: - Home View (placeholder)
-
-private struct MareaHomeView: View {
-    let server: JellyfinServer
-    let user: JellyfinUser?
-    let onLogout: () -> Void
-    let onDisconnect: () -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
-            HStack {
-                VStack(alignment: .leading) {
-                    Text("La Marea")
-                        .font(.largeTitle.bold())
-                    Text(server.name)
-                        .foregroundStyle(.secondary)
-                    if let user {
-                        Text("Conectado como \(user.name)")
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
-                    }
-                }
-                Spacer()
-                Menu {
-                    Button("Cerrar sesión", action: onLogout)
-                    Button("Desconectar servidor", action: onDisconnect)
-                } label: {
-                    Image(systemName: "person.crop.circle.fill")
-                        .font(.title2)
-                }
-            }
-
-            ContentUnavailableView(
-                "Servidor encontrado",
-                systemImage: "checkmark.circle.fill",
-                description: Text("El siguiente paso conecta tu perfil y tu biblioteca de Jellyfin.")
-            )
         }
         .padding(32)
     }
