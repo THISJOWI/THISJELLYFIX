@@ -224,6 +224,13 @@ struct DetailView: View {
                 itemId: item.id
             )
 
+            NSLog("[DetailView] PlaybackInfo mediaSources count: %d", info.mediaSources.count)
+            if let first = info.mediaSources.first {
+                NSLog("[DetailView] First source: id=%@ name=%@ container=%@ direct=%@ trans=%@",
+                      first.id, first.name, first.container ?? "nil",
+                      first.directStreamUrl ?? "nil", first.transcodingUrl ?? "nil")
+            }
+
             guard let source = info.mediaSources.first,
                   let urlString = source.bestURL else {
                 playbackError = "No hay fuente de reproducción disponible."

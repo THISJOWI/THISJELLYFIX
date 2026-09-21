@@ -33,13 +33,20 @@ public struct JellyfinPlaybackClient: JellyfinPlaybackProviding {
             throw LibraryError.invalidResponse
         }
 
+        // Diagnostic: log raw response
+        if let body = String(data: data, encoding: .utf8) {
+            NSLog("[PlaybackClient] Status: %d, Body: %@", httpResponse.statusCode, String(body.prefix(500)))
+        }
+
         switch httpResponse.statusCode {
         case 200: break
         case 401: throw LibraryError.unauthorized
         default: throw LibraryError.serverError(httpResponse.statusCode)
         }
 
-        return try JSONDecoder().decode(PlaybackInfo.self, from: data)
+        let decoded = try JSONDecoder().decode(PlaybackInfo.self, from: data)
+        NSLog("[PlaybackClient] Decoded mediaSources count: %d", decoded.mediaSources.count)
+        return decoded
     }
 
     private var deviceOS: String {
