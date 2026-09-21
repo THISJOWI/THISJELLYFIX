@@ -252,17 +252,14 @@ struct DetailView: View {
                 // Transcoding — token already included
                 url = URL(string: urlString)
             } else {
-                // Neither URL provided — use transcoding for seek support.
-                // Format: /Videos/{itemId}/master.m3u8?api_key={token}&mediaSourceId={sourceId}&static=true
-                // Note: 'static=true' on HLS gives direct-play HLS (seekable), not raw stream.
+                // Neither URL provided — construct direct play URL
                 var components = URLComponents(
-                    url: serverURL.appendingPathComponent("Videos/\(item.id)/master.m3u8"),
+                    url: serverURL.appendingPathComponent("Videos/\(item.id)/stream"),
                     resolvingAgainstBaseURL: false
                 )
                 components?.queryItems = [
-                    URLQueryItem(name: "api_key", value: token),
-                    URLQueryItem(name: "mediaSourceId", value: source.id),
                     URLQueryItem(name: "static", value: "true"),
+                    URLQueryItem(name: "ApiKey", value: token),
                 ]
                 url = components?.url
             }

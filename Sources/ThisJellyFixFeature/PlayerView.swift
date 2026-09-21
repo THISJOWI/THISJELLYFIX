@@ -6,6 +6,7 @@ import VLCKitSPM
 struct PlayerView: View {
     let streamURL: URL
     let title: String
+    var allowStop: Bool = true
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = PlayerViewModel()
     @State private var seekIndicator: SeekIndicator?
@@ -35,17 +36,10 @@ struct PlayerView: View {
                     onDismiss: { dismiss() },
                     onToggleFullscreen: {
                         #if os(macOS)
-                        // Dismiss sheet and open player in a fullscreen window
-                        dismiss()
-                        DispatchQueue.main.async {
-                            let playerView = PlayerView(streamURL: streamURL, title: title)
-                            let hostingController = NSHostingController(rootView: playerView)
-                            let window = NSWindow(contentViewController: hostingController)
-                            window.title = title
-                            window.setContentSize(NSSize(width: 1280, height: 720))
-                            window.center()
-                            window.makeKeyAndOrderFront(nil)
-                            window.toggleFullScreen(nil)
+                        // Toggle the current window to fullscreen
+                        // No need to create a new window — keep the same VLC engine running
+                        if let nsWindow = NSApp.keyWindow ?? NSApp.windows.first(where: { $0.isKeyWindow }) {
+                            nsWindow.toggleFullScreen(nil)
                         }
                         #endif
                     }
@@ -79,7 +73,9 @@ struct PlayerView: View {
             }
         }
         .onDisappear {
-            Task { await viewModel.stop() }
+            if allowStop {
+                Task { await viewModel.stop() }
+            }
         }
         .sheet(isPresented: $viewModel.showAudioPicker) {
             AudioPickerSheet(

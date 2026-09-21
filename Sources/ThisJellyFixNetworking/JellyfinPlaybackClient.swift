@@ -24,7 +24,11 @@ public struct JellyfinPlaybackClient: JellyfinPlaybackProviding {
             forHTTPHeaderField: "Authorization"
         )
 
-        let body = ["UserId": userId]
+        let body: [String: Any] = [
+            "UserId": userId,
+            "DeviceId": UUID().uuidString,
+            "MediaSourceId": itemId,
+        ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await session.data(for: request)

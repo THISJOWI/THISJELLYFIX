@@ -10,6 +10,12 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
 
     public init() {}
 
+    deinit {
+        // Must stop before dealloc — VLC video output thread crashes if
+        // libvlc_media_player_release runs while still rendering
+        mediaPlayer.stop()
+    }
+
     public func prepare(_ request: PlaybackRequest) async throws {
         let media = VLCMedia(url: request.streamURL)
         mediaPlayer.media = media
