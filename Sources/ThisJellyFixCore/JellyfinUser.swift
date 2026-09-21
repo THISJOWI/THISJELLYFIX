@@ -10,4 +10,10 @@ public struct JellyfinUser: Codable, Sendable, Equatable, Identifiable {
         self.name = name
         self.primaryImageTag = primaryImageTag
     }
+
+    enum CodingKeys: String, CodingKey {
+        case id = "Id"
+        case name = "Name"
+        case primaryImageTag = "PrimaryImageTag"
+    }
 }
