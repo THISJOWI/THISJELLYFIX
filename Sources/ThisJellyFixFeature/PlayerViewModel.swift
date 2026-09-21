@@ -67,8 +67,12 @@ final class PlayerViewModel {
     }
 
     func seekRelative(_ delta: Double) async {
-        let newTime = max(0, min(currentTime + delta, duration))
-        await seek(to: newTime)
+        isSeeking = true
+        await engine.seekRelative(delta)
+        // Update time estimate immediately for responsive UI
+        currentTime = max(0, min(currentTime + delta, duration))
+        try? await Task.sleep(for: .milliseconds(300))
+        isSeeking = false
     }
 
     func setPlaybackRate(_ rate: Float) async {
@@ -122,7 +126,16 @@ final class PlayerViewModel {
                         fputs(log, fd)
                         fclose(fd)
                     }
-                    if audioCount > 0 || textCount > 0 || self.trackLoadAttempts > 20 {
+                    // Wait until we have text tracks (subtitles) or exhaust attempts
+                    // Give extra time for subtitle tracks to appear
+                    if self.trackLoadAttempts > 30 {
+                        self.tracksLoaded = true
+                        await self.loadTracks()
+                    } else if audioCount > 0 && textCount > 0 {
+                        self.tracksLoaded = true
+                        await self.loadTracks()
+                    } else if audioCount > 0 && self.trackLoadAttempts > 12 {
+                        // Audio found but no subs yet — they might not exist, load anyway
                         self.tracksLoaded = true
                         await self.loadTracks()
                     }

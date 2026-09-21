@@ -13,6 +13,25 @@ struct MediaCardView: View {
                 width: 150,
                 height: 220
             )
+            .overlay(alignment: .bottom) {
+                if let percentage = item.playedPercentage, percentage > 0 {
+                    VStack(spacing: 0) {
+                        Spacer()
+                        // Progress bar background
+                        Rectangle()
+                            .fill(.black.opacity(0.6))
+                            .frame(height: 4)
+                            .overlay(alignment: .leading) {
+                                GeometryReader { geo in
+                                    Rectangle()
+                                        .fill(.cyan)
+                                        .frame(width: geo.size.width * percentage / 100.0)
+                                }
+                            }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+            }
 
             Text(item.name)
                 .font(.caption)

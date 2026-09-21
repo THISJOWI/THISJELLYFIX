@@ -17,11 +17,28 @@ struct JellyfinViewsResponse: Decodable {
     }
 }
 
+struct JellyfinSeasonsResponse: Decodable {
+    let items: [JellyfinSeason]
+    enum CodingKeys: String, CodingKey {
+        case items = "Items"
+    }
+}
+
+struct JellyfinEpisodesResponse: Decodable {
+    let items: [JellyfinEpisode]
+    enum CodingKeys: String, CodingKey {
+        case items = "Items"
+    }
+}
+
 // MARK: - Protocol
 
 public protocol JellyfinLibraryProviding: Sendable {
     func fetchViews(userId: String, serverURL: URL, token: String) async throws -> [LibraryView]
     func fetchItems(userId: String, serverURL: URL, token: String, parentId: String?, includeTypes: String?, limit: Int, orderBy: String, filters: String?) async throws -> [JellyfinMediaItem]
+    func fetchSeasons(userId: String, serverURL: URL, token: String, seriesId: String) async throws -> [JellyfinSeason]
+    func fetchEpisodes(userId: String, serverURL: URL, token: String, seriesId: String, seasonId: String) async throws -> [JellyfinEpisode]
+    func fetchResumeItems(userId: String, serverURL: URL, token: String, limit: Int) async throws -> [JellyfinMediaItem]
 }
 
 public struct JellyfinLibraryClient: JellyfinLibraryProviding {
@@ -70,6 +87,51 @@ public struct JellyfinLibraryClient: JellyfinLibraryProviding {
         }
 
         components.queryItems = queryItems
+
+        let data = try await fetchData(from: components.url!, token: token)
+        let response = try JSONDecoder().decode(JellyfinItemsResponse.self, from: data)
+        return response.items
+    }
+
+    public func fetchSeasons(userId: String, serverURL: URL, token: String, seriesId: String) async throws -> [JellyfinSeason] {
+        var components = URLComponents(
+            url: serverURL.appendingPathComponent("Shows/\(seriesId)/Seasons"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "userId", value: userId),
+        ]
+
+        let data = try await fetchData(from: components.url!, token: token)
+        let response = try JSONDecoder().decode(JellyfinSeasonsResponse.self, from: data)
+        return response.items
+    }
+
+    public func fetchEpisodes(userId: String, serverURL: URL, token: String, seriesId: String, seasonId: String) async throws -> [JellyfinEpisode] {
+        var components = URLComponents(
+            url: serverURL.appendingPathComponent("Shows/\(seriesId)/Episodes"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "userId", value: userId),
+            URLQueryItem(name: "seasonId", value: seasonId),
+        ]
+
+        let data = try await fetchData(from: components.url!, token: token)
+        let response = try JSONDecoder().decode(JellyfinEpisodesResponse.self, from: data)
+        return response.items
+    }
+
+    public func fetchResumeItems(userId: String, serverURL: URL, token: String, limit: Int) async throws -> [JellyfinMediaItem] {
+        var components = URLComponents(
+            url: serverURL.appendingPathComponent("Users/\(userId)/Items/Resume"),
+            resolvingAgainstBaseURL: false
+        )!
+        components.queryItems = [
+            URLQueryItem(name: "Limit", value: String(limit)),
+            URLQueryItem(name: "IncludeItemTypes", value: "Movie,Episode"),
+            URLQueryItem(name: "Recursive", value: "true"),
+        ]
 
         let data = try await fetchData(from: components.url!, token: token)
         let response = try JSONDecoder().decode(JellyfinItemsResponse.self, from: data)

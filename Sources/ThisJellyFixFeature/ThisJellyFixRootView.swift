@@ -59,6 +59,12 @@ public struct ThisJellyFixRootView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .task {
+            // Restore session from Keychain if server was restored
+            if model.server != nil && !authModel.isAuthenticated {
+                _ = await authModel.restoreSession(serverURL: model.server!.baseURL)
+            }
+        }
     }
 
     private func loadLibrary() async {
@@ -93,9 +99,19 @@ final class ServerConnectionModel {
     var server: JellyfinServer?
 
     private let probe: any JellyfinServerProbing
+    private let keychain: any KeychainStoring
 
-    init(probe: any JellyfinServerProbing = JellyfinServerProbe()) {
+    init(
+        probe: any JellyfinServerProbing = JellyfinServerProbe(),
+        keychain: any KeychainStoring = KeychainStore()
+    ) {
         self.probe = probe
+        self.keychain = keychain
+        // Restore server from Keychain if available
+        if let urlString = keychain.read(key: KeychainKey.serverURL),
+           let url = URL(string: urlString) {
+            server = JellyfinServer(baseURL: url, name: url.host ?? "Server")
+        }
     }
 
     func connect() async {

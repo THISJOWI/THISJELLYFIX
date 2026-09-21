@@ -45,6 +45,18 @@ final class LibraryModel {
 
             var allRows: [ContentRow] = []
 
+            // 0. Continue watching (items with partial playback progress)
+            do {
+                let resumeItems = try await libraryClient.fetchResumeItems(
+                    userId: userId, serverURL: serverURL, token: token, limit: 20
+                )
+                if !resumeItems.isEmpty {
+                    allRows.append(ContentRow(title: "Seguir viendo", items: resumeItems))
+                }
+            } catch {
+                // Resume items failing shouldn't block the rest of the library
+            }
+
             // 1. Recently added
             let recentItems = try await libraryClient.fetchItems(
                 userId: userId, serverURL: serverURL, token: token,

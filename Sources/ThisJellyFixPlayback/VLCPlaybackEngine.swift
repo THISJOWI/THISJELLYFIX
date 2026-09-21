@@ -11,8 +11,9 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
     public init() {}
 
     deinit {
-        // Must stop before dealloc — VLC video output thread crashes if
-        // libvlc_media_player_release runs while still rendering
+        // Detach drawable first so VLC render thread doesn't access freed view,
+        // then stop. libvlc_media_player_release joins threads — must be safe.
+        mediaPlayer.drawable = nil
         mediaPlayer.stop()
     }
 
@@ -37,7 +38,28 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
     }
 
     public func seek(to seconds: Double) async {
-        mediaPlayer.time = VLCTime(int: Int32(seconds * 1000))
+        // Use jumpForward/jumpBackward for reliable seeking in VLC 4.0
+        // VLC ignores time/position setters on many formats
+        let currentMs = Double(mediaPlayer.time.intValue)
+        let targetMs = seconds * 1000.0
+        let deltaMs = targetMs - currentMs
+
+        // Minimum jump of 1 second to avoid truncation to 0
+        guard abs(deltaMs) > 1000 else { return }
+
+        if deltaMs > 0 {
+            mediaPlayer.jumpForward(deltaMs / 1000.0)
+        } else {
+            mediaPlayer.jumpBackward(-deltaMs / 1000.0)
+        }
+    }
+
+    public func seekRelative(_ deltaSeconds: Double) async {
+        if deltaSeconds > 0 {
+            mediaPlayer.jumpForward(deltaSeconds)
+        } else if deltaSeconds < 0 {
+            mediaPlayer.jumpBackward(-deltaSeconds)
+        }
     }
 
     public func setPlaybackRate(_ rate: Float) async {

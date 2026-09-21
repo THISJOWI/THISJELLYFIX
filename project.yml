@@ -15,6 +15,7 @@ settings:
     SWIFT_VERSION: "5.10"
     PRODUCT_NAME: thisjellyfix
     GENERATE_INFOPLIST_FILE: YES
+    DEVELOPMENT_TEAM: LSKYSF7629
 targets:
   Core-iOS:
     type: framework

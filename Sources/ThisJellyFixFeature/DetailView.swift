@@ -13,10 +13,26 @@ struct DetailView: View {
     @State private var errorMessage: String?
     @State private var showPlayer = false
     @State private var streamURL: URL?
+    @State private var streamTitle: String = ""
     @State private var isPreparingPlayback = false
     @State private var playbackError: String?
 
+    // MARK: - Seasons & Episodes
+    @State private var seasons: [JellyfinSeason] = []
+    @State private var selectedSeasonIndex: Int = 0
+    @State private var episodes: [JellyfinEpisode] = []
+    @State private var isLoadingEpisodes = false
+
     var body: some View {
+        #if os(macOS)
+        if showPlayer, let streamURL {
+            // Player covers entire screen including nav bar
+            PlayerView(streamURL: streamURL, title: streamTitle, onDismiss: {
+                withAnimation { showPlayer = false }
+            })
+            .ignoresSafeArea()
+        } else {
+        #endif
         ScrollView {
             if let detail {
                 VStack(alignment: .leading, spacing: 0) {
@@ -44,8 +60,26 @@ struct DetailView: View {
                             }
                         }
 
-                        // Play button
-                        playButton
+                        // Play button (movies only — series play from episodes)
+                        if detail.type != "Series" {
+                            Button {
+                                Task { await preparePlayback(itemId: item.id) }
+                            } label: {
+                                if isPreparingPlayback {
+                                    ProgressView()
+                                        .frame(maxWidth: .infinity)
+                                } else {
+                                    HStack {
+                                        Image(systemName: "play.fill")
+                                        Text("Reproducir")
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                }
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.cyan)
+                            .disabled(isPreparingPlayback)
+                        }
 
                         // Playback error
                         if let playbackError {
@@ -88,7 +122,24 @@ struct DetailView: View {
         .navigationTitle("")
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
+        .navigationBarTitleDisplayMode(.inline)
+        .fullScreenCover(isPresented: $showPlayer) {
+            if let streamURL {
+                PlayerView(streamURL: streamURL, title: streamTitle)
+            }
+        }
         #endif
+        .overlay {
+            #if os(macOS)
+            if showPlayer, let streamURL {
+                PlayerView(streamURL: streamURL, title: streamTitle, onDismiss: {
+                    withAnimation { showPlayer = false }
+                })
+                .ignoresSafeArea()
+                .transition(.opacity)
+            }
+            #endif
+        }
         .task { await loadDetail() }
     }
 
@@ -185,40 +236,71 @@ struct DetailView: View {
         }
     }
 
-    private var playButton: some View {
-        Button {
-            Task { await preparePlayback() }
-        } label: {
-            if isPreparingPlayback {
-                ProgressView()
+    // MARK: - Episodes Section (Series)
+
+    private var episodesSection: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Episodios")
+                .font(.headline)
+
+            if seasons.isEmpty && isLoadingEpisodes {
+                ProgressView("Cargando temporadas…")
                     .frame(maxWidth: .infinity)
+            } else if seasons.isEmpty {
+                Text("No se encontraron temporadas.")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             } else {
-                HStack {
-                    Image(systemName: "play.fill")
-                    Text("Reproducir")
+                // Season picker
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(Array(seasons.enumerated()), id: \.element.id) { index, season in
+                            Button {
+                                selectedSeasonIndex = index
+                                Task { await loadEpisodes(for: season) }
+                            } label: {
+                                Text(season.displayName)
+                                    .font(.subheadline.weight(.medium))
+                                    .padding(.horizontal, 14)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        index == selectedSeasonIndex
+                                            ? Color.cyan
+                                            : Color.white.opacity(0.1),
+                                        in: Capsule()
+                                    )
+                                    .foregroundStyle(index == selectedSeasonIndex ? .black : .white)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
                 }
-                .frame(maxWidth: .infinity)
+
+                // Episode list
+                if isLoadingEpisodes {
+                    ProgressView("Cargando episodios…")
+                        .frame(maxWidth: .infinity)
+                } else if episodes.isEmpty {
+                    Text("No hay episodios en esta temporada.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(episodes) { episode in
+                        EpisodeRow(
+                            episode: episode,
+                            serverURL: serverURL
+                        ) {
+                            Task { await playEpisode(episode) }
+                        }
+                    }
+                }
             }
         }
-        .buttonStyle(.borderedProminent)
-        .tint(.cyan)
-        .disabled(isPreparingPlayback)
-        #if os(iOS)
-        .fullScreenCover(isPresented: $showPlayer) {
-            if let streamURL {
-                PlayerView(streamURL: streamURL, title: detail?.name ?? item.name)
-            }
-        }
-        #else
-        .sheet(isPresented: $showPlayer) {
-            if let streamURL {
-                PlayerView(streamURL: streamURL, title: detail?.name ?? item.name)
-            }
-        }
-        #endif
     }
 
-    private func preparePlayback() async {
+    // MARK: - Playback
+
+    private func preparePlayback(itemId: String) async {
         isPreparingPlayback = true
         playbackError = nil
         defer { isPreparingPlayback = false }
@@ -229,7 +311,7 @@ struct DetailView: View {
                 userId: userId,
                 serverURL: serverURL,
                 token: token,
-                itemId: item.id
+                itemId: itemId
             )
 
             guard let source = info.mediaSources.first else {
@@ -237,24 +319,19 @@ struct DetailView: View {
                 return
             }
 
-            // Jellyfin sometimes returns nil for DirectStreamUrl/TranscodingUrl.
-            // Build the URL ourselves when that happens.
             let url: URL?
 
             if let urlString = source.directStreamUrl {
-                // Direct stream — append ApiKey
                 var components = URLComponents(string: urlString)
                 var queryItems = components?.queryItems ?? []
                 queryItems.append(URLQueryItem(name: "ApiKey", value: token))
                 components?.queryItems = queryItems
                 url = components?.url
             } else if let urlString = source.transcodingUrl {
-                // Transcoding — token already included
                 url = URL(string: urlString)
             } else {
-                // Neither URL provided — construct direct play URL
                 var components = URLComponents(
-                    url: serverURL.appendingPathComponent("Videos/\(item.id)/stream"),
+                    url: serverURL.appendingPathComponent("Videos/\(itemId)/stream"),
                     resolvingAgainstBaseURL: false
                 )
                 components?.queryItems = [
@@ -276,15 +353,9 @@ struct DetailView: View {
         }
     }
 
-    private var episodesSection: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("Episodios")
-                .font(.headline)
-
-            Text("La sección de episodios se implementará pronto.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
+    private func playEpisode(_ episode: JellyfinEpisode) async {
+        streamTitle = episode.name
+        await preparePlayback(itemId: episode.id)
     }
 
     // MARK: - Load
@@ -302,8 +373,110 @@ struct DetailView: View {
                 token: token,
                 itemId: item.id
             )
+
+            // Load seasons if this is a series
+            if detail?.type == "Series" {
+                await loadSeasons()
+            }
         } catch {
             errorMessage = error.localizedDescription
         }
+    }
+
+    private func loadSeasons() async {
+        let libraryClient = JellyfinLibraryClient()
+        do {
+            seasons = try await libraryClient.fetchSeasons(
+                userId: userId,
+                serverURL: serverURL,
+                token: token,
+                seriesId: item.id
+            )
+            if let firstSeason = seasons.first {
+                selectedSeasonIndex = 0
+                await loadEpisodes(for: firstSeason)
+            }
+        } catch {
+            // Seasons failing shouldn't block the detail page
+        }
+    }
+
+    private func loadEpisodes(for season: JellyfinSeason) async {
+        isLoadingEpisodes = true
+        defer { isLoadingEpisodes = false }
+
+        let libraryClient = JellyfinLibraryClient()
+        do {
+            episodes = try await libraryClient.fetchEpisodes(
+                userId: userId,
+                serverURL: serverURL,
+                token: token,
+                seriesId: item.id,
+                seasonId: season.id
+            )
+        } catch {
+            episodes = []
+        }
+    }
+}
+
+// MARK: - Episode Row
+
+private struct EpisodeRow: View {
+    let episode: JellyfinEpisode
+    let serverURL: URL
+    let onPlay: () -> Void
+
+    var body: some View {
+        HStack(spacing: 12) {
+            // Episode thumbnail
+            if episode.hasImage {
+                let thumbURL = serverURL
+                    .appendingPathComponent("Items/\(episode.id)/Images/Primary")
+                    .appending(queryItems: [
+                        URLQueryItem(name: "maxWidth", value: "200"),
+                        URLQueryItem(name: "quality", value: "90"),
+                    ])
+
+                MareaImageView(url: thumbURL, width: 120, height: 68)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+            } else {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(Color(red: 0.15, green: 0.17, blue: 0.25))
+                    .frame(width: 120, height: 68)
+                    .overlay {
+                        Image(systemName: "film")
+                            .foregroundStyle(.secondary)
+                    }
+            }
+
+            // Episode info
+            VStack(alignment: .leading, spacing: 4) {
+                Text(episode.episodeLabel)
+                    .font(.caption)
+                    .foregroundStyle(.cyan)
+
+                Text(episode.name)
+                    .font(.subheadline.weight(.medium))
+                    .lineLimit(2)
+
+                if let duration = episode.durationMinutes {
+                    Text("\(duration) min")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Spacer()
+
+            // Play button
+            Button(action: onPlay) {
+                Image(systemName: "play.circle.fill")
+                    .font(.title2)
+                    .foregroundStyle(.cyan)
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.vertical, 4)
     }
 }

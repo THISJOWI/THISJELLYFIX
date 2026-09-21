@@ -7,6 +7,7 @@ struct PlayerView: View {
     let streamURL: URL
     let title: String
     var allowStop: Bool = true
+    var onDismiss: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = PlayerViewModel()
     @State private var seekIndicator: SeekIndicator?
@@ -33,7 +34,7 @@ struct PlayerView: View {
                 ControlsOverlay(
                     title: title,
                     viewModel: viewModel,
-                    onDismiss: { dismiss() },
+                    onDismiss: { onDismiss?() ?? dismiss() },
                     onToggleFullscreen: {
                         #if os(macOS)
                         // Toggle the current window to fullscreen
@@ -175,15 +176,7 @@ private struct ControlsOverlay: View {
                     .foregroundStyle(.white)
                     .lineLimit(1)
                 Spacer()
-                #if os(macOS)
-                Button(action: onToggleFullscreen) {
-                    Image(systemName: "arrow.up.left.and.arrow.down.right")
-                        .font(.title2)
-                        .foregroundStyle(.white)
-                        .padding(12)
-                        .background(.black.opacity(0.5), in: Circle())
-                }
-                #endif
+                // Fullscreen button hidden — VLC OpenGL crashes during window animation
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
@@ -247,6 +240,12 @@ private struct ControlsOverlay: View {
                     endPoint: .bottom
                 )
             )
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                viewModel.showControls = false
+            }
         }
     }
 
