@@ -21,7 +21,7 @@ struct HomeView: View {
                             .frame(width: 36, height: 36)
                             .clipShape(RoundedRectangle(cornerRadius: 8))
                         VStack(alignment: .leading) {
-                            Text("LA MAREA")
+                            Text("THISJELLYFIX")
                                 .font(.largeTitle.bold())
                             Text("Hola, \(userName)")
                                 .foregroundStyle(.secondary)
