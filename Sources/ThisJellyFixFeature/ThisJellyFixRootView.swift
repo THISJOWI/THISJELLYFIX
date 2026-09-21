@@ -7,6 +7,7 @@ public struct ThisJellyFixRootView: View {
     @State private var model = ServerConnectionModel()
     @State private var authModel = AuthModel()
     @State private var libraryModel: LibraryModel?
+    @State private var isLoadingLibrary = false
 
     public init() {}
 
@@ -21,7 +22,10 @@ public struct ThisJellyFixRootView: View {
 
             if let server = model.server {
                 if authModel.isAuthenticated {
-                    if let libModel = libraryModel {
+                    if isLoadingLibrary {
+                        ProgressView("Cargando biblioteca…")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    } else if let libModel = libraryModel {
                         HomeView(
                             libraryModel: libModel,
                             serverURL: server.baseURL,
@@ -34,9 +38,12 @@ public struct ThisJellyFixRootView: View {
                             }
                         )
                     } else {
-                        ProgressView()
-                            .task {
-                                await createLibraryModel()
+                        // First time authenticated — load library
+                        Color.clear
+                            .onAppear {
+                                Task {
+                                    await loadLibrary()
+                                }
                             }
                     }
                 } else {
@@ -53,20 +60,24 @@ public struct ThisJellyFixRootView: View {
         .preferredColorScheme(.dark)
     }
 
-    private func createLibraryModel() async {
+    private func loadLibrary() async {
+        guard !isLoadingLibrary else { return }
         guard let server = model.server,
               let user = authModel.currentUser else { return }
 
         let keychain = KeychainStore()
         guard let token = keychain.read(key: KeychainKey.accessToken) else { return }
 
+        isLoadingLibrary = true
+        defer { isLoadingLibrary = false }
+
         let libModel = LibraryModel(
             serverURL: server.baseURL,
             userId: user.id,
             token: token
         )
-        libraryModel = libModel
         await libModel.load()
+        libraryModel = libModel
     }
 }
 
