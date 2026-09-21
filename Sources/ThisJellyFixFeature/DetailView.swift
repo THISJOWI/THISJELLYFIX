@@ -122,25 +122,16 @@ struct DetailView: View {
         .navigationTitle("")
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
-        .navigationBarTitleDisplayMode(.inline)
         .fullScreenCover(isPresented: $showPlayer) {
             if let streamURL {
                 PlayerView(streamURL: streamURL, title: streamTitle)
             }
         }
         #endif
-        .overlay {
-            #if os(macOS)
-            if showPlayer, let streamURL {
-                PlayerView(streamURL: streamURL, title: streamTitle, onDismiss: {
-                    withAnimation { showPlayer = false }
-                })
-                .ignoresSafeArea()
-                .transition(.opacity)
-            }
-            #endif
-        }
         .task { await loadDetail() }
+        #if os(macOS)
+        }
+        #endif
     }
 
     // MARK: - Subviews
