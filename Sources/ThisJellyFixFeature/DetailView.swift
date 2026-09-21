@@ -11,6 +11,10 @@ struct DetailView: View {
     @State private var detail: JellyfinItemDetail?
     @State private var isLoading = true
     @State private var errorMessage: String?
+    @State private var showPlayer = false
+    @State private var streamURL: URL?
+    @State private var isPreparingPlayback = false
+    @State private var playbackError: String?
 
     var body: some View {
         ScrollView {
@@ -169,17 +173,55 @@ struct DetailView: View {
 
     private var playButton: some View {
         Button {
-            // TODO: Phase 4 — playback
+            Task { await preparePlayback() }
         } label: {
-            HStack {
-                Image(systemName: "play.fill")
-                Text("Reproducir")
+            if isPreparingPlayback {
+                ProgressView()
+                    .frame(maxWidth: .infinity)
+            } else {
+                HStack {
+                    Image(systemName: "play.fill")
+                    Text("Reproducir")
+                }
+                .frame(maxWidth: .infinity)
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 14)
         }
         .buttonStyle(.borderedProminent)
         .tint(.cyan)
+        .disabled(isPreparingPlayback)
+        .sheet(isPresented: $showPlayer) {
+            if let streamURL {
+                PlayerView(streamURL: streamURL, title: detail?.name ?? item.name)
+            }
+        }
+    }
+
+    private func preparePlayback() async {
+        isPreparingPlayback = true
+        playbackError = nil
+        defer { isPreparingPlayback = false }
+
+        do {
+            let client = JellyfinPlaybackClient()
+            let info = try await client.fetchPlaybackInfo(
+                userId: userId,
+                serverURL: serverURL,
+                token: token,
+                itemId: item.id
+            )
+
+            guard let source = info.mediaSources.first,
+                  let urlString = source.bestURL,
+                  let url = URL(string: urlString) else {
+                playbackError = "No hay fuente de reproducción disponible."
+                return
+            }
+
+            streamURL = url
+            showPlayer = true
+        } catch {
+            playbackError = error.localizedDescription
+        }
     }
 
     private var episodesSection: some View {
