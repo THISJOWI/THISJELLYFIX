@@ -92,7 +92,6 @@ final class PlayerViewModel {
             await engine.selectSubtitleTrack(index: track.id)
             selectedSubtitleTrackIndex = track.id
         } else {
-            // Disable subtitles
             await engine.selectSubtitleTrack(index: -1)
             selectedSubtitleTrackIndex = nil
         }
@@ -138,15 +137,12 @@ final class PlayerViewModel {
         engine.vlcMediaPlayer()
     }
 
+    /// Attach a view as the video output using the drawable property.
     #if os(macOS)
-    /// Attach a VLCVideoView (macOS) as the video output.
-    func attachVideoView(_ view: VLCVideoView) {
-        engine.vlcMediaPlayer().setVideoView(view)
+    func attachDrawable(_ view: Any) {
+        engine.vlcMediaPlayer().drawable = view
     }
-    #endif
-
-    #if os(iOS)
-    /// Attach a UIView (iOS) as the video output.
+    #elseif os(iOS)
     func attachDrawable(_ view: UIView) {
         engine.vlcMediaPlayer().drawable = view
     }

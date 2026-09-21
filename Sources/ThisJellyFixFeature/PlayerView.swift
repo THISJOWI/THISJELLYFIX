@@ -114,11 +114,13 @@ private struct VLCPlayerBridge: NSViewRepresentable {
     func makeNSView(context: Context) -> VLCVideoView {
         let videoView = VLCVideoView()
         videoView.fillScreen = true
-        viewModel.attachVideoView(videoView)
         return videoView
     }
 
-    func updateNSView(_ nsView: VLCVideoView, context: Context) {}
+    func updateNSView(_ nsView: VLCVideoView, context: Context) {
+        // Attach drawable on update, after view is in hierarchy
+        viewModel.attachDrawable(nsView)
+    }
 }
 #elseif os(iOS)
 private struct VLCPlayerBridge: UIViewRepresentable {
@@ -126,18 +128,16 @@ private struct VLCPlayerBridge: UIViewRepresentable {
 
     func makeUIView(context: Context) -> VLCPlayerUIView {
         let view = VLCPlayerUIView()
-        viewModel.attachDrawable(view)
         return view
     }
 
-    func updateUIView(_ uiView: VLCPlayerUIView, context: Context) {}
+    func updateUIView(_ uiView: VLCPlayerUIView, context: Context) {
+        viewModel.attachDrawable(uiView)
+    }
 }
 
-/// UIView that conforms to VLCDrawable protocol for VLCKit rendering.
-private class VLCPlayerUIView: UIView {
-    // UIView already satisfies VLCDrawable via addSubview(_:) and bounds
-    // but we declare conformance explicitly to pass to the engine.
-}
+/// UIView that VLCKit renders into.
+private class VLCPlayerUIView: UIView {}
 #endif
 
 // MARK: - Controls Overlay
