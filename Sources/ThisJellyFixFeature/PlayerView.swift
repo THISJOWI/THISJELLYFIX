@@ -220,10 +220,18 @@ private struct ControlsOverlay: View {
                 .foregroundStyle(.white)
 
                 HStack(spacing: 24) {
-                    ActionButton(icon: "speaker.wave.2", label: "Audio") {
+                    ActionButton(
+                        icon: "speaker.wave.2",
+                        label: "Audio",
+                        disabled: viewModel.availableAudioTracks.isEmpty
+                    ) {
                         viewModel.showAudioPicker = true
                     }
-                    ActionButton(icon: "captions.bubble", label: "Subtítulos") {
+                    ActionButton(
+                        icon: "captions.bubble",
+                        label: "Subtítulos",
+                        disabled: viewModel.availableSubtitleTracks.isEmpty
+                    ) {
                         viewModel.showSubtitlePicker = true
                     }
                     ActionButton(icon: "speedometer", label: String(format: "%.1fx", viewModel.playbackRate)) {
@@ -315,6 +323,7 @@ private struct SeekBar: View {
 private struct ActionButton: View {
     let icon: String
     let label: String
+    var disabled: Bool = false
     let action: () -> Void
 
     var body: some View {
@@ -325,8 +334,9 @@ private struct ActionButton: View {
                 Text(label)
                     .font(.caption2)
             }
-            .foregroundStyle(.white)
+            .foregroundStyle(disabled ? .gray : .white)
         }
+        .disabled(disabled)
     }
 }
 

@@ -115,6 +115,13 @@ final class PlayerViewModel {
                     self.trackLoadAttempts += 1
                     let audioCount = await self.engine.audioTrackCount
                     let textCount = await self.engine.textTrackCount
+                    let dur = self.duration
+                    let log = "[PlayerViewModel] attempt=\(self.trackLoadAttempts) audioCount=\(audioCount) textCount=\(textCount) duration=\(dur)\n"
+                    let logPath = NSTemporaryDirectory() + "tjf_playback.log"
+                    if let fd = fopen(logPath, "a") {
+                        fputs(log, fd)
+                        fclose(fd)
+                    }
                     if audioCount > 0 || textCount > 0 || self.trackLoadAttempts > 20 {
                         self.tracksLoaded = true
                         await self.loadTracks()
@@ -134,6 +141,15 @@ final class PlayerViewModel {
     private func loadTracks() async {
         availableAudioTracks = await engine.availableAudioTracks
         availableSubtitleTracks = await engine.availableSubtitleTracks
+
+        let audioCount = availableAudioTracks.count
+        let subCount = availableSubtitleTracks.count
+        let log = "[PlayerViewModel] loadTracks: audio=\(audioCount) subs=\(subCount)\n"
+        let logPath = NSTemporaryDirectory() + "tjf_playback.log"
+        if let fd = fopen(logPath, "a") {
+            fputs(log, fd)
+            fclose(fd)
+        }
     }
 
     func stop() async {
