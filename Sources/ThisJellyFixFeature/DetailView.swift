@@ -24,15 +24,33 @@ struct DetailView: View {
     @State private var isLoadingEpisodes = false
 
     var body: some View {
-        #if os(macOS)
-        if showPlayer, let streamURL {
-            // Player covers entire screen including nav bar
-            PlayerView(streamURL: streamURL, title: streamTitle, onDismiss: {
-                withAnimation { showPlayer = false }
-            })
-            .ignoresSafeArea()
-        } else {
-        #endif
+        ZStack {
+            detailContent
+                .navigationTitle("")
+                .navigationBarBackButtonHidden(showPlayer)
+                #if os(iOS)
+                .navigationBarTitleDisplayMode(.inline)
+                .fullScreenCover(isPresented: $showPlayer) {
+                    if let streamURL {
+                        PlayerView(streamURL: streamURL, title: streamTitle)
+                    }
+                }
+                #endif
+                .task { await loadDetail() }
+
+            #if os(macOS)
+            if showPlayer, let streamURL {
+                Color.black.ignoresSafeArea()
+                PlayerView(streamURL: streamURL, title: streamTitle, onDismiss: {
+                    withAnimation { showPlayer = false }
+                })
+                .ignoresSafeArea()
+            }
+            #endif
+        }
+    }
+
+    private var detailContent: some View {
         ScrollView {
             if let detail {
                 VStack(alignment: .leading, spacing: 0) {
@@ -119,19 +137,6 @@ struct DetailView: View {
                 .frame(maxWidth: .infinity, minHeight: 400)
             }
         }
-        .navigationTitle("")
-        #if os(iOS)
-        .navigationBarTitleDisplayMode(.inline)
-        .fullScreenCover(isPresented: $showPlayer) {
-            if let streamURL {
-                PlayerView(streamURL: streamURL, title: streamTitle)
-            }
-        }
-        #endif
-        .task { await loadDetail() }
-        #if os(macOS)
-        }
-        #endif
     }
 
     // MARK: - Subviews
