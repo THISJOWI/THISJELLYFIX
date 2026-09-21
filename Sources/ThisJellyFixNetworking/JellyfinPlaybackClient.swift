@@ -33,9 +33,14 @@ public struct JellyfinPlaybackClient: JellyfinPlaybackProviding {
             throw LibraryError.invalidResponse
         }
 
-        // Diagnostic: log raw response
+        // Write raw response to file for debugging
         if let body = String(data: data, encoding: .utf8) {
-            NSLog("[PlaybackClient] Status: %d, Body: %@", httpResponse.statusCode, String(body.prefix(500)))
+            let log = "[PlaybackClient] URL: \(url)\n[PlaybackClient] Status: \(httpResponse.statusCode)\n[PlaybackClient] Body: \(body)\n"
+            let logPath = NSTemporaryDirectory() + "tjf_playback.log"
+            if let fd = fopen(logPath, "a") {
+                fputs(log, fd)
+                fclose(fd)
+            }
         }
 
         switch httpResponse.statusCode {
@@ -45,7 +50,12 @@ public struct JellyfinPlaybackClient: JellyfinPlaybackProviding {
         }
 
         let decoded = try JSONDecoder().decode(PlaybackInfo.self, from: data)
-        NSLog("[PlaybackClient] Decoded mediaSources count: %d", decoded.mediaSources.count)
+        let log2 = "[PlaybackClient] Decoded mediaSources count: \(decoded.mediaSources.count)\n"
+        let logPath2 = NSTemporaryDirectory() + "tjf_playback.log"
+        if let fd = fopen(logPath2, "a") {
+            fputs(log2, fd)
+            fclose(fd)
+        }
         return decoded
     }
 

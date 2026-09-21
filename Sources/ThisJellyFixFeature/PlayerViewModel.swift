@@ -12,6 +12,7 @@ final class PlayerViewModel {
     var currentTime: Double = 0
     var duration: Double = 0
     var playbackRate: Float = 1.0
+    var isSeeking = false
 
     // MARK: - Tracks
     var availableAudioTracks: [AudioTrack] = []
@@ -65,8 +66,12 @@ final class PlayerViewModel {
     }
 
     func seek(to seconds: Double) async {
-        await engine.seek(to: seconds)
+        isSeeking = true
         currentTime = seconds
+        await engine.seek(to: seconds)
+        // Give VLC time to process the seek before resuming timer updates
+        try? await Task.sleep(for: .milliseconds(200))
+        isSeeking = false
     }
 
     func seekRelative(_ delta: Double) async {
@@ -108,6 +113,8 @@ final class PlayerViewModel {
         updateTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
+                // Don't overwrite currentTime while user is seeking
+                guard !self.isSeeking else { return }
                 self.currentTime = await self.engine.currentTime
                 self.duration = await self.engine.duration
                 self.isPlaying = await self.engine.isPlaying

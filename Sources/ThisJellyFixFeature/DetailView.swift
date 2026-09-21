@@ -203,11 +203,19 @@ struct DetailView: View {
         .buttonStyle(.borderedProminent)
         .tint(.cyan)
         .disabled(isPreparingPlayback)
+        #if os(iOS)
+        .fullScreenCover(isPresented: $showPlayer) {
+            if let streamURL {
+                PlayerView(streamURL: streamURL, title: detail?.name ?? item.name)
+            }
+        }
+        #else
         .sheet(isPresented: $showPlayer) {
             if let streamURL {
                 PlayerView(streamURL: streamURL, title: detail?.name ?? item.name)
             }
         }
+        #endif
     }
 
     private func preparePlayback() async {
@@ -224,34 +232,49 @@ struct DetailView: View {
                 itemId: item.id
             )
 
-            NSLog("[DetailView] PlaybackInfo mediaSources count: %d", info.mediaSources.count)
-            if let first = info.mediaSources.first {
-                NSLog("[DetailView] First source: id=%@ name=%@ container=%@ direct=%@ trans=%@",
-                      first.id, first.name, first.container ?? "nil",
-                      first.directStreamUrl ?? "nil", first.transcodingUrl ?? "nil")
-            }
-
-            guard let source = info.mediaSources.first,
-                  let urlString = source.bestURL else {
+            guard let source = info.mediaSources.first else {
                 playbackError = "No hay fuente de reproducción disponible."
                 return
             }
 
-            // Jellyfin DirectStreamUrl doesn't include the API key — append it.
-            // TranscodingUrl already has the token baked in.
-            var components = URLComponents(string: urlString)
-            if source.directStreamUrl != nil {
+            // Jellyfin sometimes returns nil for DirectStreamUrl/TranscodingUrl.
+            // Build the URL ourselves when that happens.
+            let url: URL?
+
+            if let urlString = source.directStreamUrl {
+                // Direct stream — append ApiKey
+                var components = URLComponents(string: urlString)
                 var queryItems = components?.queryItems ?? []
                 queryItems.append(URLQueryItem(name: "ApiKey", value: token))
                 components?.queryItems = queryItems
+                url = components?.url
+            } else if let urlString = source.transcodingUrl {
+                // Transcoding — token already included
+                url = URL(string: urlString)
+            } else {
+                // Neither URL provided — construct direct play URL
+                // Format: /Videos/{itemId}/stream?static=true&container={container}&ApiKey={token}
+                var components = URLComponents(
+                    url: serverURL.appendingPathComponent("Videos/\(item.id)/stream"),
+                    resolvingAgainstBaseURL: false
+                )
+                var queryItems = [
+                    URLQueryItem(name: "static", value: "true"),
+                    URLQueryItem(name: "ApiKey", value: token),
+                ]
+                if let container = source.container {
+                    queryItems.append(URLQueryItem(name: "container", value: container))
+                }
+                components?.queryItems = queryItems
+                url = components?.url
             }
 
-            guard let url = components?.url else {
+            guard let finalURL = url else {
                 playbackError = "URL de stream inválida."
                 return
             }
 
-            streamURL = url
+            streamURL = finalURL
             showPlayer = true
         } catch {
             playbackError = error.localizedDescription
