@@ -7,51 +7,74 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		0311FAC43A0D125F5888CB4D /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB7034B466503BCE33E95A1 /* KeychainStore.swift */; };
 		056906E71EF0BABC3DDF84F4 /* JellyfinServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54122B1375204F29118DED99 /* JellyfinServer.swift */; };
 		0D2FBDFFC5CE95773DEBAED0 /* Networking-visionOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		0F8EFA4D2DD39F03AEC17EDC /* Core-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */; };
 		101A597D9E5D6C554F5CCC25 /* JellyfinServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54122B1375204F29118DED99 /* JellyfinServer.swift */; };
+		119FCB01434D29D48349DBE8 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB7034B466503BCE33E95A1 /* KeychainStore.swift */; };
 		11B207F3A394C9676707D15B /* Core-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */; };
+		1426AB289255A8663046C0BC /* AuthModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 771C356E05590A913549B4C7 /* AuthModel.swift */; };
 		14A47D69C3EBED46D23A759A /* Feature-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F734B1401D9FD0BC14D69A3 /* Feature-macOS.framework */; };
 		1A25A36A4022B5C9148F8CCD /* JellyfinServerProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */; };
 		1C9D4E334AB64CAD850DA35F /* Feature-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0F734B1401D9FD0BC14D69A3 /* Feature-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		229BEE17CC6D659F4D19E4A2 /* Feature-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9627EED1BAD19BE4D412F23 /* Feature-tvOS.framework */; };
 		2605FFA8F307D37B33C2387B /* ThisJellyFixTVOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5569E8E9FF985310B2B9CB2 /* ThisJellyFixTVOSApp.swift */; };
+		277D94B5F67FE3BEB424F7DD /* JellyfinAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 703D40341AFC8475EC1F03D6 /* JellyfinAuthClient.swift */; };
 		277F1018752A65C5CCA2F0D5 /* ThisJellyFixRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */; };
 		2FCA1EF38BB9E1BC6D984761 /* Networking-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51695B1995A40FA7BE06F2FD /* Networking-tvOS.framework */; };
+		38B5686DDBB3A2AA8752D8AD /* AuthModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 771C356E05590A913549B4C7 /* AuthModel.swift */; };
 		3A108EA5CEF8D4E6354FF1E5 /* Networking-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 68BDC3A07BB7DFB622E67F67 /* Networking-macOS.framework */; };
 		3AFE5BC65C7F06035EDAC29A /* Networking-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 51695B1995A40FA7BE06F2FD /* Networking-tvOS.framework */; };
 		3BAF3070B04167743CE6CD92 /* Feature-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */; };
+		3BF87831B32E86795B3A22BB /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB4C1DE92983F2B02F9FAF05 /* LoginView.swift */; };
+		3FB0908BBABF8F061243233A /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB7034B466503BCE33E95A1 /* KeychainStore.swift */; };
 		3FEA79735CBE26BCAAEF7AE4 /* Core-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */; };
 		416FB7CBE18F5C34EA32D758 /* Networking-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 68BDC3A07BB7DFB622E67F67 /* Networking-macOS.framework */; };
 		44220C3EDDC8F138FB3B7810 /* Networking-tvOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 51695B1995A40FA7BE06F2FD /* Networking-tvOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		4518653DBFBBFAF9B7AD2C74 /* Networking-iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		47364B651D586F18F0BA8BF9 /* Core-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7D37A490B1735CF546E5317 /* Core-iOS.framework */; };
 		4E860FAC7F62BDF970B968C2 /* Core-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7D37A490B1735CF546E5317 /* Core-iOS.framework */; };
+		541BA8C031513C6B263296B4 /* DeviceIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C764363B3037D95ED713033C /* DeviceIdentifier.swift */; };
 		5C2A213D78D8128479E9CD5A /* Feature-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */; };
 		6337E7069B2C4DBB0BFD42C2 /* Core-iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F7D37A490B1735CF546E5317 /* Core-iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		72BAB446A26FC1F71774DECB /* JellyfinUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1299D0FC3ECE91B5827C8AAD /* JellyfinUser.swift */; };
 		7575BFB94285EA121DBD6D8A /* Networking-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */; };
 		761EB034F73748987E6F6B7A /* Core-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */; };
 		77CB8273B067D4BC7D51E4C7 /* Core-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7D37A490B1735CF546E5317 /* Core-iOS.framework */; };
 		7AAB8AD15AF87B0D941AA224 /* Networking-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */; };
 		7D02F10BE9A808E675DC8DA6 /* ThisJellyFixRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */; };
+		8262173985F2D997771C6EEA /* AuthModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 771C356E05590A913549B4C7 /* AuthModel.swift */; };
 		839DDCF9C5E462CFC0494815 /* Core-visionOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		857B8E3E2AF4A411115431D2 /* Core-tvOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		862325827AB6E9E1FF5FFCB8 /* Feature-tvOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A9627EED1BAD19BE4D412F23 /* Feature-tvOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		899728756CBD6286642CC3C6 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB4C1DE92983F2B02F9FAF05 /* LoginView.swift */; };
+		8C09173C4469A5FA66F1506E /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB4C1DE92983F2B02F9FAF05 /* LoginView.swift */; };
+		8C25F3F362A6D00768BF71F9 /* JellyfinAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 703D40341AFC8475EC1F03D6 /* JellyfinAuthClient.swift */; };
 		8D7B92C76CEBD509755FA2FB /* Networking-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 68BDC3A07BB7DFB622E67F67 /* Networking-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		9489C1859C6F6416E386835B /* JellyfinServerProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */; };
 		97968A415A3BDC30E661150F /* Networking-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */; };
+		9F21C617302AD2A28F2D1969 /* JellyfinUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1299D0FC3ECE91B5827C8AAD /* JellyfinUser.swift */; };
 		9F4FC6B85ADD8851B21105E1 /* Core-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; };
+		A62EBA680D44BFC81C612682 /* DeviceIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C764363B3037D95ED713033C /* DeviceIdentifier.swift */; };
 		A854FBF3F93AE9F6642F1909 /* ThisJellyFixRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */; };
 		B3BC3C434EC0128A78E7DF34 /* Feature-iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		C3F09ABE1A5D0977D1DF697F /* ThisJellyFixIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB471F8AF5489AF27C0A2607 /* ThisJellyFixIOSApp.swift */; };
 		C40C110ECF5197EB78CC2A8A /* Core-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		C8B2BD052E5372AE4F184CF6 /* LoginView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DB4C1DE92983F2B02F9FAF05 /* LoginView.swift */; };
+		CC92E71A7766D0C54DB4E45D /* JellyfinAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 703D40341AFC8475EC1F03D6 /* JellyfinAuthClient.swift */; };
+		CEF953A27F6C6524F6C0C7EF /* JellyfinAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 703D40341AFC8475EC1F03D6 /* JellyfinAuthClient.swift */; };
+		D29500D2A60E7CAC972DC617 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB7034B466503BCE33E95A1 /* KeychainStore.swift */; };
+		D4ABB923E6F471977DE2D87E /* JellyfinUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1299D0FC3ECE91B5827C8AAD /* JellyfinUser.swift */; };
 		D7515041509C7FE20840D31E /* Feature-visionOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		DA7084D8F901761420F0BEB3 /* Core-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */; };
+		DC5ABAD1FC79AFF5D417324F /* AuthModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 771C356E05590A913549B4C7 /* AuthModel.swift */; };
 		DD235AD5688A65D0ADC12BBF /* Networking-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */; };
+		DE07E1BC9894F7C0070C543E /* DeviceIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C764363B3037D95ED713033C /* DeviceIdentifier.swift */; };
 		DE4D9FD511576139DE2B86A8 /* ThisJellyFixRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */; };
 		DEA5AF950ECB457EFBBAA147 /* JellyfinServerProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */; };
 		DF1F39BA80822C8A30DF5292 /* ThisJellyFixMacOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3624D9D9774A776D40B5625D /* ThisJellyFixMacOSApp.swift */; };
+		DFE7FD7146B8CABF2F6C48C7 /* DeviceIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C764363B3037D95ED713033C /* DeviceIdentifier.swift */; };
 		E02793B804DBE25C6BD44743 /* ThisJellyFixVisionOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD74C3F99EEB6FB09C612704 /* ThisJellyFixVisionOSApp.swift */; };
 		E074E85182B5703EB3E28008 /* JellyfinServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54122B1375204F29118DED99 /* JellyfinServer.swift */; };
 		E47FB120D7BFCA930B89AB11 /* Core-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */; };
@@ -59,6 +82,7 @@
 		F119FC3380D0B095A4C7621C /* Core-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; };
 		F183B07B46F0BEACF447C5FE /* Core-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; };
 		F3E486280585142650F1C422 /* JellyfinServerProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */; };
+		F49BB41736F3752C77EB6CBE /* JellyfinUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1299D0FC3ECE91B5827C8AAD /* JellyfinUser.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -289,6 +313,7 @@
 
 /* Begin PBXFileReference section */
 		0F734B1401D9FD0BC14D69A3 /* Feature-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		1299D0FC3ECE91B5827C8AAD /* JellyfinUser.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinUser.swift; sourceTree = "<group>"; };
 		209CE81E708E8DBA8360ADF7 /* thisjellyfix-tvOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "thisjellyfix-tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -299,14 +324,19 @@
 		54122B1375204F29118DED99 /* JellyfinServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinServer.swift; sourceTree = "<group>"; };
 		68BDC3A07BB7DFB622E67F67 /* Networking-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-macOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		703D40341AFC8475EC1F03D6 /* JellyfinAuthClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinAuthClient.swift; sourceTree = "<group>"; };
+		771C356E05590A913549B4C7 /* AuthModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AuthModel.swift; sourceTree = "<group>"; };
 		8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-visionOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		966A418CD1DDCC6DB532C337 /* thisjellyfix-macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "thisjellyfix-macOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A9627EED1BAD19BE4D412F23 /* Feature-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A974A29AA43C3493A45094B0 /* Networking-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Networking-visionOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		AAB7034B466503BCE33E95A1 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		AD74C3F99EEB6FB09C612704 /* ThisJellyFixVisionOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixVisionOSApp.swift; sourceTree = "<group>"; };
 		BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinServerProbe.swift; sourceTree = "<group>"; };
+		C764363B3037D95ED713033C /* DeviceIdentifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentifier.swift; sourceTree = "<group>"; };
 		CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixRootView.swift; sourceTree = "<group>"; };
+		DB4C1DE92983F2B02F9FAF05 /* LoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LoginView.swift; sourceTree = "<group>"; };
 		E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-visionOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		F5569E8E9FF985310B2B9CB2 /* ThisJellyFixTVOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixTVOSApp.swift; sourceTree = "<group>"; };
 		F7D37A490B1735CF546E5317 /* Core-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -437,7 +467,10 @@
 		32E3C2F8AFCD3110D3D2EEED /* ThisJellyFixCore */ = {
 			isa = PBXGroup;
 			children = (
+				C764363B3037D95ED713033C /* DeviceIdentifier.swift */,
 				54122B1375204F29118DED99 /* JellyfinServer.swift */,
+				1299D0FC3ECE91B5827C8AAD /* JellyfinUser.swift */,
+				AAB7034B466503BCE33E95A1 /* KeychainStore.swift */,
 			);
 			name = ThisJellyFixCore;
 			path = Sources/ThisJellyFixCore;
@@ -478,6 +511,8 @@
 		B2C3164452EC7A6BFACA58D9 /* ThisJellyFixFeature */ = {
 			isa = PBXGroup;
 			children = (
+				771C356E05590A913549B4C7 /* AuthModel.swift */,
+				DB4C1DE92983F2B02F9FAF05 /* LoginView.swift */,
 				CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */,
 			);
 			name = ThisJellyFixFeature;
@@ -496,6 +531,7 @@
 		DF521D6064B5707950345FB0 /* ThisJellyFixNetworking */ = {
 			isa = PBXGroup;
 			children = (
+				703D40341AFC8475EC1F03D6 /* JellyfinAuthClient.swift */,
 				BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */,
 			);
 			name = ThisJellyFixNetworking;
@@ -890,6 +926,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				38B5686DDBB3A2AA8752D8AD /* AuthModel.swift in Sources */,
+				899728756CBD6286642CC3C6 /* LoginView.swift in Sources */,
 				A854FBF3F93AE9F6642F1909 /* ThisJellyFixRootView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -898,6 +936,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				277D94B5F67FE3BEB424F7DD /* JellyfinAuthClient.swift in Sources */,
 				9489C1859C6F6416E386835B /* JellyfinServerProbe.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -906,7 +945,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DE07E1BC9894F7C0070C543E /* DeviceIdentifier.swift in Sources */,
 				E074E85182B5703EB3E28008 /* JellyfinServer.swift in Sources */,
+				9F21C617302AD2A28F2D1969 /* JellyfinUser.swift in Sources */,
+				3FB0908BBABF8F061243233A /* KeychainStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -922,6 +964,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8C25F3F362A6D00768BF71F9 /* JellyfinAuthClient.swift in Sources */,
 				DEA5AF950ECB457EFBBAA147 /* JellyfinServerProbe.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -930,6 +973,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1426AB289255A8663046C0BC /* AuthModel.swift in Sources */,
+				C8B2BD052E5372AE4F184CF6 /* LoginView.swift in Sources */,
 				7D02F10BE9A808E675DC8DA6 /* ThisJellyFixRootView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -946,6 +991,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DC5ABAD1FC79AFF5D417324F /* AuthModel.swift in Sources */,
+				3BF87831B32E86795B3A22BB /* LoginView.swift in Sources */,
 				277F1018752A65C5CCA2F0D5 /* ThisJellyFixRootView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -954,7 +1001,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				DFE7FD7146B8CABF2F6C48C7 /* DeviceIdentifier.swift in Sources */,
 				056906E71EF0BABC3DDF84F4 /* JellyfinServer.swift in Sources */,
+				D4ABB923E6F471977DE2D87E /* JellyfinUser.swift in Sources */,
+				D29500D2A60E7CAC972DC617 /* KeychainStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -962,7 +1012,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				A62EBA680D44BFC81C612682 /* DeviceIdentifier.swift in Sources */,
 				101A597D9E5D6C554F5CCC25 /* JellyfinServer.swift in Sources */,
+				72BAB446A26FC1F71774DECB /* JellyfinUser.swift in Sources */,
+				0311FAC43A0D125F5888CB4D /* KeychainStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -978,7 +1031,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				541BA8C031513C6B263296B4 /* DeviceIdentifier.swift in Sources */,
 				EFECCFD4537FC63BB40CDA0A /* JellyfinServer.swift in Sources */,
+				F49BB41736F3752C77EB6CBE /* JellyfinUser.swift in Sources */,
+				119FCB01434D29D48349DBE8 /* KeychainStore.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -986,6 +1042,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CEF953A27F6C6524F6C0C7EF /* JellyfinAuthClient.swift in Sources */,
 				F3E486280585142650F1C422 /* JellyfinServerProbe.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1002,6 +1059,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8262173985F2D997771C6EEA /* AuthModel.swift in Sources */,
+				8C09173C4469A5FA66F1506E /* LoginView.swift in Sources */,
 				DE4D9FD511576139DE2B86A8 /* ThisJellyFixRootView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -1010,6 +1069,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CC92E71A7766D0C54DB4E45D /* JellyfinAuthClient.swift in Sources */,
 				1A25A36A4022B5C9148F8CCD /* JellyfinServerProbe.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
