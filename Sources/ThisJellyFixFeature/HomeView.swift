@@ -16,7 +16,15 @@ struct HomeView: View {
         NavigationStack {
             scrollContent
                 .navigationDestination(for: JellyfinMediaItem.self) { item in
-                    DetailView(item: item, serverURL: serverURL, token: token, userId: userId)
+                    DetailView(
+                        item: item, serverURL: serverURL, token: token, userId: userId,
+                        onPlayerDismiss: { Task {
+                            // Wait for the async reportStopped HTTP request to land
+                            // before re-fetching, otherwise the server has no progress yet
+                            try? await Task.sleep(for: .seconds(2))
+                            await libraryModel.load()
+                        } }
+                    )
                 }
         }
         #endif
@@ -46,7 +54,7 @@ struct HomeView: View {
 
                 List {
                     Section("Navegación") {
-                        ForEach(MareaTab.allCases, id: \.self) { tab in
+                        ForEach(MareaTab.allCases.filter { $0 != .favorites }, id: \.self) { tab in
                             Button {
                                 selectedTab = tab
                             } label: {
@@ -73,15 +81,37 @@ struct HomeView: View {
             NavigationStack {
                 scrollContent
                     .navigationDestination(for: JellyfinMediaItem.self) { item in
-                        DetailView(item: item, serverURL: serverURL, token: token, userId: userId)
+                        DetailView(
+                            item: item, serverURL: serverURL, token: token, userId: userId,
+                            onPlayerDismiss: { Task {
+                            // Wait for the async reportStopped HTTP request to land
+                            // before re-fetching, otherwise the server has no progress yet
+                            try? await Task.sleep(for: .seconds(2))
+                            await libraryModel.load()
+                        } }
+                        )
                     }
             }
         case .search:
             SearchView(serverURL: serverURL, token: token, userId: userId)
         case .favorites:
-            FavoritesView(serverURL: serverURL, token: token, userId: userId)
+            // Favorites removed from sidebar — redirect to home
+            NavigationStack {
+                scrollContent
+                    .navigationDestination(for: JellyfinMediaItem.self) { item in
+                        DetailView(
+                            item: item, serverURL: serverURL, token: token, userId: userId,
+                            onPlayerDismiss: { Task {
+                            // Wait for the async reportStopped HTTP request to land
+                            // before re-fetching, otherwise the server has no progress yet
+                            try? await Task.sleep(for: .seconds(2))
+                            await libraryModel.load()
+                        } }
+                        )
+                    }
+            }
         case .profile:
-            ProfileView(userName: userName, onLogout: onLogout)
+            ProfileView(userName: userName, onLogout: onLogout, serverURL: serverURL, token: token, userId: userId)
         }
     }
     #endif
@@ -127,6 +157,11 @@ struct HomeView: View {
                 }
             }
             .padding(.top, 16)
+        }
+        .onAppear {
+            // Refresh resume row whenever Home reappears (tab switch, pop back
+            // from DetailView) so "Estás viendo" is never stale.
+            Task { await libraryModel.refreshResume() }
         }
     }
 }

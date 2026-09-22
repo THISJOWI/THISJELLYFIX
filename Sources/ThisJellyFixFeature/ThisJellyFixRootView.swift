@@ -63,6 +63,15 @@ public struct ThisJellyFixRootView: View {
             }
         }
         .preferredColorScheme(.dark)
+        #if os(iOS)
+        .onChange(of: selectedTab) { _, tab in
+            // TabView keeps views alive, so onAppear won't re-fire on tab
+            // switches — refresh resume when user returns to Inicio.
+            if tab == .home, let lib = libraryModel {
+                Task { await lib.refreshResume() }
+            }
+        }
+        #endif
         .task {
             if model.server != nil && !authModel.isAuthenticated {
                 _ = await authModel.restoreSession(serverURL: model.server!.baseURL)
@@ -96,12 +105,14 @@ public struct ThisJellyFixRootView: View {
                     SearchView(serverURL: server.baseURL, token: token, userId: userId)
                 }
 
-                Tab("Favoritos", systemImage: "heart.fill", value: MareaTab.favorites) {
-                    FavoritesView(serverURL: server.baseURL, token: token, userId: userId)
-                }
-
                 Tab("Perfil", systemImage: "person.fill", value: MareaTab.profile) {
-                    ProfileView(userName: userName, onLogout: { authModel.logout(); libraryModel = nil })
+                    ProfileView(
+                        userName: userName,
+                        onLogout: { authModel.logout(); libraryModel = nil },
+                        serverURL: server.baseURL,
+                        token: token,
+                        userId: userId
+                    )
                 }
             }
 
@@ -128,11 +139,13 @@ public struct ThisJellyFixRootView: View {
                     .tabItem { Label("Buscar", systemImage: "magnifyingglass") }
                     .tag(MareaTab.search)
 
-                FavoritesView(serverURL: server.baseURL, token: token, userId: userId)
-                    .tabItem { Label("Favoritos", systemImage: "heart.fill") }
-                    .tag(MareaTab.favorites)
-
-                ProfileView(userName: userName, onLogout: { authModel.logout(); libraryModel = nil })
+                ProfileView(
+                    userName: userName,
+                    onLogout: { authModel.logout(); libraryModel = nil },
+                    serverURL: server.baseURL,
+                    token: token,
+                    userId: userId
+                )
                     .tabItem { Label("Perfil", systemImage: "person.fill") }
                     .tag(MareaTab.profile)
             }

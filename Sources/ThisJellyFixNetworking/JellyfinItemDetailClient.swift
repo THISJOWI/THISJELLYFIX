@@ -18,7 +18,7 @@ public struct JellyfinItemDetailClient: JellyfinItemDetailProviding {
         var request = URLRequest(url: url)
         request.timeoutInterval = 15
         request.setValue(
-            "MediaBrowser Client=\"thisjellyfix\", Device=\"\(deviceOS)\", DeviceId=\"\", Version=\"0.1\", Token=\"\(token)\"",
+            "MediaBrowser Client=\"thisjellyfix\", Device=\"\(deviceOS)\", DeviceId=\"\(DeviceIdentifier().current())\", Version=\"0.1\", Token=\"\(token)\"",
             forHTTPHeaderField: "Authorization"
         )
 

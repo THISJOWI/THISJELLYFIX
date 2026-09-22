@@ -164,7 +164,7 @@ public struct JellyfinLibraryClient: JellyfinLibraryProviding {
         var request = URLRequest(url: url)
         request.timeoutInterval = 15
         request.setValue(
-            "MediaBrowser Client=\"thisjellyfix\", Device=\"\(deviceOS)\", DeviceId=\"\", Version=\"0.1\", Token=\"\(token)\"",
+            "MediaBrowser Client=\"thisjellyfix\", Device=\"\(deviceOS)\", DeviceId=\"\(DeviceIdentifier().current())\", Version=\"0.1\", Token=\"\(token)\"",
             forHTTPHeaderField: "Authorization"
         )
 
@@ -176,8 +176,13 @@ public struct JellyfinLibraryClient: JellyfinLibraryProviding {
 
         switch httpResponse.statusCode {
         case 200: break
-        case 401: throw LibraryError.unauthorized
-        default: throw LibraryError.serverError(httpResponse.statusCode)
+        case 401:
+            TJFLog("GET \(url.absoluteString) status=401")
+            throw LibraryError.unauthorized
+        default:
+            let bodyStr = String(data: data, encoding: .utf8) ?? "binary"
+            TJFLog("GET \(url.absoluteString) status=\(httpResponse.statusCode) body=\(bodyStr.prefix(300))")
+            throw LibraryError.serverError(httpResponse.statusCode)
         }
 
         return data

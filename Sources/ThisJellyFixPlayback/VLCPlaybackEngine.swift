@@ -54,20 +54,11 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
     }
 
     public func seek(to seconds: Double) async {
-        // Use jumpForward/jumpBackward for reliable seeking in VLC 4.0
-        // VLC ignores time/position setters on many formats
-        let currentMs = Double(mediaPlayer.time.intValue)
-        let targetMs = seconds * 1000.0
-        let deltaMs = targetMs - currentMs
-
-        // Minimum jump of 1 second to avoid truncation to 0
-        guard abs(deltaMs) > 1000 else { return }
-
-        if deltaMs > 0 {
-            mediaPlayer.jumpForward(deltaMs / 1000.0)
-        } else {
-            mediaPlayer.jumpBackward(-deltaMs / 1000.0)
-        }
+        // Use position (0.0-1.0) — more reliable than time setter or jumps
+        guard let length = mediaPlayer.media?.length else { return }
+        let dur = Double(length.intValue) / 1000.0
+        guard dur > 0 else { return }
+        mediaPlayer.position = seconds / dur
     }
 
     public func seekRelative(_ deltaSeconds: Double) async {

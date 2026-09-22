@@ -7,6 +7,7 @@ struct DetailView: View {
     let serverURL: URL
     let token: String
     let userId: String
+    var onPlayerDismiss: (() -> Void)? = nil
 
     @State private var detail: JellyfinItemDetail?
     @State private var isLoading = true
@@ -15,6 +16,9 @@ struct DetailView: View {
     @State private var streamURL: URL?
     @State private var streamTitle: String = ""
     @State private var streamStartPosition: Double?
+    @State private var currentItemId: String?
+    @State private var currentPlaySessionId: String?
+    @State private var currentMediaStreams: [MediaStream] = []
     @State private var isPreparingPlayback = false
     @State private var playbackError: String?
 
@@ -32,11 +36,23 @@ struct DetailView: View {
                 .navigationBarBackButtonHidden(showPlayer)
                 .toolbar(showPlayer ? .hidden : .visible, for: .windowToolbar)
                 .task { await loadDetail() }
+                .onChange(of: showPlayer) { _, showing in
+                    if !showing { onPlayerDismiss?() }
+                }
 
             if showPlayer, let streamURL {
-                PlayerView(streamURL: streamURL, title: streamTitle, startPosition: streamStartPosition, onDismiss: {
-                    withAnimation { showPlayer = false }
-                })
+                PlayerView(
+                    streamURL: streamURL,
+                    title: streamTitle,
+                    startPosition: streamStartPosition,
+                    onDismiss: { withAnimation { showPlayer = false } },
+                    itemId: currentItemId,
+                    serverURL: serverURL,
+                    token: token,
+                    userId: userId,
+                    playSessionId: currentPlaySessionId,
+                    mediaStreams: currentMediaStreams
+                )
                 .ignoresSafeArea()
             }
         }
@@ -53,11 +69,20 @@ struct DetailView: View {
                         startPosition: streamStartPosition,
                         onDismiss: {
                             withAnimation { showPlayer = false }
-                        }
+                        },
+                        itemId: currentItemId,
+                        serverURL: serverURL,
+                        token: token,
+                        userId: userId,
+                        playSessionId: currentPlaySessionId,
+                        mediaStreams: currentMediaStreams
                     )
                 }
             }
             .task { await loadDetail() }
+            .onChange(of: showPlayer) { _, showing in
+                if !showing { onPlayerDismiss?() }
+            }
         #endif
     }
 
@@ -316,6 +341,7 @@ struct DetailView: View {
     private func preparePlayback(itemId: String, startPosition: Double? = nil) async {
         isPreparingPlayback = true
         playbackError = nil
+        currentItemId = itemId
         defer { isPreparingPlayback = false }
 
         do {
@@ -331,6 +357,9 @@ struct DetailView: View {
                 playbackError = "No hay fuente de reproducción disponible."
                 return
             }
+
+            currentPlaySessionId = info.playSessionId
+            currentMediaStreams = source.mediaStreams
 
             let url: URL?
 
@@ -358,6 +387,11 @@ struct DetailView: View {
                 playbackError = "URL de stream inválida."
                 return
             }
+
+            #if os(iOS)
+            // Lock to landscape BEFORE presenting so iOS rotates the cover on entry
+            UIApplication.shared.tjf_orientationLock = [.landscapeLeft, .landscapeRight]
+            #endif
 
             streamURL = finalURL
             streamStartPosition = startPosition

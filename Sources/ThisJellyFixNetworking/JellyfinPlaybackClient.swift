@@ -20,13 +20,13 @@ public struct JellyfinPlaybackClient: JellyfinPlaybackProviding {
         request.timeoutInterval = 15
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(
-            "MediaBrowser Client=\"thisjellyfix\", Device=\"\(deviceOS)\", DeviceId=\"\", Version=\"0.1\", Token=\"\(token)\"",
+            "MediaBrowser Client=\"thisjellyfix\", Device=\"\(deviceOS)\", DeviceId=\"\(DeviceIdentifier().current())\", Version=\"0.1\", Token=\"\(token)\"",
             forHTTPHeaderField: "Authorization"
         )
 
         let body: [String: Any] = [
             "UserId": userId,
-            "DeviceId": UUID().uuidString,
+            "DeviceId": DeviceIdentifier().current(),
             "MediaSourceId": itemId,
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -75,5 +75,165 @@ public struct JellyfinPlaybackClient: JellyfinPlaybackProviding {
         #else
         "unknown"
         #endif
+    }
+}
+
+// MARK: - Playback Reporting
+
+/// Reports playback progress to Jellyfin so episodes get marked as watched.
+/// Jellyfin considers an item "watched" when progress >= 90%.
+public struct JellyfinPlaybackReporter: Sendable {
+    private let session: any JellyfinNetworkSession
+
+    /// Server-issued PlaySessionId from PlaybackInfo — echoed on every report
+    /// so Jellyfin attributes progress to the right playback session.
+    public var playSessionId: String? = nil
+
+    public init(session: any JellyfinNetworkSession = URLSession.shared) {
+        self.session = session
+    }
+
+    private func authHeader(token: String) -> String {
+        "MediaBrowser Client=\"thisjellyfix\", Device=\"\(deviceOS)\", DeviceId=\"\(DeviceIdentifier().current())\", Version=\"0.1\", Token=\"\(token)\""
+    }
+
+    private var deviceOS: String {
+        #if os(macOS)
+        "macOS"
+        #elseif os(iOS)
+        "iOS"
+        #elseif os(tvOS)
+        "tvOS"
+        #elseif os(visionOS)
+        "visionOS"
+        #else
+        "unknown"
+        #endif
+    }
+
+    /// Report that playback has started.
+    public func reportPlaying(
+        userId: String,
+        serverURL: URL,
+        token: String,
+        itemId: String,
+        mediaSourceId: String
+    ) async {
+        await report(
+            endpoint: "Sessions/Playing",
+            userId: userId,
+            serverURL: serverURL,
+            token: token,
+            itemId: itemId,
+            mediaSourceId: mediaSourceId
+        )
+    }
+
+    /// Report playback progress (call periodically).
+    public func reportProgress(
+        userId: String,
+        serverURL: URL,
+        token: String,
+        itemId: String,
+        mediaSourceId: String,
+        positionTicks: Int64,
+        isPaused: Bool
+    ) async {
+        let body: [String: Any] = [
+            "ItemId": itemId,
+            "MediaSourceId": mediaSourceId,
+            "PositionTicks": positionTicks,
+            "IsPaused": isPaused,
+            "IsMuted": false,
+        ]
+        await report(
+            endpoint: "Sessions/Playing/Progress",
+            userId: userId,
+            serverURL: serverURL,
+            token: token,
+            body: body
+        )
+    }
+
+    /// Report that playback has stopped.
+    public func reportStopped(
+        userId: String,
+        serverURL: URL,
+        token: String,
+        itemId: String,
+        mediaSourceId: String,
+        positionTicks: Int64
+    ) async {
+        let body: [String: Any] = [
+            "ItemId": itemId,
+            "MediaSourceId": mediaSourceId,
+            "PositionTicks": positionTicks,
+        ]
+        await report(
+            endpoint: "Sessions/Playing/Stopped",
+            userId: userId,
+            serverURL: serverURL,
+            token: token,
+            body: body
+        )
+    }
+
+    private func report(
+        endpoint: String,
+        userId: String,
+        serverURL: URL,
+        token: String,
+        itemId: String,
+        mediaSourceId: String
+    ) async {
+        let body: [String: Any] = [
+            "ItemId": itemId,
+            "MediaSourceId": mediaSourceId,
+        ]
+        await report(
+            endpoint: endpoint,
+            userId: userId,
+            serverURL: serverURL,
+            token: token,
+            body: body
+        )
+    }
+
+    private func report(
+        endpoint: String,
+        userId: String,
+        serverURL: URL,
+        token: String,
+        body: [String: Any]
+    ) async {
+        let url = serverURL.appendingPathComponent(endpoint)
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 10
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue(authHeader(token: token), forHTTPHeaderField: "Authorization")
+        var finalBody = body
+        if let playSessionId {
+            finalBody["PlaySessionId"] = playSessionId
+        }
+        request.httpBody = try? JSONSerialization.data(withJSONObject: finalBody)
+
+        let logBody: String
+        if let data = request.httpBody, let str = String(data: data, encoding: .utf8) {
+            logBody = str
+        } else {
+            logBody = "nil"
+        }
+        TJFLog("HTTP → \(endpoint) url=\(url.absoluteString) body=\(logBody)")
+
+        do {
+            let (data, response) = try await session.data(for: request)
+            if let http = response as? HTTPURLResponse {
+                let responseStr = String(data: data, encoding: .utf8) ?? "binary"
+                TJFLog("HTTP ← \(endpoint) status=\(http.statusCode) response=\(responseStr.prefix(300))")
+            }
+        } catch {
+            TJFLog("HTTP ← \(endpoint) ERROR: \(error.localizedDescription)")
+        }
     }
 }

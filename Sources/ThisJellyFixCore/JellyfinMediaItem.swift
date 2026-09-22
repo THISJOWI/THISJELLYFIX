@@ -6,6 +6,8 @@ public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable, Has
     public let type: String
     public let overview: String?
     public let seriesName: String?
+    public let indexNumber: Int?
+    public let parentIndexNumber: Int?
     public let year: Int?
     public let imageTags: [String: String]?
     public let officialRating: String?
@@ -18,6 +20,8 @@ public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable, Has
         case type = "Type"
         case overview = "Overview"
         case seriesName = "SeriesName"
+        case indexNumber = "IndexNumber"
+        case parentIndexNumber = "ParentIndexNumber"
         case year = "Year"
         case imageTags = "ImageTags"
         case officialRating = "OfficialRating"
@@ -37,6 +41,29 @@ public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable, Has
     /// Resume position in seconds. nil if no resume data.
     public var resumePositionSeconds: Double? {
         userData?.playbackPositionTicks.map { Double($0) / 10_000_000.0 }
+    }
+
+    /// Episode label like "T1 E3" for episodes, nil for movies/series.
+    public var episodeLabel: String? {
+        guard type == "Episode" else { return nil }
+        if let s = parentIndexNumber, let e = indexNumber {
+            return "T\(s) E\(e)"
+        }
+        if let e = indexNumber {
+            return "Ep \(e)"
+        }
+        return nil
+    }
+
+    /// Display name: series name + episode label for episodes, otherwise just name.
+    public var displayName: String {
+        if type == "Episode", let seriesName {
+            if let label = episodeLabel {
+                return "\(seriesName) · \(label)"
+            }
+            return seriesName
+        }
+        return name
     }
 }
 

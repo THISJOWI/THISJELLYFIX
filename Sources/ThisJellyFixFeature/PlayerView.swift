@@ -9,6 +9,14 @@ struct PlayerView: View {
     var allowStop: Bool = true
     var startPosition: Double? = nil
     var onDismiss: (() -> Void)?
+    // Playback reporting (optional — if nil, reporting is skipped)
+    var itemId: String? = nil
+    var serverURL: URL? = nil
+    var token: String? = nil
+    var userId: String? = nil
+    var playSessionId: String? = nil
+    // Server media streams — needed to load external subtitle files
+    var mediaStreams: [MediaStream] = []
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = PlayerViewModel()
     @State private var seekIndicator: SeekIndicator?
@@ -109,6 +117,20 @@ struct PlayerView: View {
                     }
             )
         .onAppear {
+            #if os(iOS)
+            // Force landscape orientation for playback
+            forceLandscape()
+            #endif
+            // Configure playback reporting if credentials provided
+            if let itemId, let serverURL, let token, let userId {
+                viewModel.configureReporting(userId: userId, serverURL: serverURL, token: token, itemId: itemId, playSessionId: playSessionId)
+            } else {
+                TJFLog("onAppear: reporting NOT configured itemId=\(itemId != nil) serverURL=\(serverURL != nil) token=\(token != nil) userId=\(userId != nil)")
+            }
+            viewModel.configureMediaStreams(mediaStreams)
+            // Start the track/report timer FIRST — before any async work — so a
+            // slow stream prepare can never leave us without polls.
+            viewModel.startUpdating()
             Task {
                 await viewModel.prepareStream(url: streamURL)
                 // Wait for VLCPlayerBridge to attach drawable before playing
@@ -118,11 +140,14 @@ struct PlayerView: View {
                 if let start = startPosition, start > 0 {
                     await viewModel.seek(to: start)
                 }
-                viewModel.startUpdating()
             }
             resetControlsTimer()
         }
         .onDisappear {
+            #if os(iOS)
+            // Restore auto-rotation when leaving player
+            restoreOrientation()
+            #endif
             controlsTimer?.invalidate()
             viewModel.stopUpdating()
             if allowStop {
@@ -193,7 +218,75 @@ struct PlayerView: View {
             }
         }
     }
+
+    #if os(iOS)
+    private func forceLandscape() {
+        // Lock to landscape FIRST — supportedInterfaceOrientationsFor returns this,
+        // forcing iOS to rotate away from portrait.
+        UIApplication.shared.tjf_orientationLock = [.landscapeLeft, .landscapeRight]
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            let windowScene = UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+            .first
+
+            if let windowScene {
+                windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .landscapeRight))
+            }
+
+            // Fallback: force via UIDevice (works on all iOS versions)
+            UIDevice.current.setValue(UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
+            UINavigationController.attemptRotationToDeviceOrientation()
+        }
+    }
+
+    private func restoreOrientation() {
+        // Unlock immediately
+        UIApplication.shared.tjf_orientationLock = .all
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+            // Primary: request portrait via geometry
+            let windowScene = UIApplication.shared.connectedScenes
+                .compactMap { $0 as? UIWindowScene }
+                .first
+            windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
+
+            // Fallback: force via UIDevice
+            UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
+            UINavigationController.attemptRotationToDeviceOrientation()
+        }
+
+        // Safety: ensure unlocked after transition
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            UIApplication.shared.tjf_orientationLock = .all
+        }
+    }
+    #endif
 }
+
+#if os(iOS)
+// MARK: - Orientation Lock
+
+extension UIApplication {
+    private struct Keys {
+        static var orientationLock: UInt8 = 0
+    }
+
+    public var tjf_orientationLock: UIInterfaceOrientationMask {
+        get {
+            (objc_getAssociatedObject(self, &Keys.orientationLock) as? UIInterfaceOrientationMask) ?? .all
+        }
+        set {
+            objc_setAssociatedObject(self, &Keys.orientationLock, newValue, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
+        }
+    }
+}
+
+// App Delegate must implement this to support orientation lock:
+// func application(_ application: UIApplication, supportedInterfaceOrientationsFor window: UIWindow?) -> UIInterfaceOrientationMask {
+//     return orientationLock
+// }
+#endif
 
 // MARK: - VLC Player Bridge (Cross-platform)
 
@@ -291,6 +384,7 @@ private struct ControlsOverlay: View {
                     .foregroundStyle(.white)
                     .lineLimit(1)
                 Spacer()
+                #if os(macOS)
                 Button(action: onToggleFullscreen) {
                     Image(systemName: "arrow.up.left.and.arrow.down.right")
                         .font(.title3)
@@ -298,17 +392,42 @@ private struct ControlsOverlay: View {
                         .padding(10)
                         .background(.black.opacity(0.5), in: Circle())
                 }
+                #endif
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
 
             Spacer()
 
-            Button(action: { Task { await viewModel.togglePlayPause() } }) {
-                Image(systemName: viewModel.isPlaying ? "pause.circle.fill" : "play.circle.fill")
-                    .font(.system(size: 64))
-                    .foregroundStyle(.white)
-                    .shadow(radius: 4)
+            HStack(spacing: 50) {
+                Button(action: {
+                    let target = max(0, viewModel.currentTime - 15)
+                    Task { await viewModel.seek(to: target) }
+                }) {
+                    Image(systemName: "gobackward.15")
+                        .font(.system(size: 36))
+                        .foregroundStyle(.white)
+                        .padding(14)
+                        .background(.black.opacity(0.3), in: Circle())
+                }
+
+                Button(action: { Task { await viewModel.togglePlayPause() } }) {
+                    Image(systemName: viewModel.isPlaying ? "pause.circle.fill" : "play.circle.fill")
+                        .font(.system(size: 72))
+                        .foregroundStyle(.white)
+                        .shadow(radius: 4)
+                }
+
+                Button(action: {
+                    let target = min(viewModel.duration, viewModel.currentTime + 15)
+                    Task { await viewModel.seek(to: target) }
+                }) {
+                    Image(systemName: "goforward.15")
+                        .font(.system(size: 36))
+                        .foregroundStyle(.white)
+                        .padding(14)
+                        .background(.black.opacity(0.3), in: Circle())
+                }
             }
 
             Spacer()
@@ -648,6 +767,7 @@ private struct CloseButtonWindowRepresentable: NSViewRepresentable {
         private var playerWindowObserver: NSObjectProtocol?
         private var frameObservation: NSKeyValueObservation?
         private weak var playerWindow: NSWindow?
+        private var closed = false
 
         func createWindow(hostView: NSView, onClose: @escaping () -> Void) {
             self.onClose = onClose
@@ -685,6 +805,9 @@ private struct CloseButtonWindowRepresentable: NSViewRepresentable {
 
         func show() {
             guard let panel else { return }
+
+            // Don't re-show after user clicked close
+            if closed { return }
 
             // Find or re-find the player window (handles fullscreen window changes)
             if let pw = playerWindow, !pw.isVisible {

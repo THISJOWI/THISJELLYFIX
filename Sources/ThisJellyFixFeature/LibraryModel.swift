@@ -53,11 +53,13 @@ final class LibraryModel {
                 let resumeItems = try await libraryClient.fetchResumeItems(
                     userId: userId, serverURL: serverURL, token: token, limit: 20
                 )
+                TJFLog("load: resume items=\(resumeItems.count)")
                 if !resumeItems.isEmpty {
-                    allRows.append(ContentRow(title: "Seguir viendo", items: resumeItems))
+                    allRows.append(ContentRow(title: "Estás viendo", items: resumeItems))
                 }
             } catch {
                 // Resume items failing shouldn't block the rest of the library
+                TJFLog("load: fetchResumeItems FAILED: \(error.localizedDescription)")
             }
 
             // 1. Recently added
@@ -94,17 +96,7 @@ final class LibraryModel {
                 }
             }
 
-            // 4. Favorites
-            let favorites = try await libraryClient.fetchItems(
-                userId: userId, serverURL: serverURL, token: token,
-                parentId: nil, includeTypes: "Movie,Series",
-                limit: 20, orderBy: "DateCreated", filters: "IsFavorite"
-            )
-            if !favorites.isEmpty {
-                allRows.append(ContentRow(title: "Favoritos", items: favorites))
-            }
-
-            // 5. Recently played
+            // 4. Recently played
             let played = try await libraryClient.fetchItems(
                 userId: userId, serverURL: serverURL, token: token,
                 parentId: nil, includeTypes: "Movie,Series",
@@ -117,6 +109,28 @@ final class LibraryModel {
             rows = allRows
         } catch {
             errorMessage = error.localizedDescription
+        }
+    }
+
+    /// Refresh ONLY the "Estás viendo" row without touching the rest of the UI.
+    /// Used when returning to Home or shortly after the player dismisses.
+    func refreshResume() async {
+        do {
+            let resumeItems = try await libraryClient.fetchResumeItems(
+                userId: userId, serverURL: serverURL, token: token, limit: 20
+            )
+            TJFLog("refreshResume items=\(resumeItems.count)")
+            if let idx = rows.firstIndex(where: { $0.title == "Estás viendo" }) {
+                if resumeItems.isEmpty {
+                    rows.remove(at: idx)
+                } else {
+                    rows[idx] = ContentRow(title: "Estás viendo", items: resumeItems)
+                }
+            } else if !resumeItems.isEmpty {
+                rows.insert(ContentRow(title: "Estás viendo", items: resumeItems), at: 0)
+            }
+        } catch {
+            TJFLog("refreshResume FAILED: \(error.localizedDescription)")
         }
     }
 
