@@ -136,6 +136,7 @@ public struct ThisJellyFixRootView: View {
                     .tabItem { Label("Perfil", systemImage: "person.fill") }
                     .tag(MareaTab.profile)
             }
+            .tint(.red)
         }
     }
     #endif
