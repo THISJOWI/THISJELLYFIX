@@ -34,13 +34,6 @@ struct DetailView: View {
                 .task { await loadDetail() }
 
             if showPlayer, let streamURL {
-                Color.black
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation(.easeInOut(duration: 0.2)) {
-                            showPlayer = false
-                        }
-                    }
                 PlayerView(streamURL: streamURL, title: streamTitle, startPosition: streamStartPosition, onDismiss: {
                     withAnimation { showPlayer = false }
                 })
@@ -69,7 +62,7 @@ struct DetailView: View {
     }
 
     private var detailContent: some View {
-        ScrollView {
+        ScrollView(.vertical, showsIndicators: true) {
             if let detail {
                 VStack(alignment: .leading, spacing: 0) {
                     // Backdrop image
@@ -139,6 +132,9 @@ struct DetailView: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.top, 16)
+
+                    // Spacer ensures scroll area extends beyond content
+                    Spacer(minLength: 80)
                 }
             } else if isLoading {
                 ProgressView("Cargando detalle…")
@@ -170,19 +166,17 @@ struct DetailView: View {
                     URLQueryItem(name: "quality", value: "90"),
                 ])
 
-            GeometryReader { geo in
-                let height = min(geo.size.width * 0.45, 220)
-                MareaImageView(url: url, width: geo.size.width, height: height)
-                    .frame(width: geo.size.width, height: height)
-            }
-            .frame(height: 200)
-            .overlay(
-                LinearGradient(
-                    colors: [.clear, .black.opacity(0.8)],
-                    startPoint: .top,
-                    endPoint: .bottom
+            MareaImageView(url: url, width: 600, height: 200)
+                .frame(maxWidth: .infinity)
+                .frame(height: 200)
+                .clipped()
+                .overlay(
+                    LinearGradient(
+                        colors: [.clear, .black.opacity(0.8)],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
                 )
-            )
         } else {
             Rectangle()
                 .fill(Color(red: 0.08, green: 0.1, blue: 0.18))
@@ -202,13 +196,13 @@ struct DetailView: View {
                         URLQueryItem(name: "quality", value: "90"),
                     ])
 
-                MareaImageView(url: posterURL, width: 120, height: 180)
+                MareaImageView(url: posterURL, width: 100, height: 150)
                     .shadow(radius: 8)
             }
 
             VStack(alignment: .leading, spacing: 6) {
                 Text(detail.name)
-                    .font(.title.bold())
+                    .font(.title2.bold())
 
                 HStack(spacing: 12) {
                     if let year = detail.year {

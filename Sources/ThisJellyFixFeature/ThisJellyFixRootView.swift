@@ -77,52 +77,66 @@ public struct ThisJellyFixRootView: View {
         let userId = authModel.currentUser?.id ?? ""
         let userName = authModel.currentUser?.name ?? ""
 
-        ZStack(alignment: .bottom) {
-            Group {
-                switch selectedTab {
-                case .home:
+        if #available(iOS 18, *) {
+            // Native TabView with Tab items — iOS 26 automatically applies Liquid Glass.
+            // Same pattern used by Apple Music, App Store, WhatsApp, etc.
+            let tabView = TabView(selection: $selectedTab) {
+                Tab("Inicio", systemImage: "house.fill", value: MareaTab.home) {
                     HomeView(
                         libraryModel: libModel,
                         serverURL: server.baseURL,
                         token: token,
                         userId: userId,
                         userName: userName,
-                        onLogout: {
-                            authModel.logout()
-                            libraryModel = nil
-                        }
-                    )
-                case .search:
-                    SearchView(
-                        serverURL: server.baseURL,
-                        token: token,
-                        userId: userId
-                    )
-                case .favorites:
-                    FavoritesView(
-                        serverURL: server.baseURL,
-                        token: token,
-                        userId: userId
-                    )
-                case .profile:
-                    ProfileView(
-                        userName: userName,
-                        onLogout: {
-                            authModel.logout()
-                            libraryModel = nil
-                        }
+                        onLogout: { authModel.logout(); libraryModel = nil }
                     )
                 }
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .safeAreaInset(edge: .bottom) {
-                Color.clear.frame(height: 70)
+
+                Tab("Buscar", systemImage: "magnifyingglass", value: MareaTab.search) {
+                    SearchView(serverURL: server.baseURL, token: token, userId: userId)
+                }
+
+                Tab("Favoritos", systemImage: "heart.fill", value: MareaTab.favorites) {
+                    FavoritesView(serverURL: server.baseURL, token: token, userId: userId)
+                }
+
+                Tab("Perfil", systemImage: "person.fill", value: MareaTab.profile) {
+                    ProfileView(userName: userName, onLogout: { authModel.logout(); libraryModel = nil })
+                }
             }
 
-            MareaTabBar(selected: $selectedTab)
-                .padding(.bottom, 8)
+            if #available(iOS 26, *) {
+                tabView.tint(.red).tabBarMinimizeBehavior(.onScrollDown)
+            } else {
+                tabView.tint(.red)
+            }
+        } else {
+            // Legacy TabView for iOS 17
+            TabView(selection: $selectedTab) {
+                HomeView(
+                    libraryModel: libModel,
+                    serverURL: server.baseURL,
+                    token: token,
+                    userId: userId,
+                    userName: userName,
+                    onLogout: { authModel.logout(); libraryModel = nil }
+                )
+                .tabItem { Label("Inicio", systemImage: "house.fill") }
+                .tag(MareaTab.home)
+
+                SearchView(serverURL: server.baseURL, token: token, userId: userId)
+                    .tabItem { Label("Buscar", systemImage: "magnifyingglass") }
+                    .tag(MareaTab.search)
+
+                FavoritesView(serverURL: server.baseURL, token: token, userId: userId)
+                    .tabItem { Label("Favoritos", systemImage: "heart.fill") }
+                    .tag(MareaTab.favorites)
+
+                ProfileView(userName: userName, onLogout: { authModel.logout(); libraryModel = nil })
+                    .tabItem { Label("Perfil", systemImage: "person.fill") }
+                    .tag(MareaTab.profile)
+            }
         }
-        .ignoresSafeArea(.keyboard)
     }
     #endif
 

@@ -170,6 +170,17 @@ final class PlayerViewModel {
         stopUpdating()
     }
 
+    /// Synchronous stop — call from onDisappear to ensure VLC stops before the view is deallocated.
+    func stopSync() {
+        engine.stopSync()
+        stopUpdating()
+    }
+
+    /// Detach the drawable so VLC's render thread stops accessing the view.
+    func detachDrawable() {
+        engine.vlcMediaPlayer().drawable = nil
+    }
+
     func vlcMediaPlayer() -> VLCMediaPlayer {
         engine.vlcMediaPlayer()
     }

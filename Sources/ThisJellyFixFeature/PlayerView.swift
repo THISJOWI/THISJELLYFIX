@@ -15,6 +15,10 @@ struct PlayerView: View {
     @State private var controlsTimer: Timer?
     @State private var wasPlaying = false
 
+    private func dismissPlayer() {
+        onDismiss?() ?? dismiss()
+    }
+
     var body: some View {
         ZStack {
             Color.black.ignoresSafeArea()
@@ -22,7 +26,7 @@ struct PlayerView: View {
             VLCPlayerBridge(viewModel: viewModel)
                 .ignoresSafeArea()
 
-            // Transparent tap catcher — always active
+            // Transparent tap catcher — always active, toggles controls
             Color.clear
                 .contentShape(Rectangle())
                 .onTapGesture {
@@ -36,12 +40,12 @@ struct PlayerView: View {
                     }
                 }
 
-            // Controls overlay — buttons only active when visible
+            // Controls overlay — rendered on top when visible
             if viewModel.showControls {
                 ControlsOverlay(
                     title: title,
                     viewModel: viewModel,
-                    onDismiss: { onDismiss?() ?? dismiss() },
+                    onDismiss: { dismissPlayer() },
                     onToggleFullscreen: {
                         #if os(macOS)
                         if let nsWindow = NSApp.keyWindow ?? NSApp.windows.first(where: { $0.isKeyWindow }) {
@@ -51,7 +55,6 @@ struct PlayerView: View {
                     }
                 )
                 .transition(.opacity)
-                .onTapGesture { } // absorb taps — don't fall through
             }
 
             if let seek = seekIndicator {
@@ -65,11 +68,22 @@ struct PlayerView: View {
                         .font(.largeTitle)
                         .foregroundStyle(.orange)
                     Text(error)
-                    Button("Cerrar") { onDismiss?() ?? dismiss() }
+                    Button("Cerrar") { dismissPlayer() }
                         .buttonStyle(.borderedProminent)
                         .tint(.cyan)
                 }
             }
+
+            // macOS: invisible escape key catcher (works in fullscreen)
+            #if os(macOS)
+            EscapeKeyCatcher {
+                dismissPlayer()
+            }
+            #endif
+        }
+        .onKeyPress(.escape) {
+            dismissPlayer()
+            return .handled
         }
         .gesture(
             DragGesture(minimumDistance: 30)
@@ -95,7 +109,11 @@ struct PlayerView: View {
             controlsTimer?.invalidate()
             viewModel.stopUpdating()
             if allowStop {
-                Task { await viewModel.stop() }
+                // Stop VLC synchronously on main thread BEFORE the view is deallocated.
+                // Detach drawable first so VLC's render thread stops accessing the view,
+                // then stop playback. This prevents the vlc_gl_filter_ApplyOutputSize crash.
+                viewModel.detachDrawable()
+                viewModel.stopSync()
             }
         }
         .onChange(of: viewModel.isPlaying) { _, playing in
@@ -166,14 +184,23 @@ struct PlayerView: View {
 private struct VLCPlayerBridge: NSViewRepresentable {
     let viewModel: PlayerViewModel
 
-    func makeNSView(context: Context) -> VLCVideoView {
-        let videoView = VLCVideoView()
+    func makeNSView(context: Context) -> PassThroughVLCVideoView {
+        let videoView = PassThroughVLCVideoView()
         videoView.fillScreen = true
         return videoView
     }
 
-    func updateNSView(_ nsView: VLCVideoView, context: Context) {
+    func updateNSView(_ nsView: PassThroughVLCVideoView, context: Context) {
         viewModel.attachDrawable(nsView)
+    }
+}
+
+/// Subclass that passes through all mouse/touch events so SwiftUI gestures
+/// (tap to toggle controls, close button, etc.) work on top of the video.
+private class PassThroughVLCVideoView: VLCVideoView {
+    override func hitTest(_ point: NSPoint) -> NSView? {
+        // Return nil so all mouse events fall through to SwiftUI views layered on top
+        nil
     }
 }
 #elseif os(iOS)
@@ -191,6 +218,43 @@ private struct VLCPlayerBridge: UIViewRepresentable {
 }
 
 private class VLCPlayerUIView: UIView {}
+#endif
+
+// MARK: - macOS Escape Key Catcher
+
+#if os(macOS)
+private struct EscapeKeyCatcher: NSViewRepresentable {
+    let onEscape: () -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let view = KeyCatcherView()
+        view.onEscape = onEscape
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        (nsView as? KeyCatcherView)?.onEscape = onEscape
+    }
+}
+
+private class KeyCatcherView: NSView {
+    var onEscape: (() -> Void)?
+
+    override var acceptsFirstResponder: Bool { true }
+
+    override func viewDidMoveToWindow() {
+        super.viewDidMoveToWindow()
+        window?.makeFirstResponder(self)
+    }
+
+    override func keyDown(with event: NSEvent) {
+        if event.keyCode == 53 { // Escape key
+            onEscape?()
+        } else {
+            super.keyDown(with: event)
+        }
+    }
+}
 #endif
 
 // MARK: - Controls Overlay

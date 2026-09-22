@@ -48,6 +48,11 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
         mediaPlayer.stop()
     }
 
+    /// Synchronous stop — call from onDisappear to guarantee VLC stops before view deallocation.
+    public func stopSync() {
+        mediaPlayer.stop()
+    }
+
     public func seek(to seconds: Double) async {
         // Use jumpForward/jumpBackward for reliable seeking in VLC 4.0
         // VLC ignores time/position setters on many formats
