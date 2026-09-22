@@ -10,67 +10,130 @@ struct HomeView: View {
     let onLogout: () -> Void
 
     var body: some View {
+        #if os(macOS)
+        sidebarLayout
+        #else
         NavigationStack {
-            ScrollView {
-                VStack(alignment: .leading, spacing: 28) {
-                    // Header
-                    HStack {
-                        Image("AppIcon")
-                            .resizable()
-                            .aspectRatio(contentMode: .fit)
-                            .frame(width: 36, height: 36)
-                            .clipShape(RoundedRectangle(cornerRadius: 8))
-                        VStack(alignment: .leading) {
-                            Text("THISJELLYFIX")
-                                .font(.largeTitle.bold())
-                            Text("Hola, \(userName)")
-                                .foregroundStyle(.secondary)
-                        }
-                        Spacer()
-                        Button {
-                            onLogout()
-                        } label: {
-                            Image(systemName: "person.crop.circle.fill")
-                                .font(.title2)
+            scrollContent
+                .navigationDestination(for: JellyfinMediaItem.self) { item in
+                    DetailView(item: item, serverURL: serverURL, token: token, userId: userId)
+                }
+        }
+        #endif
+    }
+
+    // MARK: - macOS Sidebar
+
+    #if os(macOS)
+    @State private var selectedTab: MareaTab = .home
+
+    private var sidebarLayout: some View {
+        NavigationSplitView {
+            VStack(spacing: 0) {
+                // Logo header
+                HStack {
+                    Image("AppIcon")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 28, height: 28)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                    Text("THISJELLYFIX")
+                        .font(.headline)
+                    Spacer()
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+
+                List {
+                    Section("Navegación") {
+                        ForEach(MareaTab.allCases, id: \.self) { tab in
+                            Button {
+                                selectedTab = tab
+                            } label: {
+                                Label(tab.label, systemImage: tab.icon)
+                                    .foregroundStyle(selectedTab == tab ? .cyan : .primary)
+                            }
+                            .buttonStyle(.plain)
                         }
                     }
-                    .padding(.horizontal, 32)
 
-                    if libraryModel.isLoading && libraryModel.rows.isEmpty {
-                        ProgressView("Cargando biblioteca…")
-                            .frame(maxWidth: .infinity)
-                            .padding(.top, 60)
-                    } else if let error = libraryModel.errorMessage, libraryModel.rows.isEmpty {
-                        VStack(spacing: 16) {
-                            Image(systemName: "exclamationmark.triangle.fill")
-                                .font(.largeTitle)
-                                .foregroundStyle(.orange)
-                            Text(error)
-                                .multilineTextAlignment(.center)
-                            Button("Reintentar") {
-                                Task { await libraryModel.load() }
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.cyan)
+                    Section {
+                        Button(action: onLogout) {
+                            Label("Cerrar sesión", systemImage: "rectangle.portrait.and.arrow.right")
                         }
-                        .frame(maxWidth: .infinity)
-                        .padding(.top, 60)
-                    } else {
-                        ForEach(libraryModel.rows) { row in
-                            ContentRowView(row: row, libraryModel: libraryModel)
-                        }
+                        .foregroundStyle(.red)
                     }
                 }
-                .padding(.top, 16)
             }
-            .navigationDestination(for: JellyfinMediaItem.self) { item in
-                DetailView(
-                    item: item,
-                    serverURL: serverURL,
-                    token: token,
-                    userId: userId
-                )
+            .frame(minWidth: 200)
+        } detail: {
+            macTabContent(selectedTab)
+                .id(selectedTab)
+        }
+        .navigationSplitViewStyle(.balanced)
+    }
+
+    @ViewBuilder
+    private func macTabContent(_ tab: MareaTab) -> some View {
+        switch tab {
+        case .home:
+            NavigationStack {
+                scrollContent
+                    .navigationDestination(for: JellyfinMediaItem.self) { item in
+                        DetailView(item: item, serverURL: serverURL, token: token, userId: userId)
+                    }
             }
+        case .search:
+            SearchView(serverURL: serverURL, token: token, userId: userId)
+        case .favorites:
+            FavoritesView(serverURL: serverURL, token: token, userId: userId)
+        case .profile:
+            ProfileView(userName: userName, onLogout: onLogout)
+        }
+    }
+    #endif
+
+    // MARK: - Scroll Content (shared)
+
+    private var scrollContent: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 28) {
+                HStack {
+                    Image("AppIcon")
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 36, height: 36)
+                        .clipShape(RoundedRectangle(cornerRadius: 8))
+                    Text("THISJELLYFIX")
+                        .font(.largeTitle.bold())
+                    Spacer()
+                }
+                .padding(.horizontal, 32)
+
+                if libraryModel.isLoading && libraryModel.rows.isEmpty {
+                    ProgressView("Cargando biblioteca…")
+                        .frame(maxWidth: .infinity)
+                        .padding(.top, 60)
+                } else if let error = libraryModel.errorMessage, libraryModel.rows.isEmpty {
+                    VStack(spacing: 16) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.largeTitle)
+                            .foregroundStyle(.orange)
+                        Text(error)
+                            .multilineTextAlignment(.center)
+                        Button("Reintentar") { Task { await libraryModel.load() } }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.cyan)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.top, 60)
+                } else {
+                    ForEach(libraryModel.rows) { row in
+                        ContentRowView(row: row, libraryModel: libraryModel)
+                    }
+                }
+            }
+            .padding(.top, 16)
         }
     }
 }
@@ -78,6 +141,7 @@ struct HomeView: View {
 private struct ContentRowView: View {
     let row: ContentRow
     let libraryModel: LibraryModel
+    @State private var appeared = false
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
@@ -87,7 +151,7 @@ private struct ContentRowView: View {
 
             ScrollView(.horizontal, showsIndicators: false) {
                 LazyHStack(spacing: 14) {
-                    ForEach(row.items) { item in
+                    ForEach(Array(row.items.enumerated()), id: \.element.id) { index, item in
                         NavigationLink(value: item) {
                             MediaCardView(
                                 item: item,
@@ -98,6 +162,13 @@ private struct ContentRowView: View {
                     }
                 }
                 .padding(.horizontal, 32)
+            }
+        }
+        .opacity(appeared ? 1 : 0)
+        .offset(y: appeared ? 0 : 20)
+        .onAppear {
+            withAnimation(.spring(response: 0.5, dampingFraction: 0.85).delay(0.05)) {
+                appeared = true
             }
         }
     }

@@ -36,6 +36,7 @@ struct JellyfinEpisodesResponse: Decodable {
 public protocol JellyfinLibraryProviding: Sendable {
     func fetchViews(userId: String, serverURL: URL, token: String) async throws -> [LibraryView]
     func fetchItems(userId: String, serverURL: URL, token: String, parentId: String?, includeTypes: String?, limit: Int, orderBy: String, filters: String?) async throws -> [JellyfinMediaItem]
+    func searchItems(userId: String, serverURL: URL, token: String, query: String, includeTypes: String?, limit: Int) async throws -> [JellyfinMediaItem]
     func fetchSeasons(userId: String, serverURL: URL, token: String, seriesId: String) async throws -> [JellyfinSeason]
     func fetchEpisodes(userId: String, serverURL: URL, token: String, seriesId: String, seasonId: String) async throws -> [JellyfinEpisode]
     func fetchResumeItems(userId: String, serverURL: URL, token: String, limit: Int) async throws -> [JellyfinMediaItem]
@@ -119,6 +120,25 @@ public struct JellyfinLibraryClient: JellyfinLibraryProviding {
 
         let data = try await fetchData(from: components.url!, token: token)
         let response = try JSONDecoder().decode(JellyfinEpisodesResponse.self, from: data)
+        return response.items
+    }
+
+    public func searchItems(userId: String, serverURL: URL, token: String, query: String, includeTypes: String?, limit: Int) async throws -> [JellyfinMediaItem] {
+        var components = URLComponents(
+            url: serverURL.appendingPathComponent("Users/\(userId)/Items"),
+            resolvingAgainstBaseURL: false
+        )!
+        var queryItems = [
+            URLQueryItem(name: "searchTerm", value: query),
+            URLQueryItem(name: "Limit", value: String(limit)),
+            URLQueryItem(name: "Recursive", value: "true"),
+        ]
+        if let includeTypes {
+            queryItems.append(URLQueryItem(name: "IncludeItemTypes", value: includeTypes))
+        }
+        components.queryItems = queryItems
+        let data = try await fetchData(from: components.url!, token: token)
+        let response = try JSONDecoder().decode(JellyfinItemsResponse.self, from: data)
         return response.items
     }
 

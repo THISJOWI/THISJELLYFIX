@@ -24,21 +24,13 @@ struct DetailView: View {
     @State private var isLoadingEpisodes = false
 
     var body: some View {
+        #if os(macOS)
         ZStack {
             detailContent
                 .navigationTitle("")
                 .navigationBarBackButtonHidden(showPlayer)
-                #if os(iOS)
-                .navigationBarTitleDisplayMode(.inline)
-                .fullScreenCover(isPresented: $showPlayer) {
-                    if let streamURL {
-                        PlayerView(streamURL: streamURL, title: streamTitle)
-                    }
-                }
-                #endif
                 .task { await loadDetail() }
 
-            #if os(macOS)
             if showPlayer, let streamURL {
                 Color.black.ignoresSafeArea()
                 PlayerView(streamURL: streamURL, title: streamTitle, onDismiss: {
@@ -46,8 +38,18 @@ struct DetailView: View {
                 })
                 .ignoresSafeArea()
             }
-            #endif
         }
+        #else
+        detailContent
+            .navigationTitle("")
+            .navigationBarTitleDisplayMode(.inline)
+            .fullScreenCover(isPresented: $showPlayer) {
+                if let streamURL {
+                    PlayerView(streamURL: streamURL, title: streamTitle)
+                }
+            }
+            .task { await loadDetail() }
+        #endif
     }
 
     private var detailContent: some View {
@@ -151,7 +153,7 @@ struct DetailView: View {
                     URLQueryItem(name: "quality", value: "90"),
                 ])
 
-            MareaImageView(url: url, width: 600, height: 300)
+            MareaImageView(url: url, width: 600, height: 180)
                 .frame(maxWidth: .infinity)
                 .overlay(
                     LinearGradient(

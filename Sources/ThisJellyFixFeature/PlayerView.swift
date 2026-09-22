@@ -11,6 +11,7 @@ struct PlayerView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = PlayerViewModel()
     @State private var seekIndicator: SeekIndicator?
+    @State private var controlsTimer: Timer?
 
     var body: some View {
         ZStack {
@@ -18,18 +19,8 @@ struct PlayerView: View {
 
             VLCPlayerBridge(viewModel: viewModel)
                 .ignoresSafeArea()
-                .onTapGesture {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        viewModel.showControls.toggle()
-                    }
-                }
-                .gesture(
-                    DragGesture(minimumDistance: 20)
-                        .onEnded { value in
-                            handleSwipe(value)
-                        }
-                )
 
+            // Controls overlay
             if viewModel.showControls {
                 ControlsOverlay(
                     title: title,
@@ -37,8 +28,6 @@ struct PlayerView: View {
                     onDismiss: { onDismiss?() ?? dismiss() },
                     onToggleFullscreen: {
                         #if os(macOS)
-                        // Toggle the current window to fullscreen
-                        // No need to create a new window — keep the same VLC engine running
                         if let nsWindow = NSApp.keyWindow ?? NSApp.windows.first(where: { $0.isKeyWindow }) {
                             nsWindow.toggleFullScreen(nil)
                         }
@@ -65,15 +54,31 @@ struct PlayerView: View {
                 }
             }
         }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                viewModel.showControls.toggle()
+            }
+            resetControlsTimer()
+        }
+        .gesture(
+            DragGesture(minimumDistance: 30)
+                .onEnded { value in
+                    handleSwipe(value)
+                }
+        )
         .onAppear {
             Task {
                 await viewModel.prepareStream(url: streamURL)
-                try? await Task.sleep(for: .milliseconds(200))
+                // Wait for VLCPlayerBridge to attach drawable before playing
+                try? await Task.sleep(for: .milliseconds(500))
                 await viewModel.togglePlayPause()
                 viewModel.startUpdating()
             }
+            resetControlsTimer()
         }
         .onDisappear {
+            controlsTimer?.invalidate()
             if allowStop {
                 Task { await viewModel.stop() }
             }
@@ -114,6 +119,17 @@ struct PlayerView: View {
                 withAnimation { seekIndicator = SeekIndicator(text: delta > 0 ? "+15s" : "-15s") }
                 try? await Task.sleep(for: .seconds(0.8))
                 withAnimation { seekIndicator = nil }
+            }
+        }
+    }
+
+    private func resetControlsTimer() {
+        controlsTimer?.invalidate()
+        controlsTimer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { _ in
+            Task { @MainActor in
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    viewModel.showControls = false
+                }
             }
         }
     }
@@ -242,11 +258,7 @@ private struct ControlsOverlay: View {
             )
         }
         .contentShape(Rectangle())
-        .onTapGesture {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                viewModel.showControls = false
-            }
-        }
+        // Tap handled by PlayerView ZStack to avoid double-toggle bug
     }
 
     private func formatTime(_ seconds: Double) -> String {

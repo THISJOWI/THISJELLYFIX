@@ -8,6 +8,9 @@ public struct ThisJellyFixRootView: View {
     @State private var authModel = AuthModel()
     @State private var libraryModel: LibraryModel?
     @State private var isLoadingLibrary = false
+    #if os(iOS)
+    @State private var selectedTab: MareaTab = .home
+    #endif
 
     public init() {}
 
@@ -26,6 +29,9 @@ public struct ThisJellyFixRootView: View {
                         ProgressView("Cargando biblioteca…")
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else if let libModel = libraryModel {
+                        #if os(iOS)
+                        mainContent(libModel: libModel, server: server)
+                        #else
                         HomeView(
                             libraryModel: libModel,
                             serverURL: server.baseURL,
@@ -37,13 +43,11 @@ public struct ThisJellyFixRootView: View {
                                 libraryModel = nil
                             }
                         )
+                        #endif
                     } else {
-                        // First time authenticated — load library
                         Color.clear
                             .onAppear {
-                                Task {
-                                    await loadLibrary()
-                                }
+                                Task { await loadLibrary() }
                             }
                     }
                 } else {
@@ -60,12 +64,67 @@ public struct ThisJellyFixRootView: View {
         }
         .preferredColorScheme(.dark)
         .task {
-            // Restore session from Keychain if server was restored
             if model.server != nil && !authModel.isAuthenticated {
                 _ = await authModel.restoreSession(serverURL: model.server!.baseURL)
             }
         }
     }
+
+    #if os(iOS)
+    @ViewBuilder
+    private func mainContent(libModel: LibraryModel, server: JellyfinServer) -> some View {
+        let token = KeychainStore().read(key: KeychainKey.accessToken) ?? ""
+        let userId = authModel.currentUser?.id ?? ""
+        let userName = authModel.currentUser?.name ?? ""
+
+        ZStack(alignment: .bottom) {
+            Group {
+                switch selectedTab {
+                case .home:
+                    HomeView(
+                        libraryModel: libModel,
+                        serverURL: server.baseURL,
+                        token: token,
+                        userId: userId,
+                        userName: userName,
+                        onLogout: {
+                            authModel.logout()
+                            libraryModel = nil
+                        }
+                    )
+                case .search:
+                    SearchView(
+                        serverURL: server.baseURL,
+                        token: token,
+                        userId: userId
+                    )
+                case .favorites:
+                    FavoritesView(
+                        serverURL: server.baseURL,
+                        token: token,
+                        userId: userId
+                    )
+                case .profile:
+                    ProfileView(
+                        userName: userName,
+                        onLogout: {
+                            authModel.logout()
+                            libraryModel = nil
+                        }
+                    )
+                }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .safeAreaInset(edge: .bottom) {
+                Color.clear.frame(height: 70)
+            }
+
+            MareaTabBar(selected: $selectedTab)
+                .padding(.bottom, 8)
+        }
+        .ignoresSafeArea(.keyboard)
+    }
+    #endif
 
     private func loadLibrary() async {
         guard !isLoadingLibrary else { return }

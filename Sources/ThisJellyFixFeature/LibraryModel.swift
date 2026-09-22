@@ -3,10 +3,13 @@ import Observation
 import ThisJellyFixCore
 import ThisJellyFixNetworking
 
-struct ContentRow: Identifiable {
+struct ContentRow: Identifiable, Hashable {
     let id = UUID()
     let title: String
     let items: [JellyfinMediaItem]
+
+    static func == (lhs: ContentRow, rhs: ContentRow) -> Bool { lhs.id == rhs.id }
+    func hash(into hasher: inout Hasher) { hasher.combine(id) }
 }
 
 @MainActor
