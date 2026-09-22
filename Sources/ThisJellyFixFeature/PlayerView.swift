@@ -20,77 +20,94 @@ struct PlayerView: View {
     }
 
     var body: some View {
-        ZStack {
-            Color.black.ignoresSafeArea()
+        // Use .overlay() instead of ZStack so ControlsOverlay is always the
+        // topmost AppKit hosting view — critical after toggleFullScreen restructures
+        // the window hierarchy and can reorder ZStack children.
+        VLCPlayerBridge(viewModel: viewModel)
+            .ignoresSafeArea()
+            .background(Color.black.ignoresSafeArea())
 
-            VLCPlayerBridge(viewModel: viewModel)
-                .ignoresSafeArea()
-
-            // Transparent tap catcher — always active, toggles controls
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        viewModel.showControls.toggle()
-                    }
-                    if viewModel.showControls {
-                        resetControlsTimer()
-                    } else {
-                        controlsTimer?.invalidate()
-                    }
-                }
-
-            // Controls overlay — rendered on top when visible
-            if viewModel.showControls {
-                ControlsOverlay(
-                    title: title,
-                    viewModel: viewModel,
-                    onDismiss: { dismissPlayer() },
-                    onToggleFullscreen: {
-                        #if os(macOS)
-                        if let nsWindow = NSApp.keyWindow ?? NSApp.windows.first(where: { $0.isKeyWindow }) {
-                            nsWindow.toggleFullScreen(nil)
+            // Tap catcher — below controls, above video
+            .overlay {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            viewModel.showControls.toggle()
                         }
-                        #endif
+                        if viewModel.showControls {
+                            resetControlsTimer()
+                        } else {
+                            controlsTimer?.invalidate()
+                        }
                     }
-                )
-                .transition(.opacity)
             }
 
-            if let seek = seekIndicator {
-                SeekHUD(text: seek.text)
+            // Controls overlay — always the topmost hosting view
+            .overlay {
+                if viewModel.showControls {
+                    ControlsOverlay(
+                        title: title,
+                        viewModel: viewModel,
+                        onDismiss: { dismissPlayer() },
+                        onToggleFullscreen: {
+                            #if os(macOS)
+                            if let nsWindow = NSApp.keyWindow ?? NSApp.windows.first(where: { $0.isKeyWindow }) {
+                                nsWindow.toggleFullScreen(nil)
+                            }
+                            #endif
+                        }
+                    )
                     .transition(.opacity)
-            }
-
-            if let error = viewModel.errorMessage {
-                VStack(spacing: 16) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.largeTitle)
-                        .foregroundStyle(.orange)
-                    Text(error)
-                    Button("Cerrar") { dismissPlayer() }
-                        .buttonStyle(.borderedProminent)
-                        .tint(.cyan)
                 }
             }
 
-            // macOS: invisible escape key catcher (works in fullscreen)
+            // Seek HUD
+            .overlay {
+                if let seek = seekIndicator {
+                    SeekHUD(text: seek.text)
+                        .transition(.opacity)
+                }
+            }
+
+            // Error message
+            .overlay {
+                if let error = viewModel.errorMessage {
+                    VStack(spacing: 16) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.largeTitle)
+                            .foregroundStyle(.orange)
+                        Text(error)
+                        Button("Cerrar") { dismissPlayer() }
+                            .buttonStyle(.borderedProminent)
+                            .tint(.cyan)
+                    }
+                }
+            }
+
+            // macOS: separate floating window for close button.
+            // toggleFullScreen restructures the view hierarchy and SwiftUI overlay
+            // buttons lose hit testing. A separate NSWindow bypasses this entirely.
             #if os(macOS)
-            EscapeKeyCatcher {
-                dismissPlayer()
+            .overlay {
+                CloseButtonWindowRepresentable(
+                    isVisible: viewModel.showControls,
+                    onClose: { dismissPlayer() }
+                )
+                .allowsHitTesting(false)
             }
             #endif
-        }
-        .onKeyPress(.escape) {
-            dismissPlayer()
-            return .handled
-        }
-        .gesture(
-            DragGesture(minimumDistance: 30)
-                .onEnded { value in
-                    handleSwipe(value)
-                }
-        )
+
+            .onKeyPress(.escape) {
+                dismissPlayer()
+                return .handled
+            }
+            .gesture(
+                DragGesture(minimumDistance: 30)
+                    .onEnded { value in
+                        handleSwipe(value)
+                    }
+            )
         .onAppear {
             Task {
                 await viewModel.prepareStream(url: streamURL)
@@ -184,22 +201,50 @@ struct PlayerView: View {
 private struct VLCPlayerBridge: NSViewRepresentable {
     let viewModel: PlayerViewModel
 
-    func makeNSView(context: Context) -> PassThroughVLCVideoView {
-        let videoView = PassThroughVLCVideoView()
-        videoView.fillScreen = true
-        return videoView
+    func makeNSView(context: Context) -> PassThroughContainer {
+        PassThroughContainer()
     }
 
-    func updateNSView(_ nsView: PassThroughVLCVideoView, context: Context) {
-        viewModel.attachDrawable(nsView)
+    func updateNSView(_ nsView: PassThroughContainer, context: Context) {
+        viewModel.attachDrawable(nsView.videoView)
     }
 }
 
-/// Subclass that passes through all mouse/touch events so SwiftUI gestures
-/// (tap to toggle controls, close button, etc.) work on top of the video.
-private class PassThroughVLCVideoView: VLCVideoView {
+/// Container that wraps VLCVideoView and blocks ALL hit testing.
+/// The key: returning nil from the container's hitTest prevents AppKit from
+/// ever traversing into descendant subviews (VLC's internal rendering views).
+/// Without this, VLC's internal NSViews capture mouse events through AppKit's
+/// native event dispatch, bypassing SwiftUI's gesture system entirely.
+private class PassThroughContainer: NSView {
+    let videoView: VLCVideoView
+
+    override init(frame frameRect: NSRect) {
+        videoView = VLCVideoView()
+        super.init(frame: frameRect)
+        setupVideoView()
+    }
+
+    required init?(coder: NSCoder) {
+        videoView = VLCVideoView()
+        super.init(coder: coder)
+        setupVideoView()
+    }
+
+    private func setupVideoView() {
+        videoView.fillScreen = true
+        videoView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(videoView)
+        NSLayoutConstraint.activate([
+            videoView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            videoView.trailingAnchor.constraint(equalTo: trailingAnchor),
+            videoView.topAnchor.constraint(equalTo: topAnchor),
+            videoView.bottomAnchor.constraint(equalTo: bottomAnchor),
+        ])
+    }
+
     override func hitTest(_ point: NSPoint) -> NSView? {
-        // Return nil so all mouse events fall through to SwiftUI views layered on top
+        // Return nil so ALL mouse events pass through to SwiftUI views on top.
+        // This prevents VLC's internal rendering subviews from capturing events.
         nil
     }
 }
@@ -220,43 +265,6 @@ private struct VLCPlayerBridge: UIViewRepresentable {
 private class VLCPlayerUIView: UIView {}
 #endif
 
-// MARK: - macOS Escape Key Catcher
-
-#if os(macOS)
-private struct EscapeKeyCatcher: NSViewRepresentable {
-    let onEscape: () -> Void
-
-    func makeNSView(context: Context) -> NSView {
-        let view = KeyCatcherView()
-        view.onEscape = onEscape
-        return view
-    }
-
-    func updateNSView(_ nsView: NSView, context: Context) {
-        (nsView as? KeyCatcherView)?.onEscape = onEscape
-    }
-}
-
-private class KeyCatcherView: NSView {
-    var onEscape: (() -> Void)?
-
-    override var acceptsFirstResponder: Bool { true }
-
-    override func viewDidMoveToWindow() {
-        super.viewDidMoveToWindow()
-        window?.makeFirstResponder(self)
-    }
-
-    override func keyDown(with event: NSEvent) {
-        if event.keyCode == 53 { // Escape key
-            onEscape?()
-        } else {
-            super.keyDown(with: event)
-        }
-    }
-}
-#endif
-
 // MARK: - Controls Overlay
 
 private struct ControlsOverlay: View {
@@ -268,6 +276,7 @@ private struct ControlsOverlay: View {
     var body: some View {
         VStack {
             HStack {
+                #if os(iOS)
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
                         .font(.title2)
@@ -275,6 +284,7 @@ private struct ControlsOverlay: View {
                         .padding(12)
                         .background(.black.opacity(0.5), in: Circle())
                 }
+                #endif
                 Spacer()
                 Text(title)
                     .font(.headline)
@@ -596,3 +606,175 @@ private struct SpeedPickerSheet: View {
         }
     }
 }
+
+// MARK: - macOS Floating Close Button Window
+
+#if os(macOS)
+/// A SwiftUI-friendly wrapper that manages a floating NSPanel for the close button.
+/// After toggleFullScreen, SwiftUI overlay buttons lose hit testing. This bypasses
+/// the issue by placing the close button in its own window above the player.
+private struct CloseButtonWindowRepresentable: NSViewRepresentable {
+    let isVisible: Bool
+    let onClose: () -> Void
+
+    func makeNSView(context: Context) -> NSView {
+        let hostView = NSView()
+        DispatchQueue.main.async {
+            context.coordinator.createWindow(hostView: hostView, onClose: onClose)
+            if isVisible {
+                context.coordinator.show()
+            }
+        }
+        return hostView
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        if isVisible {
+            context.coordinator.show()
+        } else {
+            context.coordinator.hide()
+        }
+    }
+
+    static func dismantleNSView(_ nsView: NSView, coordinator: Coordinator) {
+        coordinator.close()
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator() }
+
+    class Coordinator {
+        private var panel: NSPanel?
+        private var onClose: (() -> Void)?
+        private var playerWindowObserver: NSObjectProtocol?
+        private var frameObservation: NSKeyValueObservation?
+        private weak var playerWindow: NSWindow?
+
+        func createWindow(hostView: NSView, onClose: @escaping () -> Void) {
+            self.onClose = onClose
+
+            let panel = NSPanel(
+                contentRect: NSRect(x: 0, y: 0, width: 36, height: 36),
+                styleMask: [.borderless, .nonactivatingPanel],
+                backing: .buffered,
+                defer: true
+            )
+            panel.isOpaque = false
+            panel.backgroundColor = .clear
+            panel.level = .floating
+            panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+            panel.hidesOnDeactivate = false
+            panel.isMovableByWindowBackground = true
+            panel.isReleasedWhenClosed = false
+            panel.animationBehavior = .utilityWindow
+
+            let button = NSButton(frame: NSRect(x: 0, y: 0, width: 36, height: 36))
+            button.bezelStyle = .circular
+            button.isBordered = false
+            button.image = NSImage(systemSymbolName: "xmark", accessibilityDescription: "Close")
+            button.contentTintColor = .white
+            button.imagePosition = .imageOnly
+            button.target = self
+            button.action = #selector(closeClicked)
+            button.wantsLayer = true
+            button.layer?.backgroundColor = NSColor(white: 0, alpha: 0.5).cgColor
+            button.layer?.cornerRadius = 18
+
+            panel.contentView = button
+            self.panel = panel
+        }
+
+        func show() {
+            guard let panel else { return }
+
+            // Find or re-find the player window (handles fullscreen window changes)
+            if let pw = playerWindow, !pw.isVisible {
+                // Player window changed (e.g. fullscreen transition) — find the new one
+                self.playerWindow = findPlayerWindow()
+            } else if playerWindow == nil {
+                self.playerWindow = findPlayerWindow()
+            }
+
+            guard let playerWindow else { return }
+
+            // Observe frame changes to reposition panel when window moves/resizes/fullscreens
+            frameObservation?.invalidate()
+            frameObservation = playerWindow.observe(\.frame) { [weak self] window, _ in
+                Task { @MainActor in
+                    self?.repositionPanel()
+                }
+            }
+
+            // Also listen for fullscreen transitions which may change the window
+            if playerWindowObserver == nil {
+                playerWindowObserver = NotificationCenter.default.addObserver(
+                    forName: NSWindow.didEnterFullScreenNotification,
+                    object: nil,
+                    queue: .main
+                ) { [weak self] notification in
+                    if let window = notification.object as? NSWindow,
+                       window.title == playerWindow.title || window === playerWindow {
+                        self?.playerWindow = window
+                        self?.frameObservation?.invalidate()
+                        self?.frameObservation = window.observe(\.frame) { [weak self] _, _ in
+                            Task { @MainActor in
+                                self?.repositionPanel()
+                            }
+                        }
+                        // Reposition after a brief delay to let fullscreen animation settle
+                        Task { @MainActor in
+                            try? await Task.sleep(for: .milliseconds(300))
+                            self?.repositionPanel()
+                        }
+                    }
+                }
+            }
+
+            repositionPanel()
+            panel.orderFront(nil)
+        }
+
+        func hide() {
+            panel?.orderOut(nil)
+        }
+
+        func close() {
+            frameObservation?.invalidate()
+            frameObservation = nil
+            if let obs = playerWindowObserver {
+                NotificationCenter.default.removeObserver(obs)
+                playerWindowObserver = nil
+            }
+            panel?.orderOut(nil)
+            panel = nil
+            playerWindow = nil
+        }
+
+        @objc private func closeClicked() {
+            onClose?()
+            panel?.orderOut(nil)
+        }
+
+        private func repositionPanel() {
+            guard let panel, let playerWindow else { return }
+            let origin = NSPoint(
+                x: playerWindow.frame.origin.x + 16,
+                y: playerWindow.frame.origin.y + playerWindow.frame.height - 52
+            )
+            panel.setFrameOrigin(origin)
+        }
+
+        /// Find the window that contains the VLC video player.
+        /// During fullscreen, the window may be a different NSWindow instance.
+        private func findPlayerWindow() -> NSWindow? {
+            // Prefer the key window if it's playing video
+            if let key = NSApp.keyWindow, key.contentView?.superview != nil {
+                return key
+            }
+            // Fallback: find any visible window that could be the player
+            return NSApp.windows.first {
+                $0.isVisible && $0.level == .normal
+            }
+        }
+    }
+}
+#endif

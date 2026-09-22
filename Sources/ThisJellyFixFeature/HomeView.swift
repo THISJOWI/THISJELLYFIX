@@ -37,7 +37,7 @@ struct HomeView: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 28, height: 28)
                         .clipShape(RoundedRectangle(cornerRadius: 6))
-                    Text("THISJELLYFIX")
+                    Text("Inicio")
                         .font(.headline)
                     Spacer()
                 }
@@ -97,7 +97,7 @@ struct HomeView: View {
                         .aspectRatio(contentMode: .fit)
                         .frame(width: 36, height: 36)
                         .clipShape(RoundedRectangle(cornerRadius: 8))
-                    Text("THISJELLYFIX")
+                    Text("Inicio")
                         .font(.largeTitle.bold())
                     Spacer()
                 }
