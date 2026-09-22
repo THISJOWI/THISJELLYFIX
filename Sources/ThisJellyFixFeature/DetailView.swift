@@ -14,6 +14,7 @@ struct DetailView: View {
     @State private var showPlayer = false
     @State private var streamURL: URL?
     @State private var streamTitle: String = ""
+    @State private var streamStartPosition: Double?
     @State private var isPreparingPlayback = false
     @State private var playbackError: String?
 
@@ -29,11 +30,18 @@ struct DetailView: View {
             detailContent
                 .navigationTitle("")
                 .navigationBarBackButtonHidden(showPlayer)
+                .toolbar(showPlayer ? .hidden : .visible, for: .windowToolbar)
                 .task { await loadDetail() }
 
             if showPlayer, let streamURL {
-                Color.black.ignoresSafeArea()
-                PlayerView(streamURL: streamURL, title: streamTitle, onDismiss: {
+                Color.black
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            showPlayer = false
+                        }
+                    }
+                PlayerView(streamURL: streamURL, title: streamTitle, startPosition: streamStartPosition, onDismiss: {
                     withAnimation { showPlayer = false }
                 })
                 .ignoresSafeArea()
@@ -43,9 +51,17 @@ struct DetailView: View {
         detailContent
             .navigationTitle("")
             .navigationBarTitleDisplayMode(.inline)
+            .navigationBarBackButtonHidden(showPlayer)
             .fullScreenCover(isPresented: $showPlayer) {
                 if let streamURL {
-                    PlayerView(streamURL: streamURL, title: streamTitle)
+                    PlayerView(
+                        streamURL: streamURL,
+                        title: streamTitle,
+                        startPosition: streamStartPosition,
+                        onDismiss: {
+                            withAnimation { showPlayer = false }
+                        }
+                    )
                 }
             }
             .task { await loadDetail() }
@@ -69,21 +85,11 @@ struct DetailView: View {
                             genreBadges(genres)
                         }
 
-                        // Synopsis
-                        if let overview = detail.overview, !overview.isEmpty {
-                            VStack(alignment: .leading, spacing: 8) {
-                                Text("Sinopsis")
-                                    .font(.headline)
-                                Text(overview)
-                                    .font(.body)
-                                    .foregroundStyle(.secondary)
-                            }
-                        }
-
                         // Play button (movies only — series play from episodes)
                         if detail.type != "Series" {
                             Button {
-                                Task { await preparePlayback(itemId: item.id) }
+                                streamTitle = detail.name
+                                Task { await preparePlayback(itemId: item.id, startPosition: item.resumePositionSeconds) }
                             } label: {
                                 if isPreparingPlayback {
                                     ProgressView()
@@ -99,6 +105,17 @@ struct DetailView: View {
                             .buttonStyle(.borderedProminent)
                             .tint(.cyan)
                             .disabled(isPreparingPlayback)
+                        }
+
+                        // Synopsis
+                        if let overview = detail.overview, !overview.isEmpty {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("Sinopsis")
+                                    .font(.headline)
+                                Text(overview)
+                                    .font(.body)
+                                    .foregroundStyle(.secondary)
+                            }
                         }
 
                         // Playback error
@@ -153,19 +170,23 @@ struct DetailView: View {
                     URLQueryItem(name: "quality", value: "90"),
                 ])
 
-            MareaImageView(url: url, width: 600, height: 180)
-                .frame(maxWidth: .infinity)
-                .overlay(
-                    LinearGradient(
-                        colors: [.clear, .black.opacity(0.8)],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
+            GeometryReader { geo in
+                let height = min(geo.size.width * 0.45, 220)
+                MareaImageView(url: url, width: geo.size.width, height: height)
+                    .frame(width: geo.size.width, height: height)
+            }
+            .frame(height: 200)
+            .overlay(
+                LinearGradient(
+                    colors: [.clear, .black.opacity(0.8)],
+                    startPoint: .top,
+                    endPoint: .bottom
                 )
+            )
         } else {
             Rectangle()
                 .fill(Color(red: 0.08, green: 0.1, blue: 0.18))
-                .frame(height: 200)
+                .frame(height: 120)
         }
     }
 
@@ -298,7 +319,7 @@ struct DetailView: View {
 
     // MARK: - Playback
 
-    private func preparePlayback(itemId: String) async {
+    private func preparePlayback(itemId: String, startPosition: Double? = nil) async {
         isPreparingPlayback = true
         playbackError = nil
         defer { isPreparingPlayback = false }
@@ -345,6 +366,7 @@ struct DetailView: View {
             }
 
             streamURL = finalURL
+            streamStartPosition = startPosition
             showPlayer = true
         } catch {
             playbackError = error.localizedDescription
@@ -428,9 +450,10 @@ private struct EpisodeRow: View {
     var body: some View {
         HStack(spacing: 12) {
             // Episode thumbnail
-            if episode.hasImage {
+            if episode.imageTags?["Backdrop"] != nil || episode.imageTags?["Primary"] != nil {
+                let hasBackdrop = episode.imageTags?["Backdrop"] != nil
                 let thumbURL = serverURL
-                    .appendingPathComponent("Items/\(episode.id)/Images/Primary")
+                    .appendingPathComponent("Items/\(episode.id)/Images/\(hasBackdrop ? "Backdrop" : "Primary")")
                     .appending(queryItems: [
                         URLQueryItem(name: "maxWidth", value: "200"),
                         URLQueryItem(name: "quality", value: "90"),

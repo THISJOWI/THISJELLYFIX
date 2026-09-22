@@ -137,7 +137,7 @@ struct SearchView: View {
                         serverURL: serverURL,
                         token: token,
                         query: trimmed,
-                        includeTypes: "Movie,Series,Episode",
+                        includeTypes: "Movie,Series",
                         limit: 40
                     )
                     guard !Task.isCancelled else { return }

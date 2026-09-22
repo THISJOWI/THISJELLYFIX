@@ -56,13 +56,6 @@ struct HomeView: View {
                             .buttonStyle(.plain)
                         }
                     }
-
-                    Section {
-                        Button(action: onLogout) {
-                            Label("Cerrar sesión", systemImage: "rectangle.portrait.and.arrow.right")
-                        }
-                        .foregroundStyle(.red)
-                    }
                 }
             }
             .frame(minWidth: 200)

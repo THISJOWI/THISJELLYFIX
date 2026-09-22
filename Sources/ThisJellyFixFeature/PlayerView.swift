@@ -7,11 +7,13 @@ struct PlayerView: View {
     let streamURL: URL
     let title: String
     var allowStop: Bool = true
+    var startPosition: Double? = nil
     var onDismiss: (() -> Void)?
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = PlayerViewModel()
     @State private var seekIndicator: SeekIndicator?
     @State private var controlsTimer: Timer?
+    @State private var wasPlaying = false
 
     var body: some View {
         ZStack {
@@ -20,7 +22,21 @@ struct PlayerView: View {
             VLCPlayerBridge(viewModel: viewModel)
                 .ignoresSafeArea()
 
-            // Controls overlay
+            // Transparent tap catcher — always active
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        viewModel.showControls.toggle()
+                    }
+                    if viewModel.showControls {
+                        resetControlsTimer()
+                    } else {
+                        controlsTimer?.invalidate()
+                    }
+                }
+
+            // Controls overlay — buttons only active when visible
             if viewModel.showControls {
                 ControlsOverlay(
                     title: title,
@@ -35,6 +51,7 @@ struct PlayerView: View {
                     }
                 )
                 .transition(.opacity)
+                .onTapGesture { } // absorb taps — don't fall through
             }
 
             if let seek = seekIndicator {
@@ -48,18 +65,11 @@ struct PlayerView: View {
                         .font(.largeTitle)
                         .foregroundStyle(.orange)
                     Text(error)
-                    Button("Cerrar") { dismiss() }
+                    Button("Cerrar") { onDismiss?() ?? dismiss() }
                         .buttonStyle(.borderedProminent)
                         .tint(.cyan)
                 }
             }
-        }
-        .contentShape(Rectangle())
-        .onTapGesture {
-            withAnimation(.easeInOut(duration: 0.2)) {
-                viewModel.showControls.toggle()
-            }
-            resetControlsTimer()
         }
         .gesture(
             DragGesture(minimumDistance: 30)
@@ -73,15 +83,30 @@ struct PlayerView: View {
                 // Wait for VLCPlayerBridge to attach drawable before playing
                 try? await Task.sleep(for: .milliseconds(500))
                 await viewModel.togglePlayPause()
+                // Resume from saved position if available
+                if let start = startPosition, start > 0 {
+                    await viewModel.seek(to: start)
+                }
                 viewModel.startUpdating()
             }
             resetControlsTimer()
         }
         .onDisappear {
             controlsTimer?.invalidate()
+            viewModel.stopUpdating()
             if allowStop {
                 Task { await viewModel.stop() }
             }
+        }
+        .onChange(of: viewModel.isPlaying) { _, playing in
+            // Show controls when playback pauses/stops unexpectedly (buffering, error)
+            if wasPlaying && !playing {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    viewModel.showControls = true
+                }
+                resetControlsTimer()
+            }
+            wasPlaying = playing
         }
         .sheet(isPresented: $viewModel.showAudioPicker) {
             AudioPickerSheet(
@@ -192,7 +217,13 @@ private struct ControlsOverlay: View {
                     .foregroundStyle(.white)
                     .lineLimit(1)
                 Spacer()
-                // Fullscreen button hidden — VLC OpenGL crashes during window animation
+                Button(action: onToggleFullscreen) {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                        .font(.title3)
+                        .foregroundStyle(.white)
+                        .padding(10)
+                        .background(.black.opacity(0.5), in: Circle())
+                }
             }
             .padding(.horizontal, 16)
             .padding(.top, 8)
@@ -257,8 +288,6 @@ private struct ControlsOverlay: View {
                 )
             )
         }
-        .contentShape(Rectangle())
-        // Tap handled by PlayerView ZStack to avoid double-toggle bug
     }
 
     private func formatTime(_ seconds: Double) -> String {

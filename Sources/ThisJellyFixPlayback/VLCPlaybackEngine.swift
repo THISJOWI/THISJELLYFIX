@@ -6,9 +6,20 @@ import VLCKitSPM
 public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
     public let kind: PlaybackEngineKind = .universal
 
-    private let mediaPlayer = VLCMediaPlayer()
+    private let mediaPlayer: VLCMediaPlayer
 
-    public init() {}
+    public init() {
+        // Configure VLC for stable network streaming
+        mediaPlayer = VLCMediaPlayer(
+            options: [
+                "--network-caching=10000",
+                "--file-caching=1000",
+                "--live-caching=1000",
+                "--sout-mux-caching=1000",
+                "--no-video-title-show",
+            ]
+        )
+    }
 
     deinit {
         // Detach drawable first so VLC render thread doesn't access freed view,
