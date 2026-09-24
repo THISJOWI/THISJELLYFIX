@@ -8,7 +8,28 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
 
     private let mediaPlayer: VLCMediaPlayer
 
+    /// One-time libvlc file logger — captures internal messages (es_out,
+    /// decoder, "slave N EOF", demux) that TJFLog alone can't show.
+    private static let installVLCLoggerOnce: Void = {
+        let url = FileManager.default.temporaryDirectory
+            .appendingPathComponent("tjf-vlc.log")
+        do {
+            if !FileManager.default.fileExists(atPath: url.path) {
+                FileManager.default.createFile(atPath: url.path, contents: nil)
+            }
+            let handle = try FileHandle(forWritingTo: url)
+            try handle.seekToEnd()
+            let logger = VLCFileLogger.create(with: handle)
+            logger.level = .debug
+            VLCLibrary.shared().loggers = [logger]
+            TJFLog("VLC file logger ON → \(url.path)")
+        } catch {
+            TJFLog("VLC file logger FAILED: \(error)")
+        }
+    }()
+
     public init() {
+        _ = Self.installVLCLoggerOnce
         // Configure VLC for stable network streaming
         mediaPlayer = VLCMediaPlayer(
             options: [
@@ -19,8 +40,16 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
                 "--no-video-title-show",
             ]
         )
-        // Predictable letterbox inside VLC; screen-cover is done in SwiftUI
-        // (computed scaleEffect) — this VLCKit alpha's fit mode is unreliable.
+        // VLC letterboxes natively (videoFitMode) — subs are composed by VLC
+        // inside the visible area, so they follow fit/fill correctly.
+        mediaPlayer.videoFitMode = .smaller
+    }
+
+    /// Fit (letterbox) or fill (cover, crop overflow) — VLC-native so the
+    /// subtitle layer is positioned within the VISIBLE region, unlike a
+    /// post-render SwiftUI scale that crops subs off-screen.
+    public func setVideoFill(_ fill: Bool) async {
+        mediaPlayer.videoFitMode = fill ? .larger : .smaller
     }
 
     /// Native video size (0 until the vout reports it).

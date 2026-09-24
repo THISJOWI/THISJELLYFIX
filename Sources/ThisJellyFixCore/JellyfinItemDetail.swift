@@ -12,6 +12,7 @@ public struct JellyfinItemDetail: Codable, Sendable, Equatable, Identifiable {
     public let runTimeTicks: Int64?
     public let premiereDate: String?
     public let seriesName: String?
+    public let seriesId: String?
     public let parentIndexNumber: Int?
     public let indexNumber: Int?
     public let imageTags: [String: String]?
@@ -28,6 +29,7 @@ public struct JellyfinItemDetail: Codable, Sendable, Equatable, Identifiable {
         case runTimeTicks = "RunTimeTicks"
         case premiereDate = "PremiereDate"
         case seriesName = "SeriesName"
+        case seriesId = "SeriesId"
         case parentIndexNumber = "ParentIndexNumber"
         case indexNumber = "IndexNumber"
         case imageTags = "ImageTags"

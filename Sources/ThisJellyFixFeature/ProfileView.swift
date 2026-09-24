@@ -40,6 +40,9 @@ struct ProfileView: View {
                     // Skip segment preferences
                     SkipSettingsSection()
 
+                    // Preferred playback languages
+                    LanguageSettingsSection()
+
                     // Actions
                     VStack(spacing: 12) {
                         Button {
@@ -100,5 +103,71 @@ private struct SkipSettingsSection: View {
         .padding(16)
         .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
         .padding(.horizontal, 24)
+    }
+}
+
+// MARK: - Language Settings
+
+private struct LanguageSettingsSection: View {
+    @AppStorage(LanguagePreferences.Key.audio) private var preferredAudio: String?
+    @AppStorage(LanguagePreferences.Key.subtitles) private var preferredSubtitles: String?
+
+    /// None = no preference (player untouched).
+    private static let noPreference = ""
+
+    /// Common picker choices + the system language as suggested default.
+    private var options: [String] {
+        var codes = ["es", "en", "ja", "pt", "fr", "de", "it"]
+        if let system = LanguagePreferences.systemDefault, !codes.contains(system) {
+            codes.insert(system, at: 0)
+        }
+        return codes
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Idioma")
+                .font(.headline)
+
+            Picker("Audio preferido", selection: $preferredAudio) {
+                Text("Sin preferencia").tag(String?.none)
+                ForEach(options, id: \.self) { code in
+                    Text(label(for: code)).tag(String?.some(code))
+                }
+            }
+
+            Divider()
+
+            Picker("Subtítulos preferidos", selection: $preferredSubtitles) {
+                Text("Sin preferencia").tag(String?.none)
+                ForEach(options, id: \.self) { code in
+                    Text(label(for: code)).tag(String?.some(code))
+                }
+            }
+
+            Text("Al abrir un vídeo se elige tu idioma si está disponible. Si cambias dentro del reproductor, se respeta hasta el siguiente.")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+        .padding(16)
+        .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 24)
+        .onAppear {
+            // Preselect system language on first run (only if never set).
+            if preferredAudio == nil, let system = LanguagePreferences.systemDefault {
+                preferredAudio = system
+            }
+            if preferredSubtitles == nil, let system = LanguagePreferences.systemDefault {
+                preferredSubtitles = system
+            }
+        }
+    }
+
+    private func label(for code: String) -> String {
+        let name = Locale.current.localizedString(forLanguageCode: code) ?? code.uppercased()
+        if code == LanguagePreferences.systemDefault {
+            return "\(name) (sistema)"
+        }
+        return name
     }
 }

@@ -23,17 +23,21 @@
 		119FCB01434D29D48349DBE8 /* KeychainStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = AAB7034B466503BCE33E95A1 /* KeychainStore.swift */; };
 		11A9EAF2DC44AFE336B0EAAC /* Playback-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28669C5F3B409CC65EA7F335 /* Playback-visionOS.framework */; };
 		11B207F3A394C9676707D15B /* Core-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */; };
+		1273CB4B40921C83F7D64F9D /* DirectPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FFBC2FE20750672856A887 /* DirectPlayer.swift */; };
 		1426AB289255A8663046C0BC /* AuthModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 771C356E05590A913549B4C7 /* AuthModel.swift */; };
 		14827EAE9A40C19E816F6EF5 /* JellyfinSegmentClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0E1736573B5EC3AC5FB9B075 /* JellyfinSegmentClient.swift */; };
 		14A47D69C3EBED46D23A759A /* Feature-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0F734B1401D9FD0BC14D69A3 /* Feature-macOS.framework */; };
 		14F4991178D9D53E907394F8 /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7EB0EE4EE654F6D5845ED31 /* DetailView.swift */; };
+		155DF913687A0FBC67603BD7 /* PlaybackDeviceProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00193F5C845E2D76D677171B /* PlaybackDeviceProfile.swift */; };
 		1A25A36A4022B5C9148F8CCD /* JellyfinServerProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */; };
 		1C0D725DA523C20086FD0FC9 /* LibraryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81B3D72ECAE6007FFBAAB00 /* LibraryModel.swift */; };
 		1C9D4E334AB64CAD850DA35F /* Feature-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 0F734B1401D9FD0BC14D69A3 /* Feature-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		1ED4A5B65CF03E5BE3A23483 /* SegmentDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = 79376088B951694B385D36F4 /* SegmentDetector.swift */; };
 		1EFBE2CD0398A093315196F9 /* Tracks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E9EEA43F53F2987FA00763 /* Tracks.swift */; };
 		229BEE17CC6D659F4D19E4A2 /* Feature-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9627EED1BAD19BE4D412F23 /* Feature-tvOS.framework */; };
+		23D225F0B1E79A09F6E1944B /* HlsStreamResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0581BBAD90D0B401EBA122E /* HlsStreamResolver.swift */; };
 		2605FFA8F307D37B33C2387B /* ThisJellyFixTVOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = F5569E8E9FF985310B2B9CB2 /* ThisJellyFixTVOSApp.swift */; };
+		272292C48BF142B6CD67B6B1 /* HlsStreamResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0581BBAD90D0B401EBA122E /* HlsStreamResolver.swift */; };
 		277D94B5F67FE3BEB424F7DD /* JellyfinAuthClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 703D40341AFC8475EC1F03D6 /* JellyfinAuthClient.swift */; };
 		277F1018752A65C5CCA2F0D5 /* ThisJellyFixRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */; };
 		28141BF24BCFA045467F40A3 /* Core-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7D37A490B1735CF546E5317 /* Core-iOS.framework */; };
@@ -85,7 +89,11 @@
 		5C2A213D78D8128479E9CD5A /* Feature-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E1730F8F94BE102A9E8DE78C /* Feature-visionOS.framework */; };
 		5D5F2642311899E17781667B /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D150E40E2CA61714BB72C24F /* SearchView.swift */; };
 		5D6E8CAE60025A14AB6EAA43 /* PlaybackEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90CB900DFBF613262ADEB1FE /* PlaybackEngine.swift */; };
+		5E2D198A8A93E0AFBDE00B22 /* DirectPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FFBC2FE20750672856A887 /* DirectPlayer.swift */; };
 		5E74463CB3FCA150D1F797F6 /* SegmentMarker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 73DDE86CE7705FE952478E82 /* SegmentMarker.swift */; };
+		5E78C68996C893DA825281DC /* DirectPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FFBC2FE20750672856A887 /* DirectPlayer.swift */; };
+		5FFC77D4067000593CB4ED8A /* DirectPlayer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25FFBC2FE20750672856A887 /* DirectPlayer.swift */; };
+		60CBD033BE25924E42BD4925 /* PipSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F733944F3C4108340B39C9 /* PipSession.swift */; };
 		61CDA4F5175F73114D31C54D /* ChapterClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD507E29FA9412A60002A5DA /* ChapterClassifier.swift */; };
 		6302F06803605A866CB0EC8D /* ChapterClassifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD507E29FA9412A60002A5DA /* ChapterClassifier.swift */; };
 		6337E7069B2C4DBB0BFD42C2 /* Core-iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F7D37A490B1735CF546E5317 /* Core-iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
@@ -94,22 +102,28 @@
 		6999136D8DBE253803823E87 /* Playback-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 08D186E415A343598A9C5A82 /* Playback-tvOS.framework */; };
 		6AC4757212C9B6FA2EF81AF8 /* MediaCardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4BEB7F8477231F3435F0C3EF /* MediaCardView.swift */; };
 		6ADFEDADB6206B335A7A7DC7 /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E39CFC19AA8E51100A6C3ECC /* HomeView.swift */; };
+		6BFF32C1029FBCCEB1839223 /* LanguagePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AED9E47165C3D3A03CA2FA1 /* LanguagePreferences.swift */; };
 		6EE0DF74BF369DA516B1FC7B /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7EB0EE4EE654F6D5845ED31 /* DetailView.swift */; };
 		7006DBAD90EC2FD7B7A16FCD /* Playback-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 28669C5F3B409CC65EA7F335 /* Playback-visionOS.framework */; };
 		71F7318AD602868AC4D236B4 /* JellyfinMediaItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C641EF70183F4B189E8FF9C2 /* JellyfinMediaItem.swift */; };
 		721016E345DA5EDAC8BE0F05 /* JellyfinPlaybackClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708CC6C4AD140C5FD530E54A /* JellyfinPlaybackClient.swift */; };
 		72BAB446A26FC1F71774DECB /* JellyfinUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1299D0FC3ECE91B5827C8AAD /* JellyfinUser.swift */; };
+		738BFC96C5B53DDBFED6DFCE /* HlsStreamResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0581BBAD90D0B401EBA122E /* HlsStreamResolver.swift */; };
+		74C5596A3D4DC9B73A36B447 /* LanguagePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AED9E47165C3D3A03CA2FA1 /* LanguagePreferences.swift */; };
 		74DBB365E4DA730D03220ABC /* PlaybackEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90CB900DFBF613262ADEB1FE /* PlaybackEngine.swift */; };
 		7575BFB94285EA121DBD6D8A /* Networking-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */; };
 		761EB034F73748987E6F6B7A /* Core-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C2DD8EB3A40E6B2F1E0F501 /* Core-macOS.framework */; };
+		7714A23CB3C52ED90ADAEDE7 /* LanguagePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AED9E47165C3D3A03CA2FA1 /* LanguagePreferences.swift */; };
 		77CB8273B067D4BC7D51E4C7 /* Core-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F7D37A490B1735CF546E5317 /* Core-iOS.framework */; };
 		7831790D6624D6403B60BF94 /* ProfileView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1F0BADE0FA8B44D927BA6700 /* ProfileView.swift */; };
+		78E72C717C386A25431AF5C1 /* PlaybackDeviceProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00193F5C845E2D76D677171B /* PlaybackDeviceProfile.swift */; };
 		7A00A9694731C13B9D807874 /* Playback-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 043C1E8AA788346A3AA0558A /* Playback-iOS.framework */; };
 		7AAB8AD15AF87B0D941AA224 /* Networking-iOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A23B93170F6FEA62AF418B4E /* Networking-iOS.framework */; };
 		7B8484CA12166F51025E11F3 /* LibraryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81B3D72ECAE6007FFBAAB00 /* LibraryModel.swift */; };
 		7D02F10BE9A808E675DC8DA6 /* ThisJellyFixRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC3D98506E466F46333AAD78 /* ThisJellyFixRootView.swift */; };
 		805F5B2CA6F310B32BC78140 /* Playback-macOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A9120E3D0C3E4801FF21A328 /* Playback-macOS.framework */; };
 		809F0276A34C260BBECCF666 /* JellyfinPlaybackClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708CC6C4AD140C5FD530E54A /* JellyfinPlaybackClient.swift */; };
+		814DEA04AD75A9354666535A /* PipSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F733944F3C4108340B39C9 /* PipSession.swift */; };
 		81571F78F439C1E9681ED51C /* Core-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; };
 		81CFFAB9493090F3705A6B59 /* MareaTabBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53823A8CBDE617D4E9EAADE9 /* MareaTabBar.swift */; };
 		8262173985F2D997771C6EEA /* AuthModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 771C356E05590A913549B4C7 /* AuthModel.swift */; };
@@ -135,6 +149,7 @@
 		9C349B9B7CF1578FF5B4FABC /* PlaybackInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = EF44E1A84B76AB6E359404F9 /* PlaybackInfo.swift */; };
 		9E5DDE166D5BB74164021B4D /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D150E40E2CA61714BB72C24F /* SearchView.swift */; };
 		9F21C617302AD2A28F2D1969 /* JellyfinUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1299D0FC3ECE91B5827C8AAD /* JellyfinUser.swift */; };
+		9F470FAFF426C5271E17AFFD /* LanguagePreferences.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AED9E47165C3D3A03CA2FA1 /* LanguagePreferences.swift */; };
 		9F4FC6B85ADD8851B21105E1 /* Core-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; };
 		A43FBCD207078FC85D0DC238 /* Playback-macOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = A9120E3D0C3E4801FF21A328 /* Playback-macOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A62EBA680D44BFC81C612682 /* DeviceIdentifier.swift in Sources */ = {isa = PBXBuildFile; fileRef = C764363B3037D95ED713033C /* DeviceIdentifier.swift */; };
@@ -153,6 +168,7 @@
 		BB76E5924651F8CC952B759A /* LibraryModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = E81B3D72ECAE6007FFBAAB00 /* LibraryModel.swift */; };
 		BBB004F6E562D4FCDEBA2B0E /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 2BD2F14F7A3887C5A6291362 /* Assets.xcassets */; };
 		BBC8783AF68A55EE2F87CDEE /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A589848995255751C02ADA9 /* FavoritesView.swift */; };
+		BFFE664027915CD4A28924AE /* PlaybackDeviceProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00193F5C845E2D76D677171B /* PlaybackDeviceProfile.swift */; };
 		C1CED74B581825F93980C94C /* JellyfinPlaybackClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708CC6C4AD140C5FD530E54A /* JellyfinPlaybackClient.swift */; };
 		C20874ED8C85EB2DBC34EB99 /* ImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D969DEC8BCB5D66E75AF00D2 /* ImageView.swift */; };
 		C3F09ABE1A5D0977D1DF697F /* ThisJellyFixIOSApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = FB471F8AF5489AF27C0A2607 /* ThisJellyFixIOSApp.swift */; };
@@ -196,12 +212,16 @@
 		E2186BFEB1FDFA51EC8E998D /* SearchView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D150E40E2CA61714BB72C24F /* SearchView.swift */; };
 		E3F03C4A4B709CC403313588 /* VLCKitSPM in Frameworks */ = {isa = PBXBuildFile; productRef = 020B3C1D017EC6380C2B017C /* VLCKitSPM */; };
 		E47FB120D7BFCA930B89AB11 /* Core-tvOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */; };
+		E709058C4C2575259E34C235 /* PipSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F733944F3C4108340B39C9 /* PipSession.swift */; };
+		EA7BA749285D85186D622223 /* PipSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = 25F733944F3C4108340B39C9 /* PipSession.swift */; };
 		EDCF4945CCAAEB4D751830D0 /* Playback-iOS.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 043C1E8AA788346A3AA0558A /* Playback-iOS.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		EF1EB2256E1FC837538136A7 /* FavoritesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A589848995255751C02ADA9 /* FavoritesView.swift */; };
 		EFECCFD4537FC63BB40CDA0A /* JellyfinServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54122B1375204F29118DED99 /* JellyfinServer.swift */; };
 		F119FC3380D0B095A4C7621C /* Core-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; };
+		F154FC7F737AEC376A7E67C8 /* PlaybackDeviceProfile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00193F5C845E2D76D677171B /* PlaybackDeviceProfile.swift */; };
 		F155438A9C9AB5F4C5EC25E6 /* JellyfinMediaItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = C641EF70183F4B189E8FF9C2 /* JellyfinMediaItem.swift */; };
 		F183B07B46F0BEACF447C5FE /* Core-visionOS.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8F3F6965BFCB98549AC54BC6 /* Core-visionOS.framework */; };
+		F188263523C03DA4126FE3DF /* HlsStreamResolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C0581BBAD90D0B401EBA122E /* HlsStreamResolver.swift */; };
 		F362177544E712219B9EF55B /* Tracks.swift in Sources */ = {isa = PBXBuildFile; fileRef = 97E9EEA43F53F2987FA00763 /* Tracks.swift */; };
 		F3E486280585142650F1C422 /* JellyfinServerProbe.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */; };
 		F49BB41736F3752C77EB6CBE /* JellyfinUser.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1299D0FC3ECE91B5827C8AAD /* JellyfinUser.swift */; };
@@ -528,6 +548,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		00193F5C845E2D76D677171B /* PlaybackDeviceProfile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlaybackDeviceProfile.swift; sourceTree = "<group>"; };
 		0070D0D9221BE56B2567FE64 /* PlayerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerViewModel.swift; sourceTree = "<group>"; };
 		043C1E8AA788346A3AA0558A /* Playback-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Playback-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		08D186E415A343598A9C5A82 /* Playback-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Playback-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -537,12 +558,16 @@
 		1AE0C6C290BD2E1075089FE0 /* PlayerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlayerView.swift; sourceTree = "<group>"; };
 		1F0BADE0FA8B44D927BA6700 /* ProfileView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProfileView.swift; sourceTree = "<group>"; };
 		209CE81E708E8DBA8360ADF7 /* thisjellyfix-tvOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "thisjellyfix-tvOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		25F733944F3C4108340B39C9 /* PipSession.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PipSession.swift; sourceTree = "<group>"; };
+		25FFBC2FE20750672856A887 /* DirectPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DirectPlayer.swift; sourceTree = "<group>"; };
 		28669C5F3B409CC65EA7F335 /* Playback-visionOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Playback-visionOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		29B8B6D4F2BC57EE6634479D /* Feature-iOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Feature-iOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
+		2AED9E47165C3D3A03CA2FA1 /* LanguagePreferences.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguagePreferences.swift; sourceTree = "<group>"; };
 		2BD2F14F7A3887C5A6291362 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		33C1AB1B257B262905CD0C17 /* Core-tvOS.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = "Core-tvOS.framework"; sourceTree = BUILT_PRODUCTS_DIR; };
 		3624D9D9774A776D40B5625D /* ThisJellyFixMacOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixMacOSApp.swift; sourceTree = "<group>"; };
 		3A589848995255751C02ADA9 /* FavoritesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesView.swift; sourceTree = "<group>"; };
+		43C2893E5B15FA517FF432DF /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		49EE84CA45240060666F0145 /* thisjellyfix-visionOS.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = "thisjellyfix-visionOS.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4BEB7F8477231F3435F0C3EF /* MediaCardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaCardView.swift; sourceTree = "<group>"; };
 		4F425D217A1D9AD7631FECD8 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
@@ -572,6 +597,7 @@
 		AAB7034B466503BCE33E95A1 /* KeychainStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainStore.swift; sourceTree = "<group>"; };
 		AD74C3F99EEB6FB09C612704 /* ThisJellyFixVisionOSApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ThisJellyFixVisionOSApp.swift; sourceTree = "<group>"; };
 		BA95529E78948EB1C050098F /* JellyfinServerProbe.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinServerProbe.swift; sourceTree = "<group>"; };
+		C0581BBAD90D0B401EBA122E /* HlsStreamResolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HlsStreamResolver.swift; sourceTree = "<group>"; };
 		C641EF70183F4B189E8FF9C2 /* JellyfinMediaItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JellyfinMediaItem.swift; sourceTree = "<group>"; };
 		C764363B3037D95ED713033C /* DeviceIdentifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DeviceIdentifier.swift; sourceTree = "<group>"; };
 		C7A397B27A7519E8A43AB41F /* VLCPlaybackEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VLCPlaybackEngine.swift; sourceTree = "<group>"; };
@@ -784,6 +810,8 @@
 				54122B1375204F29118DED99 /* JellyfinServer.swift */,
 				1299D0FC3ECE91B5827C8AAD /* JellyfinUser.swift */,
 				AAB7034B466503BCE33E95A1 /* KeychainStore.swift */,
+				2AED9E47165C3D3A03CA2FA1 /* LanguagePreferences.swift */,
+				00193F5C845E2D76D677171B /* PlaybackDeviceProfile.swift */,
 				EF44E1A84B76AB6E359404F9 /* PlaybackInfo.swift */,
 				79376088B951694B385D36F4 /* SegmentDetector.swift */,
 				73DDE86CE7705FE952478E82 /* SegmentMarker.swift */,
@@ -834,6 +862,7 @@
 			children = (
 				771C356E05590A913549B4C7 /* AuthModel.swift */,
 				E7EB0EE4EE654F6D5845ED31 /* DetailView.swift */,
+				25FFBC2FE20750672856A887 /* DirectPlayer.swift */,
 				3A589848995255751C02ADA9 /* FavoritesView.swift */,
 				E39CFC19AA8E51100A6C3ECC /* HomeView.swift */,
 				D969DEC8BCB5D66E75AF00D2 /* ImageView.swift */,
@@ -841,6 +870,7 @@
 				DB4C1DE92983F2B02F9FAF05 /* LoginView.swift */,
 				53823A8CBDE617D4E9EAADE9 /* MareaTabBar.swift */,
 				4BEB7F8477231F3435F0C3EF /* MediaCardView.swift */,
+				25F733944F3C4108340B39C9 /* PipSession.swift */,
 				1AE0C6C290BD2E1075089FE0 /* PlayerView.swift */,
 				0070D0D9221BE56B2567FE64 /* PlayerViewModel.swift */,
 				1F0BADE0FA8B44D927BA6700 /* ProfileView.swift */,
@@ -855,6 +885,7 @@
 			isa = PBXGroup;
 			children = (
 				EE44DD8B3BAC5D66EFFFF78A /* Assets.xcassets */,
+				43C2893E5B15FA517FF432DF /* Info.plist */,
 				FB471F8AF5489AF27C0A2607 /* ThisJellyFixIOSApp.swift */,
 			);
 			name = iOS;
@@ -864,6 +895,7 @@
 		DF521D6064B5707950345FB0 /* ThisJellyFixNetworking */ = {
 			isa = PBXGroup;
 			children = (
+				C0581BBAD90D0B401EBA122E /* HlsStreamResolver.swift */,
 				703D40341AFC8475EC1F03D6 /* JellyfinAuthClient.swift */,
 				AAA58138FA31937A9F9027DC /* JellyfinItemDetailClient.swift */,
 				CAF84CCF843B7012ACFEC948 /* JellyfinLibraryClient.swift */,
@@ -1477,6 +1509,7 @@
 			files = (
 				38B5686DDBB3A2AA8752D8AD /* AuthModel.swift in Sources */,
 				CC2E4F11C891157DCFE51F00 /* DetailView.swift in Sources */,
+				5E78C68996C893DA825281DC /* DirectPlayer.swift in Sources */,
 				66C8F3B1C9E3F924254CAB33 /* FavoritesView.swift in Sources */,
 				6ADFEDADB6206B335A7A7DC7 /* HomeView.swift in Sources */,
 				C4C56DBDF9B8A9994D04A612 /* ImageView.swift in Sources */,
@@ -1484,6 +1517,7 @@
 				899728756CBD6286642CC3C6 /* LoginView.swift in Sources */,
 				AC07A8FC4A5B592E9D9C6F38 /* MareaTabBar.swift in Sources */,
 				8DA21F2E7A24928CEFF13DF2 /* MediaCardView.swift in Sources */,
+				EA7BA749285D85186D622223 /* PipSession.swift in Sources */,
 				AC73A689499A33380008B3F3 /* PlayerView.swift in Sources */,
 				34E97A1EF724C12AACBE1CB8 /* PlayerViewModel.swift in Sources */,
 				F56B4102AF8B4757D334EF2C /* ProfileView.swift in Sources */,
@@ -1496,6 +1530,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				23D225F0B1E79A09F6E1944B /* HlsStreamResolver.swift in Sources */,
 				277D94B5F67FE3BEB424F7DD /* JellyfinAuthClient.swift in Sources */,
 				07A800F5E736B0E096A7F41B /* JellyfinItemDetailClient.swift in Sources */,
 				B964348FE3FDB83AFB94715A /* JellyfinLibraryClient.swift in Sources */,
@@ -1516,6 +1551,8 @@
 				E074E85182B5703EB3E28008 /* JellyfinServer.swift in Sources */,
 				9F21C617302AD2A28F2D1969 /* JellyfinUser.swift in Sources */,
 				3FB0908BBABF8F061243233A /* KeychainStore.swift in Sources */,
+				9F470FAFF426C5271E17AFFD /* LanguagePreferences.swift in Sources */,
+				155DF913687A0FBC67603BD7 /* PlaybackDeviceProfile.swift in Sources */,
 				DF9E8588B987ADEA150BF8ED /* PlaybackInfo.swift in Sources */,
 				2B1556518F54F76E4C71477D /* SegmentDetector.swift in Sources */,
 				4A4BB3BE5B8F4CDFC9CF4EC0 /* SegmentMarker.swift in Sources */,
@@ -1535,6 +1572,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				272292C48BF142B6CD67B6B1 /* HlsStreamResolver.swift in Sources */,
 				8C25F3F362A6D00768BF71F9 /* JellyfinAuthClient.swift in Sources */,
 				D3216BE00FD54AC2D14B0ACC /* JellyfinItemDetailClient.swift in Sources */,
 				0C9122EDC762FCDE75EB6D86 /* JellyfinLibraryClient.swift in Sources */,
@@ -1550,6 +1588,7 @@
 			files = (
 				1426AB289255A8663046C0BC /* AuthModel.swift in Sources */,
 				14F4991178D9D53E907394F8 /* DetailView.swift in Sources */,
+				1273CB4B40921C83F7D64F9D /* DirectPlayer.swift in Sources */,
 				EF1EB2256E1FC837538136A7 /* FavoritesView.swift in Sources */,
 				8ED42876B2BBF33403BE7C85 /* HomeView.swift in Sources */,
 				05A6141D001B905D26129D8B /* ImageView.swift in Sources */,
@@ -1557,6 +1596,7 @@
 				C8B2BD052E5372AE4F184CF6 /* LoginView.swift in Sources */,
 				81CFFAB9493090F3705A6B59 /* MareaTabBar.swift in Sources */,
 				6AC4757212C9B6FA2EF81AF8 /* MediaCardView.swift in Sources */,
+				814DEA04AD75A9354666535A /* PipSession.swift in Sources */,
 				D13C00823AE2A8F2FBD52C8F /* PlayerView.swift in Sources */,
 				FC0028EF738C1C1567B02D31 /* PlayerViewModel.swift in Sources */,
 				CA3AB48A3C409A04E7692F33 /* ProfileView.swift in Sources */,
@@ -1579,6 +1619,7 @@
 			files = (
 				DC5ABAD1FC79AFF5D417324F /* AuthModel.swift in Sources */,
 				6EE0DF74BF369DA516B1FC7B /* DetailView.swift in Sources */,
+				5E2D198A8A93E0AFBDE00B22 /* DirectPlayer.swift in Sources */,
 				BBC8783AF68A55EE2F87CDEE /* FavoritesView.swift in Sources */,
 				34DB2688B85445F043B37964 /* HomeView.swift in Sources */,
 				C20874ED8C85EB2DBC34EB99 /* ImageView.swift in Sources */,
@@ -1586,6 +1627,7 @@
 				3BF87831B32E86795B3A22BB /* LoginView.swift in Sources */,
 				58067049F30384B6B4CA2662 /* MareaTabBar.swift in Sources */,
 				842704C42612DE6FCF0B5DB1 /* MediaCardView.swift in Sources */,
+				E709058C4C2575259E34C235 /* PipSession.swift in Sources */,
 				380DE7E7F1184BA40C80A7D4 /* PlayerView.swift in Sources */,
 				C9529E04065A73C012C69B92 /* PlayerViewModel.swift in Sources */,
 				7831790D6624D6403B60BF94 /* ProfileView.swift in Sources */,
@@ -1605,6 +1647,8 @@
 				056906E71EF0BABC3DDF84F4 /* JellyfinServer.swift in Sources */,
 				D4ABB923E6F471977DE2D87E /* JellyfinUser.swift in Sources */,
 				D29500D2A60E7CAC972DC617 /* KeychainStore.swift in Sources */,
+				74C5596A3D4DC9B73A36B447 /* LanguagePreferences.swift in Sources */,
+				F154FC7F737AEC376A7E67C8 /* PlaybackDeviceProfile.swift in Sources */,
 				F8DAC96B6EAEEB9823792B33 /* PlaybackInfo.swift in Sources */,
 				AD848E30F29F5525F312183A /* SegmentDetector.swift in Sources */,
 				CA2EE6B119114DCDF2EC0D62 /* SegmentMarker.swift in Sources */,
@@ -1633,6 +1677,8 @@
 				101A597D9E5D6C554F5CCC25 /* JellyfinServer.swift in Sources */,
 				72BAB446A26FC1F71774DECB /* JellyfinUser.swift in Sources */,
 				0311FAC43A0D125F5888CB4D /* KeychainStore.swift in Sources */,
+				6BFF32C1029FBCCEB1839223 /* LanguagePreferences.swift in Sources */,
+				BFFE664027915CD4A28924AE /* PlaybackDeviceProfile.swift in Sources */,
 				9C349B9B7CF1578FF5B4FABC /* PlaybackInfo.swift in Sources */,
 				D08B36AD48DCA2B1EE3580AC /* SegmentDetector.swift in Sources */,
 				57BE36F006B7A5621EB895EF /* SegmentMarker.swift in Sources */,
@@ -1669,6 +1715,8 @@
 				EFECCFD4537FC63BB40CDA0A /* JellyfinServer.swift in Sources */,
 				F49BB41736F3752C77EB6CBE /* JellyfinUser.swift in Sources */,
 				119FCB01434D29D48349DBE8 /* KeychainStore.swift in Sources */,
+				7714A23CB3C52ED90ADAEDE7 /* LanguagePreferences.swift in Sources */,
+				78E72C717C386A25431AF5C1 /* PlaybackDeviceProfile.swift in Sources */,
 				01824714F1DC9253E8A6D61E /* PlaybackInfo.swift in Sources */,
 				1ED4A5B65CF03E5BE3A23483 /* SegmentDetector.swift in Sources */,
 				5E74463CB3FCA150D1F797F6 /* SegmentMarker.swift in Sources */,
@@ -1680,6 +1728,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				738BFC96C5B53DDBFED6DFCE /* HlsStreamResolver.swift in Sources */,
 				CEF953A27F6C6524F6C0C7EF /* JellyfinAuthClient.swift in Sources */,
 				CA7504B87808231E736BFB4E /* JellyfinItemDetailClient.swift in Sources */,
 				43FA5ECDE963E404F635AA85 /* JellyfinLibraryClient.swift in Sources */,
@@ -1703,6 +1752,7 @@
 			files = (
 				8262173985F2D997771C6EEA /* AuthModel.swift in Sources */,
 				FA2D9D6A1DF30768074EB672 /* DetailView.swift in Sources */,
+				5FFC77D4067000593CB4ED8A /* DirectPlayer.swift in Sources */,
 				87A080E17BB282C20C06C3B5 /* FavoritesView.swift in Sources */,
 				58D32FE225B92CEF7C5E82F7 /* HomeView.swift in Sources */,
 				AE7346F33667CF4216217CB2 /* ImageView.swift in Sources */,
@@ -1710,6 +1760,7 @@
 				8C09173C4469A5FA66F1506E /* LoginView.swift in Sources */,
 				D16DFCDD5041366EA0DF5BCD /* MareaTabBar.swift in Sources */,
 				F4BB934A9E370F12C427D6F7 /* MediaCardView.swift in Sources */,
+				60CBD033BE25924E42BD4925 /* PipSession.swift in Sources */,
 				83EC22EF2B914DA95CCA35D7 /* PlayerView.swift in Sources */,
 				93E5A042C1DD72FB893D7ACC /* PlayerViewModel.swift in Sources */,
 				09D87DB843120EC8D1DBE969 /* ProfileView.swift in Sources */,
@@ -1732,6 +1783,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				F188263523C03DA4126FE3DF /* HlsStreamResolver.swift in Sources */,
 				CC92E71A7766D0C54DB4E45D /* JellyfinAuthClient.swift in Sources */,
 				D25B2831FDEE556734B1C552 /* JellyfinItemDetailClient.swift in Sources */,
 				565B846F82A4A862DC8AC20B /* JellyfinLibraryClient.swift in Sources */,
@@ -1956,6 +2008,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Apps/iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -2797,6 +2850,7 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				INFOPLIST_FILE = Apps/iOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

@@ -62,7 +62,7 @@ targets:
         embed: true
       - package: VLCKitSPM
         product: VLCKitSPM
-    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.ios } }
+    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.ios, INFOPLIST_FILE: Apps/iOS/Info.plist } }
 
   Core-macOS:
     type: framework

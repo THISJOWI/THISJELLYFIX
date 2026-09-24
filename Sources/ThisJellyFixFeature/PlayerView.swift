@@ -21,6 +21,9 @@ struct PlayerView: View {
     var nextEpisode: JellyfinEpisode? = nil
     var onPlayNextEpisode: ((JellyfinEpisode) -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
+    #if os(iOS)
+    @Environment(\.scenePhase) private var scenePhase
+    #endif
     @State private var viewModel = PlayerViewModel()
     @State private var seekIndicator: SeekIndicator?
     @State private var controlsTimer: Timer?
@@ -29,22 +32,6 @@ struct PlayerView: View {
     // MARK: - Fit / fill pinch
     @State private var isPinching = false
     @State private var lastPinchEnd: Date = .distantPast
-    @State private var containerSize: CGSize = .zero
-
-    /// Cover scale for fill mode: enlarges the letterboxed video until it
-    /// spans both screen dimensions. 1 in fit mode or until aspect is known.
-    private var coverScale: CGFloat {
-        guard viewModel.isFill,
-              let aspect = viewModel.videoAspect, aspect > 0,
-              containerSize.width > 0, containerSize.height > 0
-        else { return 1 }
-        let containerAspect = containerSize.width / containerSize.height
-        // VLC letterboxes to fit: video occupies min on each axis. Scale by
-        // whichever axis is short so both axes reach the container edges.
-        return aspect < containerAspect
-            ? containerAspect / aspect   // width short → scale horizontally
-            : aspect / containerAspect   // height short → scale vertically
-    }
 
     private func dismissPlayer() {
         onDismiss?() ?? dismiss()
@@ -54,26 +41,20 @@ struct PlayerView: View {
         // Use .overlay() instead of ZStack so ControlsOverlay is always the
         // topmost AppKit hosting view — critical after toggleFullScreen restructures
         // the window hierarchy and can reorder ZStack children.
+        // Fit/fill is applied INSIDE VLC (videoFitMode): a SwiftUI scaleEffect
+        // here would crop VLC's subtitle layer off-screen in fill mode.
         VLCPlayerBridge(viewModel: viewModel)
             .ignoresSafeArea()
-            // Fill mode: scale the drawable by the exact cover ratio so the
-            // letterboxed video fills every edge (computed geometry, no gaps).
-            .scaleEffect(coverScale)
-            .clipped()
             .background(Color.black.ignoresSafeArea())
-            // Container size for the fill-mode cover scale
-            .background(
-                GeometryReader { geo in
-                    Color.clear
-                        .onAppear { containerSize = geo.size; logCover("appear") }
-                        .onChange(of: geo.size) { _, new in
-                            containerSize = new
-                            logCover("resize")
-                        }
-                }
-            )
-            .onChange(of: viewModel.videoAspect) { _, _ in logCover("aspect") }
-            .onChange(of: viewModel.isFill) { _, _ in logCover("fill") }
+
+            #if os(iOS)
+            // Hosts the AVPlayerLayer of the active PiP session so the system
+            // floating window has a layer inside the view hierarchy.
+            .overlay {
+                PipLayerHostView(isActive: viewModel.pipState == .active)
+                    .allowsHitTesting(false)
+            }
+            #endif
 
             // Tap catcher — below controls, above video
             .overlay {
@@ -187,6 +168,8 @@ struct PlayerView: View {
             #if os(iOS)
             // Force landscape orientation for playback
             forceLandscape()
+            // Closing PiP (X) while floating dismisses this fullscreen UI.
+            viewModel.onPiPClosed = { dismissPlayer() }
             #endif
             // Configure playback reporting if credentials provided
             if let itemId, let serverURL, let token, let userId {
@@ -195,6 +178,10 @@ struct PlayerView: View {
                 TJFLog("onAppear: reporting NOT configured itemId=\(itemId != nil) serverURL=\(serverURL != nil) token=\(token != nil) userId=\(userId != nil)")
             }
             viewModel.configureMediaStreams(mediaStreams)
+            #if os(iOS)
+            // Warm the HLS playlist for PiP — non-blocking.
+            viewModel.resolvePipSupport()
+            #endif
             // Next-episode action for the credits overlay
             if let nextEpisode, let onPlayNextEpisode {
                 viewModel.hasNextEpisode = true
@@ -230,8 +217,10 @@ struct PlayerView: View {
                 // Stop VLC synchronously on main thread BEFORE the view is deallocated.
                 // Detach drawable first so VLC's render thread stops accessing the view,
                 // then stop playback. This prevents the vlc_gl_filter_ApplyOutputSize crash.
+                // While PiP is floating the play session must stay open — the
+                // AVPlayer session keeps reporting progress on its own.
                 viewModel.detachDrawable()
-                viewModel.stopSync()
+                viewModel.stopSync(reportStop: !viewModel.isPiPPlaybackContinuing)
             }
         }
         .onChange(of: viewModel.isPlaying) { _, playing in
@@ -244,6 +233,21 @@ struct PlayerView: View {
             }
             wasPlaying = playing
         }
+        #if os(iOS)
+        .onChange(of: scenePhase) { _, newPhase in
+            if newPhase == .background {
+                // Auto-PiP: leaving the app hands the episode to the floating
+                // window (skipped when paused or HLS is unavailable — VLC then
+                // simply keeps playing audio in the background).
+                Task { await viewModel.startPictureInPicture() }
+            } else if newPhase == .active, viewModel.pipState == .active {
+                // Foregrounded without tapping the window (app switcher) —
+                // pull playback back into fullscreen. The tap path is driven
+                // by the PiP delegate instead.
+                Task { await viewModel.resumeFromPictureInPicture() }
+            }
+        }
+        #endif
         .sheet(isPresented: $viewModel.showAudioPicker) {
             AudioPickerSheet(
                 tracks: viewModel.availableAudioTracks,
@@ -267,10 +271,6 @@ struct PlayerView: View {
                 Task { await viewModel.setPlaybackRate(rate) }
             }
         }
-    }
-
-    private func logCover(_ reason: String) {
-        TJFLog("cover[\(reason)] container=\(Int(containerSize.width))x\(Int(containerSize.height)) aspect=\(viewModel.videoAspect.map { String(format: "%.4f", $0) } ?? "nil") fill=\(viewModel.isFill) scale=\(String(format: "%.4f", coverScale))")
     }
 
     // MARK: - Fit / fill gestures
@@ -422,7 +422,9 @@ private class PassThroughContainer: NSView {
     }
 
     private func setupVideoView() {
-        videoView.fillScreen = true
+        // Aspect is driven by mediaPlayer.videoFitMode (fit/fill toggle);
+        // fillScreen here would force-fill and break fit mode.
+        videoView.fillScreen = false
         videoView.translatesAutoresizingMaskIntoConstraints = false
         addSubview(videoView)
         NSLayoutConstraint.activate([
@@ -489,6 +491,19 @@ private struct ControlsOverlay: View {
                         .foregroundStyle(.white)
                         .padding(10)
                         .background(.black.opacity(0.5), in: Circle())
+                }
+                #endif
+                #if os(iOS)
+                if viewModel.pipAvailable && viewModel.pipState == .idle {
+                    Button {
+                        Task { await viewModel.startPictureInPicture() }
+                    } label: {
+                        Image(systemName: "pip")
+                            .font(.title3)
+                            .foregroundStyle(.white)
+                            .padding(10)
+                            .background(.black.opacity(0.5), in: Circle())
+                    }
                 }
                 #endif
             }
@@ -1055,6 +1070,39 @@ private struct CloseButtonWindowRepresentable: NSViewRepresentable {
             return NSApp.windows.first {
                 $0.isVisible && $0.level == .normal
             }
+        }
+    }
+}
+#endif
+
+// MARK: - PiP Layer Host (iOS)
+
+#if os(iOS)
+/// Embeds the `AVPlayerLayer` of the active `PipSession` into the fullscreen
+/// player's view hierarchy. The system PiP window takes over rendering once it
+/// starts; while the app is foregrounded the layer mirrors the floating
+/// window's content (the fullscreen VLC frame underneath is paused).
+private struct PipLayerHostView: UIViewRepresentable {
+    let isActive: Bool
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = .clear
+        view.isUserInteractionEnabled = false
+        return view
+    }
+
+    func updateUIView(_ uiView: UIView, context: Context) {
+        guard isActive, let layer = PipSession.shared.currentLayer else {
+            uiView.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
+            return
+        }
+        if layer.superlayer !== uiView.layer {
+            uiView.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
+            layer.frame = uiView.bounds
+            uiView.layer.addSublayer(layer)
+        } else {
+            layer.frame = uiView.bounds
         }
     }
 }

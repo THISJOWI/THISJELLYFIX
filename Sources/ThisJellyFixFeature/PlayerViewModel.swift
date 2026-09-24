@@ -97,10 +97,36 @@ final class PlayerViewModel {
 
     // MARK: - Playback Control
 
+    /// Stream URL of the current playback — lets the PiP resume path
+    /// re-prepare VLC after the view was torn down.
+    private var currentStreamURL: URL?
+    /// True once VLC has been stopped (view disappeared) — a PiP resume must
+    /// re-prepare the media instead of just seeking.
+    private var engineStopped = false
+    /// The floating PiP session already reported playback stopped (user hit
+    /// X) — the fullscreen teardown must not send a second, stale stop.
+    private var pipSessionReportedStop = false
+
     func prepareStream(url: URL, startPosition: Double? = nil) async {
         do {
+            // A floating PiP from a previous item must not keep playing (and
+            // reporting) over the new playback.
+            #if os(iOS)
+            if let itemId, PipSession.shared.isActive, PipSession.shared.activeItemId != itemId {
+                TJFLog("pip: closing foreign session item=\(PipSession.shared.activeItemId ?? "nil") for new item=\(itemId)")
+                PipSession.shared.onRestore = nil
+                PipSession.shared.onClosed = nil
+                PipSession.shared.closeAndReport()
+            }
+            #endif
             let request = PlaybackRequest(itemID: "", streamURL: url, startTime: startPosition)
             try await engine.prepare(request)
+            currentStreamURL = url
+            engineStopped = false
+            pipSessionReportedStop = false
+            // Apply the persisted fit/fill mode natively so VLC composes
+            // subtitles within the visible region from the start.
+            await engine.setVideoFill(isFill)
         } catch {
             errorMessage = error.localizedDescription
         }
@@ -187,10 +213,12 @@ final class PlayerViewModel {
     }
 
     /// Switch between fill (cover screen) and fit (whole video) modes.
-    /// Pure UI state — the cover scale is computed in PlayerView.
+    /// Applied INSIDE VLC (`videoFitMode`) so subtitles stay visible when the
+    /// video is cropped to fill the screen.
     func setFill(_ fill: Bool) {
         guard fill != isFill else { return }
         isFill = fill
+        Task { await engine.setVideoFill(fill) }
     }
 
     /// Native video aspect ratio (width/height), nil until known.
@@ -205,6 +233,7 @@ final class PlayerViewModel {
     }
 
     func selectSubtitleTrack(_ track: SubtitleTrack?) async {
+        snapshotTextTracks("before select id=\(track.map { "\($0.id)" } ?? "off")")
         if let track {
             await engine.selectSubtitleTrack(index: track.id)
             selectedSubtitleTrackIndex = track.id
@@ -212,6 +241,31 @@ final class PlayerViewModel {
             await engine.selectSubtitleTrack(index: -1)
             selectedSubtitleTrackIndex = nil
         }
+        snapshotTextTracks("right after select")
+        // Verification later — libvlc applies ES changes asynchronously via the
+        // input control queue; state 600ms later tells whether it STUCK.
+        Task { [weak self] in
+            try? await Task.sleep(for: .milliseconds(600))
+            self?.snapshotTextTracks("verify +600ms")
+        }
+    }
+
+    /// Diagnostic: dump VLC's real text-track state (selected flags) — the UI's
+    /// `selectedSubtitleTrackIndex` only records our INTENT, not VLC's truth.
+    func snapshotTextTracks(_ tag: String) {
+        let snap = engine.vlcMediaPlayer().textTracks.enumerated().map { idx, t in
+            let name = t.trackName ?? t.trackId
+            return "[\(idx)] \(name) fourcc=\(Self.fourccString(t.fourcc)) sel=\(t.isSelected)"
+        }.joined(separator: " | ")
+        TJFLog("subState[\(tag)] \(snap.isEmpty ? "NONE" : snap)")
+    }
+
+    private static func fourccString(_ code: UInt32) -> String {
+        let bytes = [
+            UInt8((code >> 24) & 0xFF), UInt8((code >> 16) & 0xFF),
+            UInt8((code >> 8) & 0xFF), UInt8(code & 0xFF),
+        ]
+        return String(bytes: bytes, encoding: .isoLatin1) ?? "????"
     }
 
     func loadExternalSubtitle(url: URL) async {
@@ -222,6 +276,9 @@ final class PlayerViewModel {
     // MARK: - Timer
 
     func startUpdating() {
+        // A PiP handoff race (start vs resume) must never stack timers —
+        // a leaked timer keeps reporting stale progress forever.
+        guard updateTimer == nil else { return }
         updateTimer = Timer.scheduledTimer(withTimeInterval: 0.5, repeats: true) { [weak self] _ in
             Task { @MainActor [weak self] in
                 guard let self else { return }
@@ -230,13 +287,19 @@ final class PlayerViewModel {
                 self.duration = await self.engine.duration
                 self.isPlaying = await self.engine.isPlaying
 
-                // Native video aspect for the SwiftUI cover-scale (fill mode)
+                // Native video aspect (diagnostics)
                 let vs = self.engine.videoSize
                 if vs.width > 0, vs.height > 0 {
                     let aspect = vs.width / vs.height
                     if abs(aspect - (self.videoAspect ?? 0)) > 0.001 {
+                        let voutJustReady = self.videoAspect == nil
                         self.videoAspect = aspect
                         TJFLog("videoAspect=\(aspect) videoSize=\(vs.width)x\(vs.height)")
+                        // vout just created — re-apply fit/fill; this VLCKit
+                        // alpha can drop videoFitMode across vout setup.
+                        if voutJustReady {
+                            await self.engine.setVideoFill(self.isFill)
+                        }
                     }
                 } else if self.videoAspect == nil && self.timerTickCount <= 6 {
                     TJFLog("videoAspect PENDING videoSize=\(vs.width)x\(vs.height)")
@@ -397,8 +460,39 @@ final class PlayerViewModel {
         availableSubtitleTracks = await engine.availableSubtitleTracks
 
         TJFLog("loadTracks audio=\(availableAudioTracks.count) subs=\(availableSubtitleTracks.count)")
+        snapshotTextTracks("loadTracks")
 
         await addExternalSubtitlesIfNeeded()
+
+        await applyLanguagePreferences()
+    }
+
+    /// Apply profile language preferences once per item, only when the user
+    /// hasn't manually picked a track yet. No match → leave VLC's default.
+    private func applyLanguagePreferences() async {
+        let prefs = LanguagePreferences.current()
+
+        if selectedAudioTrackIndex == nil,
+           let audio = LanguagePreferences.selectTrack(
+               in: availableAudioTracks,
+               preferred: prefs.preferredAudio,
+               language: { $0.language }
+           ) {
+            TJFLog("langPref audio -> id=\(audio.id) lang=\(audio.language ?? "-")")
+            await engine.selectAudioTrack(index: audio.id)
+            selectedAudioTrackIndex = audio.id
+        }
+
+        if selectedSubtitleTrackIndex == nil,
+           let sub = LanguagePreferences.selectTrack(
+               in: availableSubtitleTracks,
+               preferred: prefs.preferredSubtitles,
+               language: { $0.language }
+           ) {
+            TJFLog("langPref subtitles -> id=\(sub.id) lang=\(sub.language ?? "-")")
+            await engine.selectSubtitleTrack(index: sub.id)
+            selectedSubtitleTrackIndex = sub.id
+        }
     }
 
     /// Server-side external subtitle files (.srt next to the video) are NOT inside
@@ -444,11 +538,15 @@ final class PlayerViewModel {
     }
 
     private func reportProgress() {
+        reportProgress(at: currentTime)
+    }
+
+    private func reportProgress(at position: Double) {
         guard let userId, let serverURL, let token, let itemId else {
             TJFLog("reportProgress SKIPPED: userId=\(userId != nil) serverURL=\(serverURL != nil) token=\(token != nil) itemId=\(itemId != nil)")
             return
         }
-        let ticks = Int64(currentTime * 10_000_000) // 1 tick = 100ns
+        let ticks = Int64(position * 10_000_000) // 1 tick = 100ns
         lastProgressReport = Date()
         TJFLog("reportProgress itemId=\(itemId) ticks=\(ticks)")
         Task {
@@ -483,10 +581,15 @@ final class PlayerViewModel {
     }
 
     /// Synchronous stop — call from onDisappear to ensure VLC stops before the view is deallocated.
-    func stopSync() {
-        reportStopped()
+    /// - Parameter reportStop: false when playback continues in the floating
+    ///   PiP window — the session keeps reporting progress on its own.
+    func stopSync(reportStop: Bool = true) {
+        if reportStop && !pipSessionReportedStop {
+            reportStopped()
+        }
         engine.stopSync()
         stopUpdating()
+        engineStopped = true
     }
 
     /// Detach the drawable so VLC's render thread stops accessing the view.
@@ -498,13 +601,166 @@ final class PlayerViewModel {
         engine.vlcMediaPlayer()
     }
 
+    /// Diagnostic: SwiftUI calls updateNSView/updateUIView on every re-render
+    /// (timer ticks!) — setDrawable has NO same-value guard in VLCKit, so churn
+    /// here restarts the vout on some platforms. Count it.
+    private static var drawableAttachCount = 0
+
     #if os(macOS)
     func attachDrawable(_ view: Any) {
+        Self.drawableAttachCount += 1
+        if Self.drawableAttachCount <= 5 || Self.drawableAttachCount % 100 == 0 {
+            TJFLog("attachDrawable #\(Self.drawableAttachCount)")
+        }
         engine.vlcMediaPlayer().drawable = view
     }
     #elseif os(iOS)
     func attachDrawable(_ view: UIView) {
+        Self.drawableAttachCount += 1
+        if Self.drawableAttachCount <= 5 || Self.drawableAttachCount % 100 == 0 {
+            TJFLog("attachDrawable #\(Self.drawableAttachCount)")
+        }
         engine.vlcMediaPlayer().drawable = view
+    }
+    #endif
+
+    // MARK: - Picture in Picture (iOS)
+
+    /// True while playback continues in the floating PiP window — the
+    /// fullscreen view must NOT stop the play session when it disappears.
+    var isPiPPlaybackContinuing: Bool {
+        #if os(iOS)
+        return pipState == .active
+        #else
+        return false
+        #endif
+    }
+
+    #if os(iOS)
+    enum PipState { case idle, active }
+
+    /// Handoff state for this player instance.
+    private(set) var pipState: PipState = .idle
+    /// True when the server offered an HLS playlist — PiP can start.
+    private(set) var pipAvailable = false
+    /// HLS playlist played by the floating AVPlayer.
+    private var hlsURL: URL?
+    /// PlayerView sets this so a user-closed PiP window dismisses fullscreen UI.
+    var onPiPClosed: (() -> Void)?
+
+    /// Prefetch the HLS playlist needed for PiP. Non-blocking — called on
+    /// appear so the handoff is instant when the app backgrounds.
+    func resolvePipSupport() {
+        guard hlsURL == nil, !pipAvailable,
+              reportingConfigured, let itemId, let serverURL, let token, let userId
+        else { return }
+        Task {
+            let resolved = await HlsStreamResolver().resolveHlsURL(
+                userId: userId, serverURL: serverURL, token: token, itemId: itemId
+            )
+            hlsURL = resolved
+            pipAvailable = resolved != nil
+            TJFLog("pip: hls available=\(resolved != nil)")
+        }
+    }
+
+    /// Hand playback over to the floating PiP window — automatically on
+    /// background, or manually via the controls button. On failure falls back
+    /// to VLC background audio (playback keeps running without a window).
+    func startPictureInPicture() async {
+        guard pipState == .idle, let hlsURL, reportingConfigured,
+              let itemId, let serverURL, let token, let userId
+        else { return }
+        // Only hand off while something is actually playing.
+        guard isPlaying || (currentTime > 0 && (duration <= 0 || currentTime < duration)) else {
+            TJFLog("pip: skipped — not playing")
+            return
+        }
+        // Another player instance already owns the floating window.
+        guard !PipSession.shared.isActive else { return }
+
+        let position = currentTime
+        TJFLog("pip: handoff from VLC at \(String(format: "%.1f", position))s")
+
+        reportProgress(at: position)
+        stopUpdating()
+        await engine.pause()
+        isPlaying = false
+
+        pipState = .active
+
+        let context = PipSession.Context(
+            itemId: itemId, serverURL: serverURL, token: token,
+            userId: userId, playSessionId: reportingSessionId
+        )
+        let started = await PipSession.shared.start(
+            hlsURL: hlsURL, position: position, context: context
+        )
+
+        if started {
+            // Wire callbacks only for the session this instance owns — a
+            // later player instance must not inherit them.
+            wirePipCallbacks(itemId: itemId)
+        } else {
+            TJFLog("pip: start failed → resuming VLC (background audio fallback)")
+            // A concurrent resume (rapid background→foreground) may already
+            // have taken playback back — only the owner recovers here.
+            if pipState == .active {
+                pipState = .idle
+                await engine.play()
+                isPlaying = true
+                startUpdating()
+            }
+        }
+    }
+
+    /// Take playback back from the floating window — user tapped the PiP
+    /// window, or the app returned to foreground. Re-prepares VLC when the
+    /// view was torn down while floating, otherwise seeks the loaded media.
+    func resumeFromPictureInPicture() async {
+        guard pipState == .active else { return }
+        pipState = .idle
+
+        // Returns the last tracked position even when the session already
+        // cleaned up (didStop racing the restore callback).
+        let position = PipSession.shared.stop()
+        TJFLog("pip: resume from \(String(format: "%.1f", position))s")
+
+        guard let streamURL = currentStreamURL else {
+            startUpdating()
+            return
+        }
+
+        if engineStopped {
+            // View disappeared while floating — full re-prepare at position.
+            await prepareStream(url: streamURL, startPosition: position > 0 ? position : nil)
+            await engine.play()
+            isPlaying = true
+            if position > 0 { await verifyResume(at: position) }
+        } else {
+            // Media still loaded (just paused) — seek to the PiP position.
+            if position > 0 { await seek(to: position) }
+            await engine.play()
+            isPlaying = true
+        }
+        startUpdating()
+    }
+
+    private func wirePipCallbacks(itemId: String) {
+        PipSession.shared.onRestore = { [weak self] position in
+            guard let self, self.itemId == itemId else { return false }
+            Task { await self.resumeFromPictureInPicture() }
+            return true
+        }
+        PipSession.shared.onClosed = { [weak self] in
+            guard let self else { return }
+            TJFLog("pip: closed by user — dismissing fullscreen")
+            // Session already reported playback stopped to the server.
+            self.pipSessionReportedStop = true
+            self.pipState = .idle
+            self.stopUpdating()
+            self.onPiPClosed?()
+        }
     }
     #endif
 }

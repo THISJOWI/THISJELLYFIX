@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!-- Background Modes: "Audio, AirPlay, and Picture in Picture".
+	     Lets AVPlayer keep the floating PiP window alive when the app
+	     backgrounds, and lets VLC keep streaming audio as fallback when
+	     HLS/PiP is unavailable. -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>audio</string>
+	</array>
+</dict>
+</plist>

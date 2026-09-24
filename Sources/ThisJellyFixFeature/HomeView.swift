@@ -9,6 +9,9 @@ struct HomeView: View {
     let userName: String
     let onLogout: () -> Void
 
+    /// Episode or movie tapped on a card — played directly, without pushing DetailView.
+    @State private var directItem: JellyfinMediaItem?
+
     var body: some View {
         #if os(macOS)
         sidebarLayout
@@ -119,7 +122,7 @@ struct HomeView: View {
     // MARK: - Scroll Content (shared)
 
     private var scrollContent: some View {
-        ScrollView {
+        let base = ScrollView {
             VStack(alignment: .leading, spacing: 28) {
                 HStack {
                     Image("AppIcon")
@@ -152,7 +155,11 @@ struct HomeView: View {
                     .padding(.top, 60)
                 } else {
                     ForEach(libraryModel.rows) { row in
-                        ContentRowView(row: row, libraryModel: libraryModel)
+                        ContentRowView(
+                            row: row,
+                            libraryModel: libraryModel,
+                            onPlayDirect: { item in directItem = item }
+                        )
                     }
                 }
             }
@@ -163,12 +170,49 @@ struct HomeView: View {
             // from DetailView) so "Estás viendo" is never stale.
             Task { await libraryModel.refreshResume() }
         }
+
+        #if os(macOS)
+        return base.overlay {
+            if let directItem {
+                DirectPlayer(
+                    item: directItem,
+                    serverURL: serverURL,
+                    token: token,
+                    userId: userId,
+                    onClosed: closeDirectPlayer
+                )
+                .ignoresSafeArea()
+            }
+        }
+        #else
+        return base.fullScreenCover(item: $directItem) { item in
+            DirectPlayer(
+                item: item,
+                serverURL: serverURL,
+                token: token,
+                userId: userId,
+                onClosed: closeDirectPlayer
+            )
+        }
+        #endif
+    }
+
+    /// Player dismissed: back to this screen, then refresh progress rows
+    /// once the reportStopped request has had time to land.
+    private func closeDirectPlayer() {
+        directItem = nil
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            await libraryModel.load()
+        }
     }
 }
 
 private struct ContentRowView: View {
     let row: ContentRow
     let libraryModel: LibraryModel
+    /// Direct playback taps (episodes/movies) bypass DetailView.
+    var onPlayDirect: (JellyfinMediaItem) -> Void = { _ in }
     @State private var appeared = false
 
     var body: some View {
@@ -184,15 +228,21 @@ private struct ContentRowView: View {
                 // look like different heights.
                 LazyHStack(alignment: .top, spacing: 14) {
                     ForEach(Array(row.items.enumerated()), id: \.element.id) { index, item in
-                        NavigationLink(value: item) {
-                            let isResumeRow = row.title == "Estás viendo"
-                            MediaCardView(
-                                item: item,
-                                imageURL: libraryModel.imageURL(for: item, wide: isResumeRow),
-                                wide: isResumeRow
-                            )
+                        let isResumeRow = row.title == "Estás viendo"
+                        let card = MediaCardView(
+                            item: item,
+                            imageURL: libraryModel.imageURL(for: item, wide: isResumeRow),
+                            wide: isResumeRow
+                        )
+
+                        if item.type == "Episode" || item.type == "Movie" {
+                            // Direct playback — no DetailView in between.
+                            Button { onPlayDirect(item) } label: { card }
+                                .buttonStyle(.plain)
+                        } else {
+                            NavigationLink(value: item) { card }
+                                .buttonStyle(.plain)
                         }
-                        .buttonStyle(.plain)
                     }
                 }
                 .padding(.horizontal, 32)

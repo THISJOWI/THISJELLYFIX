@@ -13,6 +13,19 @@ public struct JellyfinPlaybackClient: JellyfinPlaybackProviding {
     }
 
     public func fetchPlaybackInfo(userId: String, serverURL: URL, token: String, itemId: String) async throws -> PlaybackInfo {
+        try await fetchPlaybackInfo(userId: userId, serverURL: serverURL, token: token, itemId: itemId, deviceProfile: nil)
+    }
+
+    /// Same as `fetchPlaybackInfo` but sends a Jellyfin DeviceProfile so the
+    /// server answers with a specific playback plan (e.g. an HLS-only profile
+    /// yields a `TranscodingUrl` usable by AVPlayer picture-in-picture).
+    public func fetchPlaybackInfo(
+        userId: String,
+        serverURL: URL,
+        token: String,
+        itemId: String,
+        deviceProfile: PlaybackDeviceProfile?
+    ) async throws -> PlaybackInfo {
         let url = serverURL.appendingPathComponent("Items/\(itemId)/PlaybackInfo")
 
         var request = URLRequest(url: url)
@@ -24,11 +37,15 @@ public struct JellyfinPlaybackClient: JellyfinPlaybackProviding {
             forHTTPHeaderField: "Authorization"
         )
 
-        let body: [String: Any] = [
+        var body: [String: Any] = [
             "UserId": userId,
             "DeviceId": DeviceIdentifier().current(),
             "MediaSourceId": itemId,
         ]
+        if let deviceProfile {
+            let profileData = try JSONEncoder().encode(deviceProfile)
+            body["DeviceProfile"] = try JSONSerialization.jsonObject(with: profileData)
+        }
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         let (data, response) = try await session.data(for: request)
