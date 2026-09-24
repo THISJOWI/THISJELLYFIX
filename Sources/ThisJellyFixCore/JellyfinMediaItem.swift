@@ -10,6 +10,7 @@ public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable, Has
     public let parentIndexNumber: Int?
     public let year: Int?
     public let imageTags: [String: String]?
+    public let backdropImageTags: [String]?
     public let officialRating: String?
     public let communityRating: Double?
     public let userData: UserData?
@@ -24,6 +25,7 @@ public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable, Has
         case parentIndexNumber = "ParentIndexNumber"
         case year = "Year"
         case imageTags = "ImageTags"
+        case backdropImageTags = "BackdropImageTags"
         case officialRating = "OfficialRating"
         case communityRating = "CommunityRating"
         case userData = "UserData"
@@ -125,6 +127,7 @@ public struct JellyfinEpisode: Codable, Sendable, Equatable, Identifiable {
     public let seriesName: String?
     public let seasonName: String?
     public let imageTags: [String: String]?
+    public let userData: UserData?
 
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -137,6 +140,12 @@ public struct JellyfinEpisode: Codable, Sendable, Equatable, Identifiable {
         case seriesName = "SeriesName"
         case seasonName = "SeasonName"
         case imageTags = "ImageTags"
+        case userData = "UserData"
+    }
+
+    /// Resume position in seconds. nil if no resume data.
+    public var resumePositionSeconds: Double? {
+        userData?.playbackPositionTicks.map { Double($0) / 10_000_000.0 }
     }
 
     public var episodeLabel: String {

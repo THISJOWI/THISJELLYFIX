@@ -19,6 +19,14 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
                 "--no-video-title-show",
             ]
         )
+        // Fill the drawable instead of letterboxing (default fit_smaller leaves
+        // black bars when video aspect ≠ screen aspect). Crop overflow like Netflix.
+        mediaPlayer.videoFitMode = .larger
+    }
+
+    /// Toggle fill (crop to cover the screen) vs fit (whole video, letterboxed).
+    public func setFill(_ fill: Bool) {
+        mediaPlayer.videoFitMode = fill ? .larger : .smaller
     }
 
     deinit {
@@ -30,6 +38,12 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
 
     public func prepare(_ request: PlaybackRequest) async throws {
         let media = VLCMedia(url: request.streamURL)
+        // Open DIRECTLY at the resume position via input option — VLC seeks as part
+        // of opening the media, so there is no open-at-0 → seek → HTTP re-buffer
+        // round trip (the slow resume). Must be added before playback starts.
+        if let media, let start = request.startTime, start > 0 {
+            media.addOption(":start-time=\(Int(start))")
+        }
         mediaPlayer.media = media
 
         // Brief pause so the media object is fully associated

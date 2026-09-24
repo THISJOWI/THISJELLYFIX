@@ -134,12 +134,26 @@ final class LibraryModel {
         }
     }
 
-    func imageURL(for item: JellyfinMediaItem) -> URL? {
+    func imageURL(for item: JellyfinMediaItem, wide: Bool = false) -> URL? {
         guard item.hasImage else { return nil }
+        let path: String
+        if wide {
+            // Resume-row landscape cards: prefer a real 16:9 frame (Thumb),
+            // then the backdrop, then fall back to the portrait poster.
+            if item.imageTags?["Thumb"] != nil {
+                path = "Items/\(item.id)/Images/Thumb"
+            } else if !(item.backdropImageTags ?? []).isEmpty {
+                path = "Items/\(item.id)/Images/Backdrop"
+            } else {
+                path = "Items/\(item.id)/Images/Primary"
+            }
+        } else {
+            path = "Items/\(item.id)/Images/Primary"
+        }
         return serverURL
-            .appendingPathComponent("Items/\(item.id)/Images/Primary")
+            .appendingPathComponent(path)
             .appending(queryItems: [
-                URLQueryItem(name: "maxWidth", value: "300"),
+                URLQueryItem(name: "maxWidth", value: wide ? "480" : "300"),
                 URLQueryItem(name: "quality", value: "90"),
             ])
     }

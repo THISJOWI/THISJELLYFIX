@@ -23,6 +23,10 @@ struct PlayerView: View {
     @State private var controlsTimer: Timer?
     @State private var wasPlaying = false
 
+    // MARK: - Fit / fill pinch
+    @State private var isPinching = false
+    @State private var lastPinchEnd: Date = .distantPast
+
     private func dismissPlayer() {
         onDismiss?() ?? dismiss()
     }
@@ -33,12 +37,18 @@ struct PlayerView: View {
         // the window hierarchy and can reorder ZStack children.
         VLCPlayerBridge(viewModel: viewModel)
             .ignoresSafeArea()
+            // Fit/fill mode is applied inside VLC (videoFitMode), not with
+            // SwiftUI transforms — pinch toggles between the two modes.
             .background(Color.black.ignoresSafeArea())
 
             // Tap catcher — below controls, above video
             .overlay {
                 Color.clear
                     .contentShape(Rectangle())
+                    .onTapGesture(count: 2) {
+                        // Double-tap: toggle fit ↔ fill
+                        viewModel.setFill(!viewModel.isFill)
+                    }
                     .onTapGesture {
                         withAnimation(.easeInOut(duration: 0.2)) {
                             viewModel.showControls.toggle()
@@ -113,8 +123,14 @@ struct PlayerView: View {
             .gesture(
                 DragGesture(minimumDistance: 30)
                     .onEnded { value in
+                        guard !isPinching, Date().timeIntervalSince(lastPinchEnd) >= 0.4 else { return }
                         handleSwipe(value)
                     }
+            )
+            .simultaneousGesture(
+                MagnifyGesture()
+                    .onChanged { value in handleMagnifyChanged(value) }
+                    .onEnded { value in handleMagnifyEnded(value) }
             )
         .onAppear {
             #if os(iOS)
@@ -132,13 +148,14 @@ struct PlayerView: View {
             // slow stream prepare can never leave us without polls.
             viewModel.startUpdating()
             Task {
-                await viewModel.prepareStream(url: streamURL)
+                await viewModel.prepareStream(url: streamURL, startPosition: startPosition)
                 // Wait for VLCPlayerBridge to attach drawable before playing
                 try? await Task.sleep(for: .milliseconds(500))
                 await viewModel.togglePlayPause()
-                // Resume from saved position if available
+                // Resume from saved position if available — media may already be
+                // opened there via start-time; verify before re-seeking
                 if let start = startPosition, start > 0 {
-                    await viewModel.seek(to: start)
+                    await viewModel.verifyResume(at: start)
                 }
             }
             resetControlsTimer()
@@ -191,6 +208,24 @@ struct PlayerView: View {
                 Task { await viewModel.setPlaybackRate(rate) }
             }
         }
+    }
+
+    // MARK: - Fit / fill gestures
+
+    /// Pinch out → fill the whole screen (crop overflow).
+    /// Pinch in → fit the whole video (letterbox, no crop).
+    private func handleMagnifyChanged(_ value: MagnifyGesture.Value) {
+        isPinching = true
+        let fill = value.magnification >= 1
+        if viewModel.isFill != fill {
+            viewModel.setFill(fill)
+        }
+    }
+
+    private func handleMagnifyEnded(_ value: MagnifyGesture.Value) {
+        isPinching = false
+        lastPinchEnd = Date()
+        viewModel.setFill(value.magnification >= 1)
     }
 
     private func handleSwipe(_ value: DragGesture.Value) {

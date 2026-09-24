@@ -77,6 +77,7 @@ struct DetailView: View {
                         playSessionId: currentPlaySessionId,
                         mediaStreams: currentMediaStreams
                     )
+                    .ignoresSafeArea()
                 }
             }
             .task { await loadDetail() }
@@ -403,7 +404,7 @@ struct DetailView: View {
 
     private func playEpisode(_ episode: JellyfinEpisode) async {
         streamTitle = episode.name
-        await preparePlayback(itemId: episode.id)
+        await preparePlayback(itemId: episode.id, startPosition: episode.resumePositionSeconds)
     }
 
     // MARK: - Load

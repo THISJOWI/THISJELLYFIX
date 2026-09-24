@@ -23,6 +23,8 @@ final class PlayerViewModel {
 
     // MARK: - UI State
     var showControls = true
+    /// true = fill screen (crop), false = fit whole video (letterbox)
+    var isFill = true
     var showAudioPicker = false
     var showSubtitlePicker = false
     var showSpeedPicker = false
@@ -77,9 +79,9 @@ final class PlayerViewModel {
 
     // MARK: - Playback Control
 
-    func prepareStream(url: URL) async {
+    func prepareStream(url: URL, startPosition: Double? = nil) async {
         do {
-            let request = PlaybackRequest(itemID: "", streamURL: url)
+            let request = PlaybackRequest(itemID: "", streamURL: url, startTime: startPosition)
             try await engine.prepare(request)
         } catch {
             errorMessage = error.localizedDescription
@@ -100,14 +102,59 @@ final class PlayerViewModel {
         currentTime = seconds
         // Use VLC's position setter — more reliable than time setter for all formats
         let vlcPlayer = engine.vlcMediaPlayer()
-        let dur = await engine.duration
-        if dur > 0 {
-            vlcPlayer.position = seconds / dur
+        // VLC needs the container length before position (0-1) can be computed.
+        var dur = engine.duration
+        var waitedMs = 0
+        while dur <= 0 && waitedMs < 10000 {
+            try? await Task.sleep(for: .milliseconds(250))
+            waitedMs += 250
+            dur = engine.duration
         }
-        // Wait for VLC to settle after seek
-        try? await Task.sleep(for: .milliseconds(500))
-        // Read back actual time from VLC
-        currentTime = await engine.currentTime
+        guard dur > 0 else {
+            // Length never known — let the timer sync currentTime to reality
+            isSeeking = false
+            return
+        }
+        vlcPlayer.position = seconds / dur
+        // Wait PATIENTLY for the seek to land before judging — HTTP seeks take
+        // seconds. Checking at 600ms used to always look "not applied yet" and
+        // fired a second seek → double re-buffer → sluggish resume.
+        var actual = engine.currentTime
+        waitedMs = 0
+        while abs(actual - seconds) > 2.0 && waitedMs < 5000 {
+            try? await Task.sleep(for: .milliseconds(300))
+            waitedMs += 300
+            actual = engine.currentTime
+        }
+        if abs(actual - seconds) > 2.0 {
+            // Genuinely didn't land — one retry
+            vlcPlayer.position = seconds / dur
+            try? await Task.sleep(for: .milliseconds(800))
+            actual = engine.currentTime
+        }
+        currentTime = actual
+        isSeeking = false
+    }
+
+    /// Initial resume path: the engine may have opened the media already at
+    /// `seconds` (start-time input option) — wait for it to arrive instead of
+    /// blindly re-seeking (a redundant seek re-buffers the HTTP stream).
+    func verifyResume(at seconds: Double) async {
+        isSeeking = true
+        var actual = engine.currentTime
+        var waitedMs = 0
+        while abs(actual - seconds) > 2.0 && waitedMs < 4000 {
+            try? await Task.sleep(for: .milliseconds(250))
+            waitedMs += 250
+            actual = engine.currentTime
+        }
+        if abs(actual - seconds) > 2.0 {
+            // start-time didn't take (unusual container/stream) → fallback explicit seek
+            isSeeking = false
+            await seek(to: seconds)
+            return
+        }
+        currentTime = actual
         isSeeking = false
     }
 
@@ -119,6 +166,13 @@ final class PlayerViewModel {
     func setPlaybackRate(_ rate: Float) async {
         await engine.setPlaybackRate(rate)
         playbackRate = rate
+    }
+
+    /// Switch between fill (cover screen) and fit (whole video) modes.
+    func setFill(_ fill: Bool) {
+        guard fill != isFill else { return }
+        isFill = fill
+        engine.setFill(fill)
     }
 
     // MARK: - Track Selection

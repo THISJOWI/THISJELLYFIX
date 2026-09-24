@@ -181,9 +181,11 @@ private struct ContentRowView: View {
                 LazyHStack(spacing: 14) {
                     ForEach(Array(row.items.enumerated()), id: \.element.id) { index, item in
                         NavigationLink(value: item) {
+                            let isResumeRow = row.title == "Estás viendo"
                             MediaCardView(
                                 item: item,
-                                imageURL: libraryModel.imageURL(for: item)
+                                imageURL: libraryModel.imageURL(for: item, wide: isResumeRow),
+                                wide: isResumeRow
                             )
                         }
                         .buttonStyle(.plain)

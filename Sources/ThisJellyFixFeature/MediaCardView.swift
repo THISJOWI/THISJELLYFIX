@@ -4,9 +4,12 @@ import ThisJellyFixCore
 struct MediaCardView: View {
     let item: JellyfinMediaItem
     let imageURL: URL?
+    /// Render the card in landscape 16:9 (resume row) instead of portrait poster.
+    var wide: Bool = false
     @State private var isAppeared = false
 
     private var isEpisode: Bool { item.type == "Episode" }
+    private var isWide: Bool { wide || isEpisode }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
@@ -39,8 +42,8 @@ struct MediaCardView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
 
-                // Play button overlay for episodes with progress
-                if isEpisode, item.playedPercentage != nil {
+                // Play button overlay for wide cards with progress
+                if isWide, item.playedPercentage != nil {
                     Image(systemName: "play.fill")
                         .font(.system(size: 20))
                         .foregroundStyle(.white)
@@ -96,10 +99,10 @@ struct MediaCardView: View {
     }
 
     private var cardWidth: CGFloat {
-        isEpisode ? 240 : 150
+        isWide ? 240 : 150
     }
 
     private var cardHeight: CGFloat {
-        isEpisode ? 135 : 220  // 16:9 for episodes, portrait for movies/series
+        isWide ? 135 : 220  // 16:9 for episodes/resume, portrait for movies/series
     }
 }
