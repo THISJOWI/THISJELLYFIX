@@ -1,4 +1,5 @@
 import SwiftUI
+import ThisJellyFixCore
 
 struct ProfileView: View {
     let userName: String
@@ -36,6 +37,9 @@ struct ProfileView: View {
                             .frame(height: 300)
                     }
 
+                    // Skip segment preferences
+                    SkipSettingsSection()
+
                     // Actions
                     VStack(spacing: 12) {
                         Button {
@@ -60,5 +64,41 @@ struct ProfileView: View {
             .navigationBarTitleDisplayMode(.inline)
             #endif
         }
+    }
+}
+
+// MARK: - Skip Settings
+
+private struct SkipSettingsSection: View {
+    // @AppStorage inside @Observable-adjacent views: plain @State-free view,
+    // so no @ObservationIgnored needed here.
+    @AppStorage(SkipSettings.Key.autoSkip) private var autoSkip = true
+    @AppStorage(SkipSettings.Key.intro) private var introEnabled = true
+    @AppStorage(SkipSettings.Key.recap) private var recapEnabled = true
+    @AppStorage(SkipSettings.Key.credits) private var creditsEnabled = true
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Salto automático")
+                .font(.headline)
+
+            Toggle(isOn: $autoSkip) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Auto-saltar segmentos")
+                    Text("Salta solo tras 5 s dentro de un segmento")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            Divider()
+
+            Toggle("Introducción", isOn: $introEnabled)
+            Toggle("Resumen", isOn: $recapEnabled)
+            Toggle("Ending", isOn: $creditsEnabled)
+        }
+        .padding(16)
+        .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 24)
     }
 }

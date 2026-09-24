@@ -31,6 +31,23 @@ final class PlayerViewModel {
     var showQualityPicker = false
     var errorMessage: String?
 
+    // MARK: - Skip Segments (intro / recap / credits)
+    /// Current skip UI state — driven by the 0.5s playback timer.
+    var activeSegment: SegmentMarker?
+    /// Seconds until auto-skip fires inside `activeSegment` (nil = auto-skip off).
+    var segmentCountdown: Double?
+    /// Provided by the view: plays the next episode (nil when unavailable).
+    var onPlayNextEpisode: (() -> Void)?
+    /// true when a next-episode action is wired (credits shows both buttons).
+    var hasNextEpisode = false
+
+    private var segmentDetector = SegmentDetector()
+    private var segmentMarkers: [SegmentMarker] = []
+    private var segmentClient: any JellyfinSegmentProviding
+    private var segmentsLoaded = false
+    private var segmentsLoadAttempts = 0
+    private var skipInProgress = false
+
     // MARK: - Dependencies
     private let engine: VLCPlaybackEngine
     private var updateTimer: Timer?
@@ -53,8 +70,9 @@ final class PlayerViewModel {
     private var userId: String?
     private var reportingConfigured = false
 
-    init(engine: VLCPlaybackEngine = VLCPlaybackEngine()) {
+    init(engine: VLCPlaybackEngine = VLCPlaybackEngine(), segmentClient: any JellyfinSegmentProviding = JellyfinSegmentClient()) {
         self.engine = engine
+        self.segmentClient = segmentClient
     }
 
     /// Configure playback reporting. Call before starting playback.
@@ -169,11 +187,14 @@ final class PlayerViewModel {
     }
 
     /// Switch between fill (cover screen) and fit (whole video) modes.
+    /// Pure UI state — the cover scale is computed in PlayerView.
     func setFill(_ fill: Bool) {
         guard fill != isFill else { return }
         isFill = fill
-        engine.setFill(fill)
     }
+
+    /// Native video aspect ratio (width/height), nil until known.
+    private(set) var videoAspect: CGFloat?
 
     // MARK: - Track Selection
 
@@ -208,6 +229,18 @@ final class PlayerViewModel {
                 self.currentTime = await self.engine.currentTime
                 self.duration = await self.engine.duration
                 self.isPlaying = await self.engine.isPlaying
+
+                // Native video aspect for the SwiftUI cover-scale (fill mode)
+                let vs = self.engine.videoSize
+                if vs.width > 0, vs.height > 0 {
+                    let aspect = vs.width / vs.height
+                    if abs(aspect - (self.videoAspect ?? 0)) > 0.001 {
+                        self.videoAspect = aspect
+                        TJFLog("videoAspect=\(aspect) videoSize=\(vs.width)x\(vs.height)")
+                    }
+                } else if self.videoAspect == nil && self.timerTickCount <= 6 {
+                    TJFLog("videoAspect PENDING videoSize=\(vs.width)x\(vs.height)")
+                }
 
                 // Diagnostic log (first 10 ticks only)
                 self.timerTickCount += 1
@@ -261,6 +294,10 @@ final class PlayerViewModel {
                         await self.loadTracks()
                     }
                 }
+
+                // Skip segments: fetch markers once, then evaluate every tick
+                await self.loadSegmentsIfNeeded()
+                self.evaluateSkipState(delta: 0.5)
             }
         }
     }
@@ -268,6 +305,89 @@ final class PlayerViewModel {
     func stopUpdating() {
         updateTimer?.invalidate()
         updateTimer = nil
+    }
+
+    // MARK: - Skip Segments
+
+    /// Fetches skip markers once per playback session. Network/plugin failures
+    /// degrade silently after a couple of attempts — the player works normally.
+    private func loadSegmentsIfNeeded() async {
+        guard !segmentsLoaded else { return }
+        guard reportingConfigured, let serverURL, let token, let userId, let itemId else { return }
+        segmentsLoadAttempts += 1
+        do {
+            let markers = try await segmentClient.fetchSegments(
+                serverURL: serverURL,
+                token: token,
+                userId: userId,
+                itemId: itemId
+            )
+            segmentMarkers = markers
+            segmentsLoaded = true
+        } catch {
+            TJFLog("segments fetch error attempt=\(segmentsLoadAttempts): \(error)")
+            if segmentsLoadAttempts >= 3 {
+                segmentsLoaded = true // give up quietly
+            }
+        }
+    }
+
+    private func evaluateSkipState(delta: Double) {
+        guard !skipInProgress else { return }
+        // Freeze countdown while paused or seeking — only advance during playback.
+        let effectiveDelta = (isPlaying && !isSeeking) ? delta : 0
+        let settings = SkipSettings.current()
+        let outcome = segmentDetector.tick(
+            time: currentTime,
+            delta: effectiveDelta,
+            markers: segmentMarkers,
+            settings: settings
+        )
+        switch outcome {
+        case .none:
+            activeSegment = nil
+            segmentCountdown = nil
+        case .show(let marker, let countdown):
+            activeSegment = marker
+            segmentCountdown = countdown
+        case .triggerSkip(let marker):
+            activeSegment = marker
+            segmentCountdown = nil
+            segmentDetector.markSkipped(marker)
+            Task { await performSkip(marker) }
+        }
+    }
+
+    /// Skip action for the overlay button: jump to the end of the segment.
+    func skipActiveSegment() {
+        guard let marker = activeSegment, !skipInProgress else { return }
+        segmentDetector.markSkipped(marker)
+        Task { await performSkip(marker) }
+    }
+
+    /// Ending segment: offer/trigger next episode playback.
+    func playNextEpisode() {
+        guard activeSegment?.type == .credits else { return }
+        onPlayNextEpisode?()
+    }
+
+    private func performSkip(_ marker: SegmentMarker) async {
+        skipInProgress = true
+        defer {
+            skipInProgress = false
+            activeSegment = nil
+            segmentCountdown = nil
+        }
+        let target: Double
+        if let end = marker.end {
+            target = end
+        } else {
+            // Chapter-derived marker running to video end: skip to the very end.
+            target = max(0, duration - 0.5)
+        }
+        guard target > currentTime else { return }
+        TJFLog("skip \(marker.type.rawValue) → \(Int(target))s")
+        await seek(to: target)
     }
 
     // MARK: - Private

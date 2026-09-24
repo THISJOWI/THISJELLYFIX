@@ -178,7 +178,11 @@ private struct ContentRowView: View {
                 .padding(.horizontal, 32)
 
             ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 14) {
+                // Top-align cards: text below posters varies in height (1–2 line
+                // titles, optional year, episode labels), and the default
+                // .center alignment vertically offset the posters, making them
+                // look like different heights.
+                LazyHStack(alignment: .top, spacing: 14) {
                     ForEach(Array(row.items.enumerated()), id: \.element.id) { index, item in
                         NavigationLink(value: item) {
                             let isResumeRow = row.title == "Estás viendo"

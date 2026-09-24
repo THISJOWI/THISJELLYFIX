@@ -21,6 +21,7 @@ struct DetailView: View {
     @State private var currentMediaStreams: [MediaStream] = []
     @State private var isPreparingPlayback = false
     @State private var playbackError: String?
+    @State private var nextEpisode: JellyfinEpisode?
 
     // MARK: - Seasons & Episodes
     @State private var seasons: [JellyfinSeason] = []
@@ -51,7 +52,11 @@ struct DetailView: View {
                     token: token,
                     userId: userId,
                     playSessionId: currentPlaySessionId,
-                    mediaStreams: currentMediaStreams
+                    mediaStreams: currentMediaStreams,
+                    nextEpisode: nextEpisode,
+                    onPlayNextEpisode: { episode in
+                        Task { await playNextEpisode(episode) }
+                    }
                 )
                 .ignoresSafeArea()
             }
@@ -75,7 +80,11 @@ struct DetailView: View {
                         token: token,
                         userId: userId,
                         playSessionId: currentPlaySessionId,
-                        mediaStreams: currentMediaStreams
+                        mediaStreams: currentMediaStreams,
+                        nextEpisode: nextEpisode,
+                        onPlayNextEpisode: { episode in
+                            Task { await playNextEpisode(episode) }
+                        }
                     )
                     .ignoresSafeArea()
                 }
@@ -404,7 +413,23 @@ struct DetailView: View {
 
     private func playEpisode(_ episode: JellyfinEpisode) async {
         streamTitle = episode.name
+        nextEpisode = nextEpisodeAfter(episode)
         await preparePlayback(itemId: episode.id, startPosition: episode.resumePositionSeconds)
+    }
+
+    /// Next episode in the currently listed season order, if any.
+    private func nextEpisodeAfter(_ episode: JellyfinEpisode) -> JellyfinEpisode? {
+        guard let index = episodes.firstIndex(where: { $0.id == episode.id }),
+              index + 1 < episodes.count else { return nil }
+        return episodes[index + 1]
+    }
+
+    /// Credits overlay → tear down the current player and start the next one.
+    private func playNextEpisode(_ episode: JellyfinEpisode) async {
+        showPlayer = false
+        // Let the full-screen cover dismiss and VLC stop before re-presenting.
+        try? await Task.sleep(for: .milliseconds(500))
+        await playEpisode(episode)
     }
 
     // MARK: - Load

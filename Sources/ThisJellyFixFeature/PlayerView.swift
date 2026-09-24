@@ -17,6 +17,9 @@ struct PlayerView: View {
     var playSessionId: String? = nil
     // Server media streams — needed to load external subtitle files
     var mediaStreams: [MediaStream] = []
+    // Next episode wiring — when provided, the credits overlay offers it
+    var nextEpisode: JellyfinEpisode? = nil
+    var onPlayNextEpisode: ((JellyfinEpisode) -> Void)? = nil
     @Environment(\.dismiss) private var dismiss
     @State private var viewModel = PlayerViewModel()
     @State private var seekIndicator: SeekIndicator?
@@ -26,6 +29,22 @@ struct PlayerView: View {
     // MARK: - Fit / fill pinch
     @State private var isPinching = false
     @State private var lastPinchEnd: Date = .distantPast
+    @State private var containerSize: CGSize = .zero
+
+    /// Cover scale for fill mode: enlarges the letterboxed video until it
+    /// spans both screen dimensions. 1 in fit mode or until aspect is known.
+    private var coverScale: CGFloat {
+        guard viewModel.isFill,
+              let aspect = viewModel.videoAspect, aspect > 0,
+              containerSize.width > 0, containerSize.height > 0
+        else { return 1 }
+        let containerAspect = containerSize.width / containerSize.height
+        // VLC letterboxes to fit: video occupies min on each axis. Scale by
+        // whichever axis is short so both axes reach the container edges.
+        return aspect < containerAspect
+            ? containerAspect / aspect   // width short → scale horizontally
+            : aspect / containerAspect   // height short → scale vertically
+    }
 
     private func dismissPlayer() {
         onDismiss?() ?? dismiss()
@@ -37,9 +56,24 @@ struct PlayerView: View {
         // the window hierarchy and can reorder ZStack children.
         VLCPlayerBridge(viewModel: viewModel)
             .ignoresSafeArea()
-            // Fit/fill mode is applied inside VLC (videoFitMode), not with
-            // SwiftUI transforms — pinch toggles between the two modes.
+            // Fill mode: scale the drawable by the exact cover ratio so the
+            // letterboxed video fills every edge (computed geometry, no gaps).
+            .scaleEffect(coverScale)
+            .clipped()
             .background(Color.black.ignoresSafeArea())
+            // Container size for the fill-mode cover scale
+            .background(
+                GeometryReader { geo in
+                    Color.clear
+                        .onAppear { containerSize = geo.size; logCover("appear") }
+                        .onChange(of: geo.size) { _, new in
+                            containerSize = new
+                            logCover("resize")
+                        }
+                }
+            )
+            .onChange(of: viewModel.videoAspect) { _, _ in logCover("aspect") }
+            .onChange(of: viewModel.isFill) { _, _ in logCover("fill") }
 
             // Tap catcher — below controls, above video
             .overlay {
@@ -85,6 +119,23 @@ struct PlayerView: View {
                 if let seek = seekIndicator {
                     SeekHUD(text: seek.text)
                         .transition(.opacity)
+                }
+            }
+
+            // Skip segment overlay (intro / recap / credits) — visible even
+            // when the controls are hidden, like Netflix's skip button.
+            .overlay(alignment: .bottomTrailing) {
+                if let segment = viewModel.activeSegment {
+                    SkipSegmentOverlay(
+                        segment: segment,
+                        countdown: viewModel.segmentCountdown,
+                        hasNextEpisode: viewModel.hasNextEpisode,
+                        onSkip: { viewModel.skipActiveSegment() },
+                        onPlayNext: { viewModel.playNextEpisode() }
+                    )
+                    .transition(.opacity)
+                    .padding(.trailing, 24)
+                    .padding(.bottom, viewModel.showControls ? 140 : 32)
                 }
             }
 
@@ -144,6 +195,14 @@ struct PlayerView: View {
                 TJFLog("onAppear: reporting NOT configured itemId=\(itemId != nil) serverURL=\(serverURL != nil) token=\(token != nil) userId=\(userId != nil)")
             }
             viewModel.configureMediaStreams(mediaStreams)
+            // Next-episode action for the credits overlay
+            if let nextEpisode, let onPlayNextEpisode {
+                viewModel.hasNextEpisode = true
+                viewModel.onPlayNextEpisode = { onPlayNextEpisode(nextEpisode) }
+            } else {
+                viewModel.hasNextEpisode = false
+                viewModel.onPlayNextEpisode = nil
+            }
             // Start the track/report timer FIRST — before any async work — so a
             // slow stream prepare can never leave us without polls.
             viewModel.startUpdating()
@@ -208,6 +267,10 @@ struct PlayerView: View {
                 Task { await viewModel.setPlaybackRate(rate) }
             }
         }
+    }
+
+    private func logCover(_ reason: String) {
+        TJFLog("cover[\(reason)] container=\(Int(containerSize.width))x\(Int(containerSize.height)) aspect=\(viewModel.videoAspect.map { String(format: "%.4f", $0) } ?? "nil") fill=\(viewModel.isFill) scale=\(String(format: "%.4f", coverScale))")
     }
 
     // MARK: - Fit / fill gestures
@@ -619,6 +682,66 @@ private struct SeekHUD: View {
 
 private struct SeekIndicator: Equatable {
     let text: String
+}
+
+// MARK: - Skip Segment Overlay
+
+/// Netflix-style skip button(s) shown when the playhead is inside an
+/// intro / recap / credits segment.
+private struct SkipSegmentOverlay: View {
+    let segment: SegmentMarker
+    let countdown: Double?
+    let hasNextEpisode: Bool
+    let onSkip: () -> Void
+    let onPlayNext: () -> Void
+
+    var body: some View {
+        VStack(alignment: .trailing, spacing: 10) {
+            if segment.type == .credits {
+                // Ending: two choices — skip to the end, or jump to next episode.
+                if hasNextEpisode {
+                    skipButton(label: "Siguiente episodio", icon: "forward.end.fill", action: onPlayNext)
+                }
+                skipButton(label: "Saltar ending", icon: "arrow.right.to.line", action: onSkip)
+            } else {
+                skipButton(label: label, icon: "fastforward", action: onSkip)
+            }
+
+            if let countdown {
+                Text("Auto en \(Int(countdown.rounded(.up)))s")
+                    .font(.caption2)
+                    .foregroundStyle(.white.opacity(0.7))
+            }
+        }
+    }
+
+    private var label: String {
+        switch segment.type {
+        case .intro: "Saltar intro"
+        case .recap: "Saltar resumen"
+        case .credits: "Saltar ending"
+        }
+    }
+
+    private func skipButton(label: String, icon: String, action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.subheadline)
+                Text(label)
+                    .font(.subheadline.weight(.semibold))
+            }
+            .padding(.horizontal, 18)
+            .padding(.vertical, 12)
+            .background(.black.opacity(0.7), in: RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke(.white.opacity(0.35), lineWidth: 1)
+            )
+            .foregroundStyle(.white)
+        }
+        .buttonStyle(.plain)
+    }
 }
 
 // MARK: - Sheets

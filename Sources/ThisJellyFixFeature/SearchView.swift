@@ -73,7 +73,9 @@ struct SearchView: View {
                         .padding(.top, 60)
                     } else if !results.isEmpty {
                         LazyVGrid(
-                            columns: [GridItem(.adaptive(minimum: 120), spacing: 14)],
+                            // Top-align cells so variable text height below
+                            // posters doesn't vertically offset them.
+                            columns: [GridItem(.adaptive(minimum: 120), spacing: 14, alignment: .top)],
                             spacing: 20
                         ) {
                             ForEach(results) { item in

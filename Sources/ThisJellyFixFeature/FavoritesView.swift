@@ -82,7 +82,9 @@ struct FavoritesView: View {
                 .font(.title3.bold())
 
             ScrollView(.horizontal, showsIndicators: false) {
-                LazyHStack(spacing: 14) {
+                // Top-align so variable text height below posters doesn't
+                // vertically offset them (default .center alignment).
+                LazyHStack(alignment: .top, spacing: 14) {
                     ForEach(items) { item in
                         NavigationLink(value: item) {
                             MediaCardView(

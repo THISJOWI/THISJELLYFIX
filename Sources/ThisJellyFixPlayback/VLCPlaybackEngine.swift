@@ -19,14 +19,13 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
                 "--no-video-title-show",
             ]
         )
-        // Fill the drawable instead of letterboxing (default fit_smaller leaves
-        // black bars when video aspect ≠ screen aspect). Crop overflow like Netflix.
-        mediaPlayer.videoFitMode = .larger
+        // Predictable letterbox inside VLC; screen-cover is done in SwiftUI
+        // (computed scaleEffect) — this VLCKit alpha's fit mode is unreliable.
     }
 
-    /// Toggle fill (crop to cover the screen) vs fit (whole video, letterboxed).
-    public func setFill(_ fill: Bool) {
-        mediaPlayer.videoFitMode = fill ? .larger : .smaller
+    /// Native video size (0 until the vout reports it).
+    public var videoSize: CGSize {
+        mediaPlayer.videoSize
     }
 
     deinit {
