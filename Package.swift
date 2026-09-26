@@ -19,6 +19,7 @@ let package = Package(
     targets: [
         .target(name: "ThisJellyFixCore"),
         .target(name: "ThisJellyFixNetworking", dependencies: ["ThisJellyFixCore"]),
+        .target(name: "ThisJellyFixDiscovery", dependencies: ["ThisJellyFixCore", "ThisJellyFixNetworking"]),
         .target(
             name: "ThisJellyFixFeature",
             dependencies: ["ThisJellyFixCore", "ThisJellyFixNetworking", "ThisJellyFixPlayback"]
@@ -28,6 +29,10 @@ let package = Package(
         .testTarget(
             name: "ThisJellyFixNetworkingTests",
             dependencies: ["ThisJellyFixNetworking"]
+        ),
+        .testTarget(
+            name: "ThisJellyFixDiscoveryTests",
+            dependencies: ["ThisJellyFixDiscovery", "ThisJellyFixNetworking", "ThisJellyFixCore"]
         )
     ]
 )
