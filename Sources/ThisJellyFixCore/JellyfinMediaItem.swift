@@ -14,6 +14,8 @@ public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable, Has
     public let officialRating: String?
     public let communityRating: Double?
     public let userData: UserData?
+    /// External provider ids the server knows ("Tmdb", "Imdb", "Tvdb", …).
+    public let providerIds: [String: String]?
 
     enum CodingKeys: String, CodingKey {
         case id = "Id"
@@ -29,7 +31,18 @@ public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable, Has
         case officialRating = "OfficialRating"
         case communityRating = "CommunityRating"
         case userData = "UserData"
+        case providerIds = "ProviderIds"
     }
+
+    /// Value for an external provider key, case-insensitive (`Tmdb`/`tmdb`).
+    public func providerId(for provider: String) -> String? {
+        guard let providerIds else { return nil }
+        let wanted = provider.lowercased()
+        return providerIds.first { $0.key.lowercased() == wanted }?.value
+    }
+
+    public var tmdbId: String? { providerId(for: "Tmdb") }
+    public var imdbId: String? { providerId(for: "Imdb") }
 
     public var hasImage: Bool {
         imageTags?["Primary"] != nil
