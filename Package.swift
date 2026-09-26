@@ -22,7 +22,7 @@ let package = Package(
         .target(name: "ThisJellyFixDiscovery", dependencies: ["ThisJellyFixCore", "ThisJellyFixNetworking"]),
         .target(
             name: "ThisJellyFixFeature",
-            dependencies: ["ThisJellyFixCore", "ThisJellyFixNetworking", "ThisJellyFixPlayback"]
+            dependencies: ["ThisJellyFixCore", "ThisJellyFixNetworking", "ThisJellyFixPlayback", "ThisJellyFixDiscovery"]
         ),
         .target(name: "ThisJellyFixPlayback", dependencies: ["ThisJellyFixCore", .product(name: "VLCKitSPM", package: "vlckit-spm")]),
         .testTarget(name: "ThisJellyFixCoreTests", dependencies: ["ThisJellyFixCore"]),

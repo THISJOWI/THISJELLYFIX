@@ -43,6 +43,11 @@ struct ProfileView: View {
                     // Preferred playback languages
                     LanguageSettingsSection()
 
+                    // External services (TMDB / Radarr / Sonarr)
+                    #if os(iOS) || os(macOS)
+                    IntegrationsSection()
+                    #endif
+
                     // Actions
                     VStack(spacing: 12) {
                         Button {

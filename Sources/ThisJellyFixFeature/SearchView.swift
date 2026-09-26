@@ -12,6 +12,10 @@ struct SearchView: View {
     @State private var isSearching = false
     @State private var hasSearched = false
     @State private var searchTask: Task<Void, Never>?
+    /// nil = discovery not configured → the catalog half never appears.
+    @Environment(DiscoveryModel.self) private var discovery: DiscoveryModel?
+    @State private var catalogResults: [CatalogItem] = []
+    @State private var isSearchingCatalog = false
 
     private let libraryClient: any JellyfinLibraryProviding
 
@@ -61,7 +65,8 @@ struct SearchView: View {
                     .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 14))
 
                     // Results
-                    if hasSearched && results.isEmpty && !isSearching {
+                    if hasSearched && results.isEmpty && catalogResults.isEmpty
+                        && !isSearching && !isSearchingCatalog {
                         VStack(spacing: 12) {
                             Image(systemName: "magnifyingglass")
                                 .font(.largeTitle)
@@ -71,26 +76,43 @@ struct SearchView: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.top, 60)
-                    } else if !results.isEmpty {
-                        LazyVGrid(
-                            // Top-align cells so variable text height below
-                            // posters doesn't vertically offset them.
-                            columns: [GridItem(.adaptive(minimum: 120), spacing: 14, alignment: .top)],
-                            spacing: 20
-                        ) {
-                            ForEach(results) { item in
-                                NavigationLink(value: item) {
-                                    MediaCardView(
-                                        item: item,
-                                        imageURL: imageURL(for: item)
-                                    )
-                                    .transition(.scale.combined(with: .opacity))
+                    } else {
+                        if !results.isEmpty {
+                            Text("Tu biblioteca")
+                                .font(.headline)
+                                .padding(.top, 4)
+                            LazyVGrid(
+                                // Top-align cells so variable text height below
+                                // posters doesn't vertically offset them.
+                                columns: [GridItem(.adaptive(minimum: 120), spacing: 14, alignment: .top)],
+                                spacing: 20
+                            ) {
+                                ForEach(results) { item in
+                                    NavigationLink(value: item) {
+                                        MediaCardView(
+                                            item: item,
+                                            imageURL: imageURL(for: item)
+                                        )
+                                        .transition(.scale.combined(with: .opacity))
+                                    }
+                                    .buttonStyle(.plain)
                                 }
-                                .buttonStyle(.plain)
                             }
+                            .padding(.horizontal, 4)
                         }
-                        .padding(.horizontal, 4)
-                    } else if !hasSearched && query.isEmpty {
+
+                        #if os(iOS) || os(macOS)
+                        if isSearchingCatalog {
+                            ProgressView("Buscando en el catálogo…")
+                                .frame(maxWidth: .infinity)
+                                .padding(.top, 24)
+                        } else if !catalogResults.isEmpty {
+                            catalogSection
+                        }
+                        #endif
+                    }
+
+                    if !hasSearched && query.isEmpty {
                         VStack(spacing: 12) {
                             Image(systemName: "sparkle.magnifyingglass")
                                 .font(.system(size: 48))
@@ -119,12 +141,19 @@ struct SearchView: View {
                     userId: userId
                 )
             }
+            #if os(iOS) || os(macOS)
+            .navigationDestination(for: CatalogItem.self) { item in
+                CatalogDetailView(item: item)
+            }
+            #endif
         }
         .onChange(of: query) { _, newValue in
             searchTask?.cancel()
             let trimmed = newValue.trimmingCharacters(in: .whitespaces)
             guard trimmed.count >= 2 else {
                 results = []
+                catalogResults = []
+                discovery?.clearCatalogResults()
                 hasSearched = false
                 return
             }
@@ -151,9 +180,53 @@ struct SearchView: View {
                     results = []
                 }
                 isSearching = false
+
+                // External catalog half: only when discovery is configured,
+                // and never blocking the library results above.
+                #if os(iOS) || os(macOS)
+                guard !Task.isCancelled, let discovery, discovery.hasMetadataProvider else { return }
+                isSearchingCatalog = true
+                let found = await discovery.searchCatalog(query: trimmed)
+                guard !Task.isCancelled else { isSearchingCatalog = false; return }
+                withAnimation(.spring(response: 0.3)) {
+                    catalogResults = found
+                }
+                isSearchingCatalog = false
+                #endif
             }
         }
     }
+
+    #if os(iOS) || os(macOS)
+    /// Catalog results shelf: external titles not already in the library,
+    /// plus owned ones badged so the user knows they're already there.
+    private var catalogSection: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text("Catálogo")
+                .font(.headline)
+                .padding(.top, 8)
+
+            LazyVGrid(
+                columns: [GridItem(.adaptive(minimum: 120), spacing: 14, alignment: .top)],
+                spacing: 20
+            ) {
+                ForEach(catalogResults) { item in
+                    NavigationLink(value: item) {
+                        CatalogCardView(
+                            item: item,
+                            state: discovery?.coordinator.entries.first {
+                                (item.tmdbId != nil && $0.tmdbId == item.tmdbId) || $0.title == item.title
+                            }?.state
+                        )
+                        .transition(.scale.combined(with: .opacity))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(.horizontal, 4)
+        }
+    }
+    #endif
 
     private func imageURL(for item: JellyfinMediaItem) -> URL? {
         guard item.hasImage else { return nil }

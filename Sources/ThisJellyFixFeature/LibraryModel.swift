@@ -18,6 +18,12 @@ final class LibraryModel {
     var rows: [ContentRow] = []
     var isLoading = false
     var errorMessage: String?
+    /// Every distinct item across the loaded rows — the discovery layer
+    /// matches TMDB ids against this set to know what the library owns.
+    var allItems: [JellyfinMediaItem] {
+        var seen = Set<String>()
+        return rows.flatMap(\.items).filter { seen.insert($0.id).inserted }
+    }
 
     private let libraryClient: any JellyfinLibraryProviding
     private let serverURL: URL

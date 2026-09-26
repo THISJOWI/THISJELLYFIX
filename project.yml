@@ -28,6 +28,14 @@ targets:
     sources: [Sources/ThisJellyFixNetworking]
     dependencies: [{ target: Core-iOS }]
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixNetworking, PRODUCT_NAME: ThisJellyFixNetworking } }
+  Discovery-iOS:
+    type: framework
+    platform: iOS
+    sources: [Sources/ThisJellyFixDiscovery]
+    dependencies:
+      - target: Core-iOS
+      - target: Networking-iOS
+    settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixDiscovery, PRODUCT_NAME: ThisJellyFixDiscovery } }
   Playback-iOS:
     type: framework
     platform: iOS
@@ -45,6 +53,7 @@ targets:
       - target: Core-iOS
       - target: Networking-iOS
       - target: Playback-iOS
+      - target: Discovery-iOS
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixFeature, PRODUCT_NAME: ThisJellyFixFeature } }
   thisjellyfix-iOS:
     type: application
@@ -59,6 +68,8 @@ targets:
       - target: Playback-iOS
         embed: true
       - target: Feature-iOS
+        embed: true
+      - target: Discovery-iOS
         embed: true
       - package: VLCKitSPM
         product: VLCKitSPM
@@ -75,6 +86,14 @@ targets:
     sources: [Sources/ThisJellyFixNetworking]
     dependencies: [{ target: Core-macOS }]
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixNetworking, PRODUCT_NAME: ThisJellyFixNetworking } }
+  Discovery-macOS:
+    type: framework
+    platform: macOS
+    sources: [Sources/ThisJellyFixDiscovery]
+    dependencies:
+      - target: Core-macOS
+      - target: Networking-macOS
+    settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixDiscovery, PRODUCT_NAME: ThisJellyFixDiscovery } }
   Playback-macOS:
     type: framework
     platform: macOS
@@ -92,6 +111,7 @@ targets:
       - target: Core-macOS
       - target: Networking-macOS
       - target: Playback-macOS
+      - target: Discovery-macOS
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixFeature, PRODUCT_NAME: ThisJellyFixFeature } }
   thisjellyfix-macOS:
     type: application
@@ -106,6 +126,8 @@ targets:
       - target: Playback-macOS
         embed: true
       - target: Feature-macOS
+        embed: true
+      - target: Discovery-macOS
         embed: true
       - package: VLCKitSPM
         product: VLCKitSPM
@@ -122,6 +144,14 @@ targets:
     sources: [Sources/ThisJellyFixNetworking]
     dependencies: [{ target: Core-tvOS }]
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixNetworking, PRODUCT_NAME: ThisJellyFixNetworking } }
+  Discovery-tvOS:
+    type: framework
+    platform: tvOS
+    sources: [Sources/ThisJellyFixDiscovery]
+    dependencies:
+      - target: Core-tvOS
+      - target: Networking-tvOS
+    settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixDiscovery, PRODUCT_NAME: ThisJellyFixDiscovery } }
   Playback-tvOS:
     type: framework
     platform: tvOS
@@ -139,6 +169,7 @@ targets:
       - target: Core-tvOS
       - target: Networking-tvOS
       - target: Playback-tvOS
+      - target: Discovery-tvOS
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixFeature, PRODUCT_NAME: ThisJellyFixFeature } }
   thisjellyfix-tvOS:
     type: application
@@ -153,6 +184,8 @@ targets:
       - target: Playback-tvOS
         embed: true
       - target: Feature-tvOS
+        embed: true
+      - target: Discovery-tvOS
         embed: true
       - package: VLCKitSPM
         product: VLCKitSPM
@@ -169,6 +202,14 @@ targets:
     sources: [Sources/ThisJellyFixNetworking]
     dependencies: [{ target: Core-visionOS }]
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixNetworking, PRODUCT_NAME: ThisJellyFixNetworking } }
+  Discovery-visionOS:
+    type: framework
+    platform: visionOS
+    sources: [Sources/ThisJellyFixDiscovery]
+    dependencies:
+      - target: Core-visionOS
+      - target: Networking-visionOS
+    settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixDiscovery, PRODUCT_NAME: ThisJellyFixDiscovery } }
   Playback-visionOS:
     type: framework
     platform: visionOS
@@ -186,6 +227,7 @@ targets:
       - target: Core-visionOS
       - target: Networking-visionOS
       - target: Playback-visionOS
+      - target: Discovery-visionOS
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixFeature, PRODUCT_NAME: ThisJellyFixFeature } }
   thisjellyfix-visionOS:
     type: application
@@ -200,6 +242,8 @@ targets:
       - target: Playback-visionOS
         embed: true
       - target: Feature-visionOS
+        embed: true
+      - target: Discovery-visionOS
         embed: true
       - package: VLCKitSPM
         product: VLCKitSPM

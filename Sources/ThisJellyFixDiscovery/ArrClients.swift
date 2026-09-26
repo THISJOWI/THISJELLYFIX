@@ -79,6 +79,11 @@ struct ArrHTTPClient {
         try await send(path: path, method: "POST", query: [], body: body)
     }
 
+    /// DELETE returns an empty body on success (200...299).
+    func delete(_ path: String) async throws {
+        _ = try await sendRaw(path: path, method: "DELETE", body: nil)
+    }
+
     /// POST returning the raw JSON object (id extraction and similar).
     func post(_ path: String, body: [String: Any]) async throws -> [String: Any] {
         let data = try await sendRaw(path: path, method: "POST", body: body)
@@ -192,6 +197,8 @@ public protocol RadarrProviding: Sendable {
     func rootFolders() async throws -> [ArrRootFolder]
     func testConnection() async throws
     func queue() async throws -> [DownloadEntry]
+    /// Remove the entry (not the downloaded files) from the service.
+    func deleteEntry(id: String) async throws
 }
 
 public struct RadarrClient: RadarrProviding {
@@ -240,6 +247,10 @@ public struct RadarrClient: RadarrProviding {
     public func queue() async throws -> [DownloadEntry] {
         let response: QueueResponse = try await http.get("queue")
         return response.records.compactMap { $0.entry(service: .radarr) }
+    }
+
+    public func deleteEntry(id: String) async throws {
+        try await http.delete("movie/\(id)")
     }
 }
 
@@ -336,6 +347,8 @@ public protocol SonarrProviding: Sendable {
     func rootFolders() async throws -> [ArrRootFolder]
     func testConnection() async throws
     func queue() async throws -> [DownloadEntry]
+    /// Remove the entry (not the downloaded files) from the service.
+    func deleteEntry(id: String) async throws
 }
 
 public struct SonarrClient: SonarrProviding {
@@ -388,5 +401,9 @@ public struct SonarrClient: SonarrProviding {
     public func queue() async throws -> [DownloadEntry] {
         let response: QueueResponse = try await http.get("queue")
         return response.records.compactMap { $0.entry(service: .sonarr) }
+    }
+
+    public func deleteEntry(id: String) async throws {
+        try await http.delete("series/\(id)")
     }
 }

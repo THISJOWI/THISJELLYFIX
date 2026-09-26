@@ -8,6 +8,9 @@ public struct ThisJellyFixRootView: View {
     @State private var authModel = AuthModel()
     @State private var libraryModel: LibraryModel?
     @State private var isLoadingLibrary = false
+    /// Discovery + downloads state. Rebuilt whenever the library model
+    /// changes so its library snapshot points at the live model.
+    @State private var discoveryModel: DiscoveryModel?
     #if os(iOS)
     @State private var selectedTab: MareaTab = .home
     #endif
@@ -31,6 +34,7 @@ public struct ThisJellyFixRootView: View {
                     } else if let libModel = libraryModel {
                         #if os(iOS)
                         mainContent(libModel: libModel, server: server)
+                            .environment(discoveryModel)
                         #else
                         HomeView(
                             libraryModel: libModel,
@@ -43,6 +47,7 @@ public struct ThisJellyFixRootView: View {
                                 libraryModel = nil
                             }
                         )
+                        .environment(discoveryModel)
                         #endif
                     } else {
                         Color.clear
@@ -172,6 +177,13 @@ public struct ThisJellyFixRootView: View {
         )
         await libModel.load()
         libraryModel = libModel
+        // Discovery reads the live library through the same reference, so its
+        // TMDB matching sees rows as they land.
+        discoveryModel = DiscoveryModel.live { [weak libModel] in
+            libModel?.allItems ?? []
+        }
+        // Rows landed: discovery can now seed recommendations from them.
+        await discoveryModel?.loadRows()
     }
 }
 

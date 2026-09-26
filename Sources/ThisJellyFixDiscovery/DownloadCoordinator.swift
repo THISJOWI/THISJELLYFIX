@@ -184,6 +184,27 @@ public final class DownloadCoordinator {
         entries = remote + unmatchedLocal
     }
 
+    // MARK: Removal
+
+    /// Cancel: delete the entry from the *arr service, drop it locally and
+    /// re-sync. Files already on disk stay — the service owns those.
+    public func removeEntries(matching item: CatalogItem) async {
+        let matches = entries.filter { entry in
+            (item.tmdbId != nil && entry.tmdbId == item.tmdbId) || entry.title == item.title
+        }
+        for entry in matches where !entry.id.hasPrefix("local-") {
+            let id = entry.id.split(separator: "-").last.map(String.init)
+            guard let id else { continue }
+            switch entry.service {
+            case .radarr: try? await radarr?.deleteEntry(id: id)
+            case .sonarr: try? await sonarr?.deleteEntry(id: id)
+            }
+        }
+        let doomed = Set(matches.map(\.id))
+        entries.removeAll { doomed.contains($0.id) }
+        await refresh()
+    }
+
     // MARK: Availability
 
     /// Jellyfin now has this title: the download is done and playable.

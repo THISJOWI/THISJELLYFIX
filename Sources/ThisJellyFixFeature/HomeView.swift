@@ -11,6 +11,8 @@ struct HomeView: View {
 
     /// Episode or movie tapped on a card — played directly, without pushing DetailView.
     @State private var directItem: JellyfinMediaItem?
+    /// nil = discovery not configured (or tvOS/visionOS) → rows never render.
+    @Environment(DiscoveryModel.self) private var discovery: DiscoveryModel?
 
     var body: some View {
         #if os(macOS)
@@ -29,6 +31,11 @@ struct HomeView: View {
                         } }
                     )
                 }
+                #if os(iOS) || os(macOS)
+                .navigationDestination(for: CatalogItem.self) { item in
+                    CatalogDetailView(item: item)
+                }
+                #endif
         }
         #endif
     }
@@ -94,6 +101,11 @@ struct HomeView: View {
                         } }
                         )
                     }
+                    #if os(iOS) || os(macOS)
+                    .navigationDestination(for: CatalogItem.self) { item in
+                        CatalogDetailView(item: item)
+                    }
+                    #endif
             }
         case .search:
             SearchView(serverURL: serverURL, token: token, userId: userId)
@@ -133,6 +145,12 @@ struct HomeView: View {
                     Text("Inicio")
                         .font(.largeTitle.bold())
                     Spacer()
+
+                    #if os(iOS) || os(macOS)
+                    if let discovery, discovery.hasDownloadService {
+                        DownloadsButton(discovery: discovery)
+                    }
+                    #endif
                 }
                 .padding(.horizontal, 32)
 
@@ -162,6 +180,15 @@ struct HomeView: View {
                         )
                     }
                 }
+
+                // Discovery shelves (TMDB): rendered only when configured.
+                #if os(iOS) || os(macOS)
+                if let discovery {
+                    ForEach(discovery.rows) { row in
+                        DiscoveryRowView(row: row, discovery: discovery)
+                    }
+                }
+                #endif
             }
             .padding(.top, 16)
         }
