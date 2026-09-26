@@ -191,6 +191,7 @@ public protocol RadarrProviding: Sendable {
     func qualityProfiles() async throws -> [ArrQualityProfile]
     func rootFolders() async throws -> [ArrRootFolder]
     func testConnection() async throws
+    func queue() async throws -> [DownloadEntry]
 }
 
 public struct RadarrClient: RadarrProviding {
@@ -235,6 +236,11 @@ public struct RadarrClient: RadarrProviding {
     public func testConnection() async throws {
         let _: [ArrQualityProfile] = try await http.get("qualityprofile")
     }
+
+    public func queue() async throws -> [DownloadEntry] {
+        let response: QueueResponse = try await http.get("queue")
+        return response.records.compactMap { $0.entry(service: .radarr) }
+    }
 }
 
 // MARK: - Sonarr
@@ -259,6 +265,23 @@ public struct SonarrSeriesLookup: Decodable, Sendable, Equatable {
 
     enum CodingKeys: String, CodingKey {
         case id, title, year, tvdbId, tmdbId, status, network, seasonCount, images, seasons
+    }
+
+    public init(
+        id: Int?, title: String, year: Int?, tvdbId: Int, tmdbId: String?,
+        status: String?, network: String?, seasonCount: Int?,
+        images: [ArrImage]?, seasons: [SonarrSeason]
+    ) {
+        self.id = id
+        self.title = title
+        self.year = year
+        self.tvdbId = tvdbId
+        self.tmdbId = tmdbId
+        self.status = status
+        self.network = network
+        self.seasonCount = seasonCount
+        self.images = images
+        self.seasons = seasons
     }
 
     public init(from decoder: Decoder) throws {
@@ -312,6 +335,7 @@ public protocol SonarrProviding: Sendable {
     func qualityProfiles() async throws -> [ArrQualityProfile]
     func rootFolders() async throws -> [ArrRootFolder]
     func testConnection() async throws
+    func queue() async throws -> [DownloadEntry]
 }
 
 public struct SonarrClient: SonarrProviding {
@@ -359,5 +383,10 @@ public struct SonarrClient: SonarrProviding {
 
     public func testConnection() async throws {
         let _: [ArrQualityProfile] = try await http.get("qualityprofile")
+    }
+
+    public func queue() async throws -> [DownloadEntry] {
+        let response: QueueResponse = try await http.get("queue")
+        return response.records.compactMap { $0.entry(service: .sonarr) }
     }
 }

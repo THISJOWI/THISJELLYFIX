@@ -1,5 +1,31 @@
 import Foundation
+import ThisJellyFixCore
 import ThisJellyFixNetworking
+
+final class InMemoryKeychain: KeychainStoring, @unchecked Sendable {
+    private var store: [String: String] = [:]
+    private let lock = NSLock()
+
+    func save(key: String, value: String) throws {
+        lock.lock(); defer { lock.unlock() }
+        store[key] = value
+    }
+
+    func read(key: String) -> String? {
+        lock.lock(); defer { lock.unlock() }
+        return store[key]
+    }
+
+    func delete(key: String) throws {
+        lock.lock(); defer { lock.unlock() }
+        store[key] = nil
+    }
+
+    func deleteAll() throws {
+        lock.lock(); defer { lock.unlock() }
+        store.removeAll()
+    }
+}
 
 /// Replayable network spy shared by the Discovery test suite.
 final class SpySession: JellyfinNetworkSession, @unchecked Sendable {
