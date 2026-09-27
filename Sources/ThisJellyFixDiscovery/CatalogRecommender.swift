@@ -35,7 +35,8 @@ public enum CatalogRecommender {
                 id: entry.id, kind: entry.kind, title: entry.title, year: entry.year,
                 overview: entry.overview, posterURL: entry.posterURL,
                 backdropURL: entry.backdropURL, tmdbId: entry.tmdbId,
-                imdbId: entry.imdbId, jellyfinId: jellyfinId
+                imdbId: entry.imdbId, jellyfinId: jellyfinId,
+                genreIds: entry.genreIds, originalLanguage: entry.originalLanguage
             )
         }
     }
@@ -49,21 +50,30 @@ public enum CatalogRecommender {
         }
     }
 
-    /// Build the Home shelves. `nil` input = provider not configured = shelf
-    /// omitted entirely (no empty headers, no error banners on Home).
+    /// Build the Home shelves: separate trending rows per kind up front,
+    /// then homogeneous "para ti" rows (series with series, movies with
+    /// movies, anime with anime). `nil` input = provider not configured =
+    /// shelf omitted entirely (no empty headers, no error banners on Home).
     public static func buildRows(
-        trending: [CatalogItem]?,
+        trendingSeries: [CatalogItem]?,
+        trendingMovies: [CatalogItem]?,
         recommendations: [CatalogItem]?,
         library: [JellyfinMediaItem]
     ) -> [CatalogRow] {
         var rows: [CatalogRow] = []
 
         // Trending is public discovery: keep library titles (they're popular
-        // for a reason), but "Para ti" must not recommend what you already own.
-        if let trending, !trending.isEmpty {
+        // for a reason); only "Para ti" must not recommend what you own.
+        if let trendingSeries, !trendingSeries.isEmpty {
             rows.append(CatalogRow(
-                id: "trending", title: "Tendencias",
-                items: dedupe(markLibrary(trending, library: library))
+                id: "trending-series", title: "Tendencias de series",
+                items: dedupe(markLibrary(trendingSeries, library: library))
+            ))
+        }
+        if let trendingMovies, !trendingMovies.isEmpty {
+            rows.append(CatalogRow(
+                id: "trending-movies", title: "Tendencias de películas",
+                items: dedupe(markLibrary(trendingMovies, library: library))
             ))
         }
 
@@ -72,8 +82,19 @@ public enum CatalogRecommender {
                 !library.contains { $0.matches(candidate) }
             }
             let shaped = dedupe(markLibrary(fresh, library: library))
-            if !shaped.isEmpty {
-                rows.append(CatalogRow(id: "forYou", title: "Para ti", items: shaped))
+
+            let series = shaped.filter { $0.kind == .series && !$0.isAnime }
+            let movies = shaped.filter { $0.kind == .movie && !$0.isAnime }
+            let anime = shaped.filter(\.isAnime)
+
+            if !series.isEmpty {
+                rows.append(CatalogRow(id: "forYou-series", title: "Series para ti", items: series))
+            }
+            if !movies.isEmpty {
+                rows.append(CatalogRow(id: "forYou-movies", title: "Películas para ti", items: movies))
+            }
+            if !anime.isEmpty {
+                rows.append(CatalogRow(id: "forYou-anime", title: "Anime para ti", items: anime))
             }
         }
 

@@ -51,6 +51,9 @@ public struct DownloadEntry: Identifiable, Sendable, Equatable {
     public let title: String
     /// TMDB id when the source reported it — used to detect "now in library".
     public let tmdbId: String?
+    /// Movie/series id inside the *arr service: the id DELETE needs.
+    /// Distinct from `id`, which for queue entries is the queue *record* id.
+    public let remoteId: String?
     public let state: DownloadState
 
     public init(
@@ -58,12 +61,14 @@ public struct DownloadEntry: Identifiable, Sendable, Equatable {
         service: DownloadService,
         title: String,
         tmdbId: String? = nil,
+        remoteId: String? = nil,
         state: DownloadState
     ) {
         self.id = id
         self.service = service
         self.title = title
         self.tmdbId = tmdbId
+        self.remoteId = remoteId
         self.state = state
     }
 }
@@ -107,15 +112,25 @@ struct QueueRecord: Decodable {
     let progress: Double?
     let movie: QueueMovie?
     let series: QueueSeries?
+    let movieId: Int?
+    let seriesId: Int?
+
+    enum CodingKeys: String, CodingKey {
+        case id, status, progress, movie, series, movieId, seriesId
+    }
 
     func entry(service: DownloadService) -> DownloadEntry? {
         let title = movie?.title ?? series?.title
         guard let title else { return nil }
+        // Service-side id for DELETE: the embedded object's id wins, the
+        // top-level *Id field is the fallback when the object is thin.
+        let remoteId = movie?.id ?? movieId ?? series?.id ?? seriesId
         return DownloadEntry(
             id: "\(service.rawValue)-\(id)",
             service: service,
             title: title,
             tmdbId: (movie?.tmdbId ?? series?.tmdbId).map(String.init),
+            remoteId: remoteId.map(String.init),
             state: DownloadState(status: status, progress: progress)
         )
     }

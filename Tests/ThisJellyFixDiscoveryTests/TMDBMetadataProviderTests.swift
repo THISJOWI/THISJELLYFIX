@@ -10,57 +10,72 @@ final class TMDBMetadataProviderTests: XCTestCase {
         return (provider, session)
     }
 
-    // MARK: - Trending
+    // MARK: - Trending (split per kind)
 
-    func testTrendingMapsMovieAndSeries() async throws {
-        let (provider, _) = makeProvider("""
+    func testTrendingSeriesHitsTvEndpointAndMaps() async throws {
+        let (provider, session) = makeProvider("""
         {
           "results": [
-            {"id": 335984, "media_type": "movie", "title": "Blade Runner 2049",
-             "release_date": "2017-10-04", "overview": "o", "poster_path": "/p.jpg",
-             "backdrop_path": "/b.jpg", "vote_average": 7.6},
             {"id": 1396, "media_type": "tv", "name": "Breaking Bad",
-             "first_air_date": "2008-01-20", "overview": "o", "poster_path": "/s.jpg"}
+             "first_air_date": "2008-01-20", "overview": "o", "poster_path": "/s.jpg",
+             "backdrop_path": "/b.jpg", "genre_ids": [18], "original_language": "en"}
           ]
         }
         """)
 
-        let items = try await provider.trending()
+        let items = try await provider.trending(kind: .series)
 
-        XCTAssertEqual(items.count, 2)
-        let movie = items[0]
-        XCTAssertEqual(movie.kind, .movie)
-        XCTAssertEqual(movie.title, "Blade Runner 2049")
-        XCTAssertEqual(movie.year, 2017)
-        XCTAssertEqual(movie.tmdbId, "335984")
-        XCTAssertEqual(movie.posterURL?.absoluteString, "https://image.tmdb.org/t/p/w500/p.jpg")
-        XCTAssertEqual(movie.backdropURL?.absoluteString, "https://image.tmdb.org/t/p/w780/b.jpg")
-
-        let series = items[1]
-        XCTAssertEqual(series.kind, .series)
-        XCTAssertEqual(series.title, "Breaking Bad")
-        XCTAssertEqual(series.year, 2008)
-        XCTAssertEqual(series.tmdbId, "1396")
-    }
-
-    func testTrendingSendsApiKeyAsQueryItem() async throws {
-        let (provider, session) = makeProvider(#"{"results": []}"#)
-        _ = try await provider.trending()
         let url = try XCTUnwrap(session.capturedRequest?.url)
+        XCTAssertEqual(url.path, "/3/trending/tv/day")
         XCTAssertEqual(url.queryParameters["api_key"], "tmdb-key")
-        XCTAssertEqual(url.path, "/3/trending/all/day")
+        XCTAssertEqual(items.count, 1)
+        XCTAssertEqual(items[0].kind, .series)
+        XCTAssertEqual(items[0].title, "Breaking Bad")
+        XCTAssertEqual(items[0].year, 2008)
+        XCTAssertEqual(items[0].tmdbId, "1396")
+        XCTAssertEqual(items[0].posterURL?.absoluteString, "https://image.tmdb.org/t/p/w500/s.jpg")
+        XCTAssertEqual(items[0].backdropURL?.absoluteString, "https://image.tmdb.org/t/p/w780/b.jpg")
+        XCTAssertEqual(items[0].genreIds, [18])
+        XCTAssertEqual(items[0].originalLanguage, "en")
+        XCTAssertFalse(items[0].isAnime)
     }
 
-    func testTrendingSkipsPersonEntries() async throws {
+    func testTrendingMoviesHitsMovieEndpointAndMaps() async throws {
+        let (provider, session) = makeProvider("""
+        {
+          "results": [
+            {"id": 335984, "media_type": "movie", "title": "Blade Runner 2049",
+             "release_date": "2017-10-04", "overview": "o", "poster_path": "/p.jpg",
+             "backdrop_path": "/b.jpg", "genre_ids": [878], "original_language": "en"}
+          ]
+        }
+        """)
+
+        let items = try await provider.trending(kind: .movie)
+
+        let url = try XCTUnwrap(session.capturedRequest?.url)
+        XCTAssertEqual(url.path, "/3/trending/movie/day")
+        XCTAssertEqual(items.count, 1)
+        XCTAssertEqual(items[0].kind, .movie)
+        XCTAssertEqual(items[0].title, "Blade Runner 2049")
+        XCTAssertEqual(items[0].year, 2017)
+        XCTAssertEqual(items[0].tmdbId, "335984")
+    }
+
+    func testJapaneseAnimationIsFlaggedAsAnime() async throws {
         let (provider, _) = makeProvider("""
         {"results": [
-          {"id": 1, "media_type": "person", "name": "Actor"},
-          {"id": 2, "media_type": "movie", "title": "Film", "release_date": "2020-01-01"}
+          {"id": 95479, "name": "Jujutsu Kaisen", "genre_ids": [16, 10759],
+           "original_language": "ja", "first_air_date": "2020-10-04"},
+          {"id": 3015, "title": "Toy Story", "genre_ids": [16],
+           "original_language": "en", "release_date": "1995-11-22"}
         ]}
         """)
-        let items = try await provider.trending()
-        XCTAssertEqual(items.count, 1)
-        XCTAssertEqual(items[0].title, "Film")
+
+        let items = try await provider.trending(kind: .series)
+        XCTAssertTrue(items[0].isAnime)
+        // English-language animation is not anime: it stays in plain rows.
+        XCTAssertFalse(items[1].isAnime)
     }
 
     // MARK: - Recommendations
@@ -118,7 +133,7 @@ final class TMDBMetadataProviderTests: XCTestCase {
     func testUnauthorizedStatusThrowsUnauthorized() async {
         let (provider, _) = makeProvider(#"{"status_message": "Invalid key"}"#, statusCode: 401)
         do {
-            _ = try await provider.trending()
+            _ = try await provider.trending(kind: .movie)
             XCTFail("Expected error")
         } catch let error as MetadataProviderError {
             XCTAssertEqual(error, .unauthorized)
@@ -130,7 +145,7 @@ final class TMDBMetadataProviderTests: XCTestCase {
     func testServerErrorThrowsServerError() async {
         let (provider, _) = makeProvider("{}", statusCode: 500)
         do {
-            _ = try await provider.trending()
+            _ = try await provider.trending(kind: .movie)
             XCTFail("Expected error")
         } catch let error as MetadataProviderError {
             XCTAssertEqual(error, .serverError(500))

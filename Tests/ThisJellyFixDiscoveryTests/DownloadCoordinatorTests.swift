@@ -58,6 +58,9 @@ final class DownloadCoordinatorTests: XCTestCase {
         XCTAssertEqual(coordinator.entries[0].title, "Blade Runner 2049")
         XCTAssertEqual(coordinator.entries[0].service, .radarr)
         XCTAssertEqual(coordinator.entries[0].state, .submitting)
+        // Radarr's movie id (what DELETE /movie/{id} needs) must be kept
+        // from the add response: cancel before the first refresh needs it.
+        XCTAssertEqual(coordinator.entries[0].remoteId, "1")
         XCTAssertEqual(radarr.addedMovies.count, 1)
         XCTAssertEqual(radarr.addedMovies[0].tmdbId, "335984")
     }
@@ -83,6 +86,7 @@ final class DownloadCoordinatorTests: XCTestCase {
         XCTAssertEqual(sonarr.addedSeries.count, 1)
         XCTAssertEqual(sonarr.addedSeries[0].tvdbId, 81189)
         XCTAssertEqual(coordinator.entries[0].service, .sonarr)
+        XCTAssertEqual(coordinator.entries[0].remoteId, "1")
     }
 
     func testSubmitSeriesWithNoLookupResultThrows() async {
@@ -104,7 +108,7 @@ final class DownloadCoordinatorTests: XCTestCase {
 
     func testFailedSubmitMarksEntryFailed() async {
         let radarr = FakeRadarr()
-        radarr.addError = ArrError.serverError(500)
+        radarr.addError = ArrError.serverError(500, nil)
         config.radarrURL = URL(string: "http://r:7878")
         config.radarrApiKey = "k"
         let coordinator = DownloadCoordinator(config: config, radarr: radarr, sonarr: nil)
@@ -115,7 +119,11 @@ final class DownloadCoordinatorTests: XCTestCase {
         } catch { /* surfaced to UI */ }
 
         XCTAssertEqual(coordinator.entries.count, 1)
-        XCTAssertEqual(coordinator.entries[0].state, .failed("serverError(500)"))
+        // User-facing text, not the enum's debug dump.
+        XCTAssertEqual(
+            coordinator.entries[0].state,
+            .failed("El servicio devolvió un error (código 500).")
+        )
     }
 
     // MARK: - Refresh merges remote queue over local optimistic entries
@@ -182,11 +190,14 @@ final class DownloadCoordinatorTests: XCTestCase {
 
     // MARK: - Removal
 
-    func testRemoveEntriesDeletesRemoteAndDropsLocal() async throws {
+    func testRemoveEntriesDeletesRemoteIdNotQueueRecordId() async throws {
         let radarr = FakeRadarr()
         radarr.queueRecords = [
+            // Queue record id 11, but Radarr's movie id is 77: cancel must
+            // DELETE /movie/77 — record ids 404 and the old code hid it.
             DownloadEntry(id: "radarr-11", service: .radarr, title: "Dune",
-                          tmdbId: "438631", state: .downloading(progress: 10))
+                          tmdbId: "438631", remoteId: "77",
+                          state: .downloading(progress: 10))
         ]
         config.radarrURL = URL(string: "http://r:7878")
         config.radarrApiKey = "k"
@@ -200,14 +211,17 @@ final class DownloadCoordinatorTests: XCTestCase {
                                  tmdbId: "438631", imdbId: nil)
         await coordinator.removeEntries(matching: target)
 
-        XCTAssertEqual(radarr.deletedIds, ["11"])
+        XCTAssertEqual(radarr.deletedIds, ["77"])
         // Queue is now empty server-side → local list must be empty too.
         radarr.queueRecords = []
         await coordinator.refresh()
         XCTAssertTrue(coordinator.entries.isEmpty)
     }
 
-    func testRemoveLocalOptimisticEntryNeverCallsService() async throws {
+    func testCancelRightAfterSubmitDeletesFromService() async throws {
+        // Before the first refresh the entry is still local-* — cancel must
+        // still reach Radarr using the id returned by the add call,
+        // otherwise the movie stays in Radarr forever.
         let radarr = FakeRadarr()
         config.radarrURL = URL(string: "http://r:7878")
         config.radarrApiKey = "k"
@@ -215,10 +229,52 @@ final class DownloadCoordinatorTests: XCTestCase {
 
         try await coordinator.submit(movie, options: nil)
         XCTAssertEqual(coordinator.entries.count, 1)
+        XCTAssertTrue(coordinator.entries[0].id.hasPrefix("local-"))
 
         await coordinator.removeEntries(matching: movie)
 
-        XCTAssertTrue(radarr.deletedIds.isEmpty)
+        XCTAssertEqual(radarr.deletedIds, ["1"])
+        XCTAssertTrue(coordinator.entries.isEmpty)
+    }
+
+    func testRemoveFallsBackToLookupWhenRemoteIdMissing() async throws {
+        let radarr = FakeRadarr()
+        radarr.lookupResults = [
+            RadarrMovieLookup(id: 77, title: "Dune", year: 2021, tmdbId: "438631",
+                              hasFile: false, monitored: true, status: "released", images: nil)
+        ]
+        radarr.queueRecords = [
+            DownloadEntry(id: "radarr-11", service: .radarr, title: "Dune",
+                          tmdbId: "438631", state: .downloading(progress: 10))
+        ]
+        config.radarrURL = URL(string: "http://r:7878")
+        config.radarrApiKey = "k"
+        let coordinator = DownloadCoordinator(config: config, radarr: radarr, sonarr: nil)
+
+        await coordinator.refresh()
+        let target = CatalogItem(id: "438631", kind: .movie, title: "Dune", year: 2021,
+                                 overview: nil, posterURL: nil, backdropURL: nil,
+                                 tmdbId: "438631", imdbId: nil)
+        await coordinator.removeEntries(matching: target)
+
+        XCTAssertEqual(radarr.lookupTerms, ["438631"])
+        XCTAssertEqual(radarr.deletedIds, ["77"])
+    }
+
+    func testRemoveMatchingSonarrEntryDeletesSeries() async throws {
+        let sonarr = FakeSonarr()
+        sonarr.queueRecords = [
+            DownloadEntry(id: "sonarr-1", service: .sonarr, title: "Breaking Bad",
+                          tmdbId: "1396", remoteId: "3", state: .queued)
+        ]
+        config.sonarrURL = URL(string: "http://s:8989")
+        config.sonarrApiKey = "k"
+        let coordinator = DownloadCoordinator(config: config, radarr: nil, sonarr: sonarr)
+
+        await coordinator.refresh()
+        await coordinator.removeEntries(matching: series)
+
+        XCTAssertEqual(sonarr.deletedIds, ["3"])
         XCTAssertTrue(coordinator.entries.isEmpty)
     }
 
@@ -257,6 +313,8 @@ final class FakeRadarr: RadarrProviding, @unchecked Sendable {
     var addError: Error?
     var queueRecords: [DownloadEntry] = []
     var queueError: Error?
+    var lookupResults: [RadarrMovieLookup] = []
+    private(set) var lookupTerms: [String] = []
     var qualityProfilesResult: [ArrQualityProfile] = [ArrQualityProfile(id: 1, name: "HD")]
     var rootFoldersResult: [ArrRootFolder] = [ArrRootFolder(id: 1, path: "/films")]
     private(set) var queueFetchCount = 0
@@ -264,10 +322,13 @@ final class FakeRadarr: RadarrProviding, @unchecked Sendable {
 
     func deleteEntry(id: String) async throws {
         deletedIds.append(id)
-        queueRecords.removeAll { $0.id == "radarr-\(id)" }
+        queueRecords.removeAll { $0.remoteId == id }
     }
 
-    func lookup(tmdbId: String) async throws -> [RadarrMovieLookup] { [] }
+    func lookup(tmdbId: String) async throws -> [RadarrMovieLookup] {
+        lookupTerms.append(tmdbId)
+        return lookupResults
+    }
 
     func addMovie(
         tmdbId: String, title: String, qualityProfileId: Int,
@@ -315,7 +376,7 @@ final class FakeSonarr: SonarrProviding, @unchecked Sendable {
 
     func deleteEntry(id: String) async throws {
         deletedIds.append(id)
-        queueRecords.removeAll { $0.id == "sonarr-\(id)" }
+        queueRecords.removeAll { $0.remoteId == id }
     }
 
     func lookup(tmdbId: String) async throws -> [SonarrSeriesLookup] {

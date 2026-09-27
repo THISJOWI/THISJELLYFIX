@@ -133,6 +133,28 @@ struct HomeView: View {
 
     // MARK: - Scroll Content (shared)
 
+    #if os(iOS) || os(macOS)
+    /// Trending shelves — nil discovery (tvOS/visionOS or no config) = empty.
+    @ViewBuilder
+    private var trendingShelf: some View {
+        if let discovery {
+            ForEach(discovery.trendingRows) { row in
+                DiscoveryRowView(row: row, discovery: discovery)
+            }
+        }
+    }
+
+    /// Homogeneous "para ti" shelves (series/movies/anime kept apart).
+    @ViewBuilder
+    private var forYouShelf: some View {
+        if let discovery {
+            ForEach(discovery.forYouRows) { row in
+                DiscoveryRowView(row: row, discovery: discovery)
+            }
+        }
+    }
+    #endif
+
     private var scrollContent: some View {
         let base = ScrollView {
             VStack(alignment: .leading, spacing: 28) {
@@ -172,22 +194,32 @@ struct HomeView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.top, 60)
                 } else {
-                    ForEach(libraryModel.rows) { row in
+                    #if os(iOS) || os(macOS)
+                    if libraryModel.rows.isEmpty {
+                        trendingShelf
+                    }
+                    #endif
+
+                    ForEach(Array(libraryModel.rows.enumerated()), id: \.element.id) { index, row in
                         ContentRowView(
                             row: row,
                             libraryModel: libraryModel,
                             onPlayDirect: { item in directItem = item }
                         )
+
+                        // Trending sits right after "Estás viendo" so fresh
+                        // content shows up at the top of Home.
+                        #if os(iOS) || os(macOS)
+                        if index == 0 {
+                            trendingShelf
+                        }
+                        #endif
                     }
                 }
 
-                // Discovery shelves (TMDB): rendered only when configured.
+                // "Para ti" shelves: homogeneous rows after the library.
                 #if os(iOS) || os(macOS)
-                if let discovery {
-                    ForEach(discovery.rows) { row in
-                        DiscoveryRowView(row: row, discovery: discovery)
-                    }
-                }
+                forYouShelf
                 #endif
             }
             .padding(.top, 16)

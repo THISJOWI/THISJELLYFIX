@@ -210,7 +210,7 @@ struct IntegrationsSection: View {
             return
         }
         do {
-            _ = try await TMDBMetadataProvider(apiKey: key).trending()
+            _ = try await TMDBMetadataProvider(apiKey: key).trending(kind: .movie)
             tmdbResult = true
         } catch {
             tmdbResult = false

@@ -19,7 +19,8 @@ final class DiscoveryLoaderTests: XCTestCase {
 
     func testLoadRowsUsesTrendingPlusRecommendationsFromLibrary() async throws {
         let provider = FakeProvider()
-        provider.trendingResult = [catalog("1", title: "T1"), catalog("2", title: "T2")]
+        provider.trendingByKind[.series] = [catalog("1", title: "TS", kind: .series)]
+        provider.trendingByKind[.movie] = [catalog("2", title: "TM")]
         provider.recommendationsResult = [catalog("9", title: "Rec")]
         let loader = DiscoveryLoader(provider: provider)
 
@@ -28,10 +29,12 @@ final class DiscoveryLoaderTests: XCTestCase {
             libraryItem("60", type: "Series"),
         ])
 
-        XCTAssertEqual(rows.map(\.title), ["Tendencias", "Para ti"])
+        // Separate trending shelves per kind, homogeneous "para ti" rows.
+        XCTAssertEqual(rows.map(\.title), ["Tendencias de series", "Tendencias de películas", "Películas para ti"])
+        XCTAssertEqual(provider.askedTrendingKinds, [.series, .movie])
         // Recommendations asked for both library TMDB ids.
         XCTAssertEqual(provider.askedRecommendations.sorted(), ["50", "60"])
-        XCTAssertEqual(rows[1].items.map(\.title), ["Rec"])
+        XCTAssertEqual(rows[2].items.map(\.title), ["Rec"])
     }
 
     func testLoadRowsWithoutProviderReturnsEmpty() async throws {
@@ -100,18 +103,21 @@ final class DiscoveryLoaderTests: XCTestCase {
 
 final class FakeProvider: MetadataProvider, @unchecked Sendable {
     var trendingResult: [CatalogItem] = []
+    var trendingByKind: [CatalogItem.Kind: [CatalogItem]] = [:]
     var trendingError: Error?
     var recommendationsResult: [CatalogItem] = []
     var recommendationsError: Error?
     var searchResult: [CatalogItem] = []
     var searchError: Error?
 
+    private(set) var askedTrendingKinds: [CatalogItem.Kind] = []
     private(set) var askedRecommendations: [String] = []
     private(set) var askedKinds: [String: CatalogItem.Kind] = [:]
 
-    func trending() async throws -> [CatalogItem] {
+    func trending(kind: CatalogItem.Kind) async throws -> [CatalogItem] {
+        askedTrendingKinds.append(kind)
         if let trendingError { throw trendingError }
-        return trendingResult
+        return trendingByKind[kind] ?? trendingResult
     }
 
     func recommendations(tmdbId: String, kind: CatalogItem.Kind) async throws -> [CatalogItem] {

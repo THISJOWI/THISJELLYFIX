@@ -76,24 +76,30 @@ public final class DownloadCoordinator {
         ))
 
         do {
+            let remoteId: Int?
             switch service {
             case .radarr:
-                try await submitMovie(item, options: options)
+                remoteId = try await submitMovie(item, options: options)
             case .sonarr:
-                try await submitSeries(item, options: options)
+                remoteId = try await submitSeries(item, options: options)
+            }
+            // Keep the service-side id: cancel before the first refresh
+            // needs it to DELETE the entry we just created.
+            if let remoteId {
+                patch(remoteId: String(remoteId), for: localId)
             }
         } catch {
-            set(state: .failed("\(error)"), for: localId)
+            set(state: .failed(error.localizedDescription), for: localId)
             throw error
         }
     }
 
-    private func submitMovie(_ item: CatalogItem, options: AddOptions?) async throws {
+    private func submitMovie(_ item: CatalogItem, options: AddOptions?) async throws -> Int {
         guard let radarr, let tmdbId = item.tmdbId else {
             throw DownloadCoordinatorError.serviceNotConfigured(.radarr)
         }
         let resolved = try await resolve(options: options, radarr: radarr)
-        _ = try await radarr.addMovie(
+        return try await radarr.addMovie(
             tmdbId: tmdbId,
             title: item.title,
             qualityProfileId: resolved.qualityProfileId,
@@ -103,7 +109,7 @@ public final class DownloadCoordinator {
         )
     }
 
-    private func submitSeries(_ item: CatalogItem, options: AddOptions?) async throws {
+    private func submitSeries(_ item: CatalogItem, options: AddOptions?) async throws -> Int {
         guard let sonarr else {
             throw DownloadCoordinatorError.serviceNotConfigured(.sonarr)
         }
@@ -115,7 +121,7 @@ public final class DownloadCoordinator {
             throw DownloadCoordinatorError.lookupReturnedNothing
         }
         let resolved = try await resolve(options: options, sonarr: sonarr)
-        _ = try await sonarr.addSeries(
+        return try await sonarr.addSeries(
             tvdbId: match.tvdbId,
             title: match.title,
             qualityProfileId: resolved.qualityProfileId,
@@ -192,9 +198,10 @@ public final class DownloadCoordinator {
         let matches = entries.filter { entry in
             (item.tmdbId != nil && entry.tmdbId == item.tmdbId) || entry.title == item.title
         }
-        for entry in matches where !entry.id.hasPrefix("local-") {
-            let id = entry.id.split(separator: "-").last.map(String.init)
-            guard let id else { continue }
+        for entry in matches {
+            // Local-* entries count too: they were already created
+            // server-side by submit, cancel must undo them there as well.
+            guard let id = await serviceId(for: entry) else { continue }
             switch entry.service {
             case .radarr: try? await radarr?.deleteEntry(id: id)
             case .sonarr: try? await sonarr?.deleteEntry(id: id)
@@ -203,6 +210,25 @@ public final class DownloadCoordinator {
         let doomed = Set(matches.map(\.id))
         entries.removeAll { doomed.contains($0.id) }
         await refresh()
+    }
+
+    /// Id the service's DELETE endpoint expects: the stored service id,
+    /// falling back to a lookup by TMDB id when the queue didn't carry one.
+    private func serviceId(for entry: DownloadEntry) async -> String? {
+        if let remoteId = entry.remoteId { return remoteId }
+        guard let tmdbId = entry.tmdbId else { return nil }
+        switch entry.service {
+        case .radarr:
+            guard let radarr, let match = try? await radarr.lookup(tmdbId: tmdbId).first else {
+                return nil
+            }
+            return match.id.map(String.init)
+        case .sonarr:
+            guard let sonarr, let match = try? await sonarr.lookup(tmdbId: tmdbId).first else {
+                return nil
+            }
+            return match.id.map(String.init)
+        }
     }
 
     // MARK: Availability
@@ -215,7 +241,7 @@ public final class DownloadCoordinator {
             else { return entry }
             return DownloadEntry(
                 id: entry.id, service: entry.service, title: entry.title,
-                tmdbId: entry.tmdbId, state: .available
+                tmdbId: entry.tmdbId, remoteId: entry.remoteId, state: .available
             )
         }
     }
@@ -235,7 +261,17 @@ public final class DownloadCoordinator {
         entries[index] = DownloadEntry(
             id: entries[index].id, service: entries[index].service,
             title: entries[index].title, tmdbId: entries[index].tmdbId,
-            state: state
+            remoteId: entries[index].remoteId, state: state
+        )
+    }
+
+    /// Attach the service-side id to an already-created local entry.
+    private func patch(remoteId: String, for id: String) {
+        guard let index = entries.firstIndex(where: { $0.id == id }) else { return }
+        entries[index] = DownloadEntry(
+            id: entries[index].id, service: entries[index].service,
+            title: entries[index].title, tmdbId: entries[index].tmdbId,
+            remoteId: remoteId, state: entries[index].state
         )
     }
 

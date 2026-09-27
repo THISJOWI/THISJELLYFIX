@@ -63,6 +63,18 @@ public final class DiscoveryModel {
 
     // MARK: - Home
 
+    /// Trending shelves (id prefix `trending-`): Home renders them right
+    /// after "Estás viendo" so fresh content sits at the top.
+    public var trendingRows: [CatalogRow] {
+        rows.filter { $0.id.hasPrefix("trending-") }
+    }
+
+    /// "Para ti" shelves (id prefix `forYou-`): homogeneous rows rendered
+    /// after the library rows.
+    public var forYouRows: [CatalogRow] {
+        rows.filter { $0.id.hasPrefix("forYou-") }
+    }
+
     public func loadRows() async {
         guard !isLoadingRows else { return }
         isLoadingRows = true

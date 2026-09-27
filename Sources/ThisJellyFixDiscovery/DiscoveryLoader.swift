@@ -32,11 +32,15 @@ public struct DiscoveryLoader: Sendable {
     public func loadRows(library: [JellyfinMediaItem]) async -> [CatalogRow] {
         guard let provider else { return [] }
 
-        let trending = await safe { try await provider.trending() }
+        // Separate shelves per kind: a mixed list buries series behind
+        // movies (or the reverse) depending on the day's ranking.
+        let trendingSeries = await safe { try await provider.trending(kind: .series) }
+        let trendingMovies = await safe { try await provider.trending(kind: .movie) }
         let recommendations = await recommendations(for: library, provider: provider)
 
         return CatalogRecommender.buildRows(
-            trending: trending,
+            trendingSeries: trendingSeries,
+            trendingMovies: trendingMovies,
             recommendations: recommendations,
             library: library
         )

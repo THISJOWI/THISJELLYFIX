@@ -9,7 +9,8 @@ public enum ArrError: LocalizedError, Equatable {
     case unauthorized
     /// Service did not answer (LAN/túnel caído, URL mal, timeout).
     case unreachable
-    case serverError(Int)
+    /// Non-2xx with the service's own explanation (nil = empty body).
+    case serverError(Int, String?)
     case invalidResponse
     /// Lookup returned nothing for this id.
     case notFound
@@ -18,10 +19,42 @@ public enum ArrError: LocalizedError, Equatable {
         switch self {
         case .unauthorized: "API key rechazada por el servicio."
         case .unreachable: "No se pudo contactar con el servicio. Revisa la URL."
-        case .serverError(let code): "El servicio devolvió un error (código \(code))."
+        case .serverError(let code, let message):
+            if let message, !message.isEmpty {
+                "El servicio devolvió un error (código \(code)): \(message)"
+            } else {
+                "El servicio devolvió un error (código \(code))."
+            }
         case .invalidResponse: "Respuesta inválida del servicio."
         case .notFound: "No se encontró el título en el servicio."
         }
+    }
+
+    /// Pull the human-readable part out of an *arr error body: JSON array
+    /// of {errorMessage}, {message}, or plain text.
+    static func serverMessage(from body: Data) -> String? {
+        guard !body.isEmpty else { return nil }
+        let raw = String(data: body, encoding: .utf8)?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let raw, !raw.isEmpty else { return nil }
+
+        if let object = try? JSONSerialization.jsonObject(with: body) {
+            if let array = object as? [[String: Any]] {
+                let messages = array.compactMap {
+                    ($0["errorMessage"] as? String) ?? ($0["message"] as? String)
+                }
+                let joined = messages.joined(separator: "; ")
+                if !joined.isEmpty { return String(joined.prefix(300)) }
+            } else if let dictionary = object as? [String: Any],
+                      let message = dictionary["message"] as? String ?? dictionary["errorMessage"] as? String {
+                return String(message.prefix(300))
+            } else if let string = object as? String, !string.isEmpty {
+                return String(string.prefix(300))
+            }
+            return nil
+        }
+        // Not JSON (plain-text error page): show a short prefix.
+        return String(raw.prefix(300))
     }
 }
 
@@ -141,9 +174,9 @@ struct ArrHTTPClient {
             TJFLog("\(service) \(method) \(path) status=\(http.statusCode)")
             throw ArrError.unauthorized
         default:
-            let bodyStr = String(data: data, encoding: .utf8) ?? "binary"
-            TJFLog("\(service) \(method) \(path) status=\(http.statusCode) body=\(bodyStr.prefix(300))")
-            throw ArrError.serverError(http.statusCode)
+            let message = ArrError.serverMessage(from: data)
+            TJFLog("\(service) \(method) \(path) status=\(http.statusCode) message=\(message ?? "-")")
+            throw ArrError.serverError(http.statusCode, message)
         }
     }
 }
@@ -175,6 +208,20 @@ public struct RadarrMovieLookup: Decodable, Sendable, Equatable {
         monitored = try container.decodeIfPresent(Bool.self, forKey: .monitored)
         status = try container.decodeIfPresent(String.self, forKey: .status)
         images = try container.decodeIfPresent([ArrImage].self, forKey: .images)
+    }
+
+    public init(
+        id: Int?, title: String, year: Int?, tmdbId: String,
+        hasFile: Bool?, monitored: Bool?, status: String?, images: [ArrImage]?
+    ) {
+        self.id = id
+        self.title = title
+        self.year = year
+        self.tmdbId = tmdbId
+        self.hasFile = hasFile
+        self.monitored = monitored
+        self.status = status
+        self.images = images
     }
 }
 
@@ -226,7 +273,9 @@ public struct RadarrClient: RadarrProviding {
             "qualityProfileId": qualityProfileId,
             "rootFolderPath": rootFolderPath,
             "monitored": monitored,
-            "searchForMovie": searchForMovie,
+            // Radarr reads the search flag from addOptions only: a top-level
+            // copy is ignored and the movie lands without a search.
+            "addOptions": ["searchForMovie": searchForMovie],
         ]
         let response: [String: Any] = try await http.post("movie", body: body)
         return response["id"] as? Int ?? 0
@@ -378,9 +427,16 @@ public struct SonarrClient: SonarrProviding {
             "qualityProfileId": qualityProfileId,
             "rootFolderPath": rootFolderPath,
             "monitored": monitored,
-            "monitor": monitor.rawValue,
-            "seasons": seasons,
-            "searchForMissingEpisodes": searchForMissing,
+            "seasonFolder": true,
+            // seasons must be SeasonResource objects: bare ints make Sonarr's
+            // JSON parser reject the whole request with 400.
+            "seasons": seasons.map { ["seasonNumber": $0, "monitored": true] },
+            // monitor + search only exist inside addOptions; Sonarr ignores
+            // top-level copies, so no search would ever fire.
+            "addOptions": [
+                "monitor": monitor.rawValue,
+                "searchForMissingEpisodes": searchForMissing,
+            ] as [String: Any],
         ]
         let response: [String: Any] = try await http.post("series", body: body)
         return response["id"] as? Int ?? 0

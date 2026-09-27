@@ -23,9 +23,29 @@ final class DownloadQueueTests: XCTestCase {
         XCTAssertEqual(queue[0].service, .radarr)
         XCTAssertEqual(queue[0].title, "Dune")
         XCTAssertEqual(queue[0].state, .downloading(progress: 42.5))
+        // remoteId = the movie id Radarr knows (DELETE /movie/{id}), which is
+        // NOT the queue record id — deleting by record id 404s silently.
+        XCTAssertEqual(queue[0].remoteId, "5")
         XCTAssertEqual(queue[1].state, .completed)
+        XCTAssertEqual(queue[1].remoteId, "6")
         XCTAssertEqual(queue[2].state, .failed("failed"))
         XCTAssertEqual(session.capturedRequest?.url?.path, "/api/v3/queue")
+    }
+
+    func testQueuePrefersEmbeddedMovieIdOverTopLevel() async throws {
+        let session = SpySession(json: """
+        {"records": [
+          {"id": 14, "status": "queued", "progress": 0, "movieId": 9,
+           "movie": {"id": 5, "title": "Dune", "tmdbId": 438631}},
+          {"id": 15, "status": "queued", "progress": 0}
+        ]}
+        """)
+        let client = RadarrClient(baseURL: URL(string: "http://r:7878")!, apiKey: "k", session: session)
+        let queue = try await DownloadQueue(client: .radarr(client)).fetch()
+
+        XCTAssertEqual(queue.count, 1)
+        XCTAssertEqual(queue[0].remoteId, "5")
+        // Record with no movie object has no title → skipped, no crash.
     }
 
     func testSonarrQueueUsesSeriesTitle() async throws {
@@ -44,6 +64,9 @@ final class DownloadQueueTests: XCTestCase {
         XCTAssertEqual(queue[0].service, .sonarr)
         XCTAssertEqual(queue[0].title, "Breaking Bad")
         XCTAssertEqual(queue[0].state, .downloading(progress: 10))
+        // Series id (3), not the queue record id (1): cancel must DELETE
+        // /series/3 server-side.
+        XCTAssertEqual(queue[0].remoteId, "3")
         XCTAssertEqual(queue[1].state, .paused(progress: 50))
         XCTAssertEqual(session.capturedRequest?.url?.path, "/api/v3/queue")
     }

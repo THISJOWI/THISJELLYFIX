@@ -52,8 +52,12 @@ final class ArrClientTests: XCTestCase {
         XCTAssertEqual(json["qualityProfileId"] as? Int, 1)
         XCTAssertEqual(json["rootFolderPath"] as? String, "/films")
         XCTAssertEqual(json["monitored"] as? Bool, true)
-        XCTAssertEqual(json["searchForMovie"] as? Bool, false)
         XCTAssertEqual(json["title"] as? String, "Blade Runner 2049")
+        // Radarr only reads the search flag from addOptions — a top-level
+        // copy is ignored (movie added, no search triggered).
+        let addOptions = try XCTUnwrap(json["addOptions"] as? [String: Any])
+        XCTAssertEqual(addOptions["searchForMovie"] as? Bool, false)
+        XCTAssertNil(json["searchForMovie"])
     }
 
     func testRadarrAddMovieCanSearchImmediately() async throws {
@@ -65,7 +69,8 @@ final class ArrClientTests: XCTestCase {
         )
         let body = try XCTUnwrap(session.capturedRequest?.httpBody)
         let json = try JSONSerialization.jsonObject(with: body) as! [String: Any]
-        XCTAssertEqual(json["searchForMovie"] as? Bool, true)
+        let addOptions = try XCTUnwrap(json["addOptions"] as? [String: Any])
+        XCTAssertEqual(addOptions["searchForMovie"] as? Bool, true)
     }
 
     // MARK: - Radarr: options (quality profiles, root folders)
@@ -122,7 +127,7 @@ final class ArrClientTests: XCTestCase {
             monitored: true,
             monitor: .all,
             seasons: [1, 2],
-            searchForMissing: false
+            searchForMissing: true
         )
 
         XCTAssertEqual(added, 99)
@@ -134,9 +139,19 @@ final class ArrClientTests: XCTestCase {
         XCTAssertEqual(json["qualityProfileId"] as? Int, 2)
         XCTAssertEqual(json["rootFolderPath"] as? String, "/series")
         XCTAssertEqual(json["monitored"] as? Bool, true)
-        XCTAssertEqual(json["monitor"] as? String, "all")
-        XCTAssertEqual(json["seasons"] as? [Int], [1, 2])
-        XCTAssertEqual(json["searchForMissingEpisodes"] as? Bool, false)
+        XCTAssertEqual(json["seasonFolder"] as? Bool, true)
+        // seasons must be SeasonResource objects: bare ints make Sonarr's
+        // JSON parser fail → 400 on every series add.
+        let seasons = try XCTUnwrap(json["seasons"] as? [[String: Any]])
+        XCTAssertEqual(seasons.compactMap { $0["seasonNumber"] as? Int }, [1, 2])
+        XCTAssertEqual(seasons.allSatisfy { $0["monitored"] as? Bool == true }, true)
+        // monitor + search live inside addOptions; top-level copies are
+        // ignored by Sonarr → no search would ever fire.
+        let addOptions = try XCTUnwrap(json["addOptions"] as? [String: Any])
+        XCTAssertEqual(addOptions["monitor"] as? String, "all")
+        XCTAssertEqual(addOptions["searchForMissingEpisodes"] as? Bool, true)
+        XCTAssertNil(json["monitor"])
+        XCTAssertNil(json["searchForMissingEpisodes"])
     }
 
     func testSonarrQualityProfiles() async throws {
@@ -183,6 +198,40 @@ final class ArrClientTests: XCTestCase {
             XCTFail("Expected error")
         } catch let error as ArrError {
             XCTAssertEqual(error, .unreachable)
+        } catch {
+            XCTFail("Unexpected \(error)")
+        }
+    }
+
+    /// A 400 is useless without the service's explanation: surface the
+    /// response body so the user sees WHY the add was rejected.
+    func testServerErrorSurfacesServerMessage() async {
+        let session = SpySession(
+            json: #"[{"propertyName":"seasons","errorMessage":"Invalid seasons value"}]"#,
+            statusCode: 400
+        )
+        let client = SonarrClient(baseURL: sonarrBase, apiKey: "sk", session: session)
+        do {
+            _ = try await client.qualityProfiles()
+            XCTFail("Expected error")
+        } catch let error as ArrError {
+            XCTAssertEqual(error, .serverError(400, "Invalid seasons value"))
+            XCTAssertTrue(error.localizedDescription.contains("código 400"))
+            XCTAssertTrue(error.localizedDescription.contains("Invalid seasons value"))
+        } catch {
+            XCTFail("Unexpected \(error)")
+        }
+    }
+
+    func testServerErrorWithoutBodyKeepsCodeOnly() async {
+        let session = SpySession(json: "", statusCode: 500)
+        let client = RadarrClient(baseURL: radarrBase, apiKey: "rk", session: session)
+        do {
+            _ = try await client.qualityProfiles()
+            XCTFail("Expected error")
+        } catch let error as ArrError {
+            XCTAssertEqual(error, .serverError(500, nil))
+            XCTAssertEqual(error.localizedDescription, "El servicio devolvió un error (código 500).")
         } catch {
             XCTFail("Unexpected \(error)")
         }

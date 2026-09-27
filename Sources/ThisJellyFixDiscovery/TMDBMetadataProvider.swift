@@ -7,7 +7,9 @@ import ThisJellyFixNetworking
 /// Metadata source for the discovery UI. Implementations are swappable:
 /// adding a provider means adding a type, not touching the UI.
 public protocol MetadataProvider: Sendable {
-    func trending() async throws -> [CatalogItem]
+    /// Trending shelf for one media kind: series and movies get their own
+    /// row instead of one mixed list.
+    func trending(kind: CatalogItem.Kind) async throws -> [CatalogItem]
     func recommendations(tmdbId: String, kind: CatalogItem.Kind) async throws -> [CatalogItem]
     func search(query: String) async throws -> [CatalogItem]
 }
@@ -50,12 +52,13 @@ public struct TMDBMetadataProvider: MetadataProvider {
         self.session = session
     }
 
-    public func trending() async throws -> [CatalogItem] {
-        let response: PagedResults = try await get("/3/trending/all/day")
-        // Trending mixes movies, series and people; people are not downloadable.
+    public func trending(kind: CatalogItem.Kind) async throws -> [CatalogItem] {
+        let media = kind == .movie ? "movie" : "tv"
+        let response: PagedResults = try await get("/3/trending/\(media)/day")
+        // The kind comes from the endpoint; media_type is just a cross-check.
         return response.results.compactMap { entry in
-            guard let kind = entry.kind(mediaType: entry.mediaType) else { return nil }
-            return entry.catalogItem(kind: kind)
+            guard let entryKind = entry.kind(mediaType: entry.mediaType ?? media) else { return nil }
+            return entry.catalogItem(kind: entryKind)
         }
     }
 
@@ -120,6 +123,8 @@ private struct TMDBEntry: Decodable {
     let releaseDate: String?
     let firstAirDate: String?
     let voteAverage: Double?
+    let genreIds: [Int]?
+    let originalLanguage: String?
 
     enum CodingKeys: String, CodingKey {
         case id
@@ -132,6 +137,8 @@ private struct TMDBEntry: Decodable {
         case releaseDate = "release_date"
         case firstAirDate = "first_air_date"
         case voteAverage = "vote_average"
+        case genreIds = "genre_ids"
+        case originalLanguage = "original_language"
     }
 
     /// media_type comes from trending/search; callers with no media_type
@@ -155,7 +162,9 @@ private struct TMDBEntry: Decodable {
             posterURL: Self.imageURL(path: posterPath, size: "w500"),
             backdropURL: Self.imageURL(path: backdropPath, size: "w780"),
             tmdbId: String(id),
-            imdbId: nil
+            imdbId: nil,
+            genreIds: genreIds ?? [],
+            originalLanguage: originalLanguage
         )
     }
 

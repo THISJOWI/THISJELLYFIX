@@ -20,6 +20,10 @@ public struct CatalogItem: Identifiable, Sendable, Equatable, Hashable {
     public let imdbId: String?
     /// Jellyfin item id when this title already exists in the library.
     public let jellyfinId: String?
+    /// TMDB genre ids — used to shelf like with like (anime vs plain rows).
+    public let genreIds: [Int]
+    /// TMDB original language ("ja" + Animation = anime).
+    public let originalLanguage: String?
 
     public init(
         id: String,
@@ -31,7 +35,9 @@ public struct CatalogItem: Identifiable, Sendable, Equatable, Hashable {
         backdropURL: URL?,
         tmdbId: String?,
         imdbId: String?,
-        jellyfinId: String? = nil
+        jellyfinId: String? = nil,
+        genreIds: [Int] = [],
+        originalLanguage: String? = nil
     ) {
         self.id = id
         self.kind = kind
@@ -43,9 +49,17 @@ public struct CatalogItem: Identifiable, Sendable, Equatable, Hashable {
         self.tmdbId = tmdbId
         self.imdbId = imdbId
         self.jellyfinId = jellyfinId
+        self.genreIds = genreIds
+        self.originalLanguage = originalLanguage
     }
 
     public var isInLibrary: Bool { jellyfinId != nil }
+
+    /// Japanese animation: TMDB's Animation genre (16) in a Japanese-origin
+    /// title. English-language animation (Pixar…) stays in the plain rows.
+    public var isAnime: Bool {
+        genreIds.contains(16) && originalLanguage == "ja"
+    }
 
     /// Which *arr service handles downloads for this kind of item.
     public var downloadService: DownloadService {
