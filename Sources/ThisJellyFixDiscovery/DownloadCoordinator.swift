@@ -44,6 +44,7 @@ public final class DownloadCoordinator {
         self.config = config
         self.radarr = radarr
         self.sonarr = sonarr
+        hydrate()
     }
 
     /// Build the default coordinator from the user's stored settings.
@@ -182,12 +183,27 @@ public final class DownloadCoordinator {
 
         lastRefreshError = firstError
 
+        // A failing service would rebuild the list from a partial (or
+        // empty) queue and wipe real entries: keep the previous list.
+        if firstError != nil { return }
+
         // Local optimistic entries survive until the remote queue covers them.
         let unmatchedLocal = entries.filter { local in
             local.id.hasPrefix("local-") &&
             !remote.contains { sameTitle($0, local) || sameTmdb($0, local) }
         }
-        entries = remote + unmatchedLocal
+        // Terminal entries (done/failed) left the remote queue but are the
+        // history the user keeps across launches — until they cancel them.
+        // Matched against re-downloads so a title never shows up twice.
+        let history = entries.filter { entry in
+            !entry.id.hasPrefix("local-") &&
+            !isPending(entry.state) &&
+            !remote.contains {
+                $0.id == entry.id || sameTitle($0, entry) || sameTmdb($0, entry)
+            }
+        }
+        entries = remote + unmatchedLocal + history
+        persist()
     }
 
     // MARK: Removal
@@ -209,6 +225,7 @@ public final class DownloadCoordinator {
         }
         let doomed = Set(matches.map(\.id))
         entries.removeAll { doomed.contains($0.id) }
+        persist()
         await refresh()
     }
 
@@ -244,9 +261,34 @@ public final class DownloadCoordinator {
                 tmdbId: entry.tmdbId, remoteId: entry.remoteId, state: .available
             )
         }
+        persist()
     }
 
     // MARK: - Private
+
+    /// Rebuild the panel from the last persisted state so leaving the app
+    /// doesn't wipe the history. A submit interrupted by the app dying is
+    /// reported as failed instead of hanging in `.submitting`.
+    private func hydrate() {
+        guard let data = config.downloadHistoryData,
+              let decoded = try? JSONDecoder().decode([DownloadEntry].self, from: data)
+        else { return }
+        entries = decoded.map { entry in
+            guard entry.state == .submitting else { return entry }
+            return DownloadEntry(
+                id: entry.id, service: entry.service, title: entry.title,
+                tmdbId: entry.tmdbId, remoteId: entry.remoteId,
+                state: .failed("Envío interrumpido")
+            )
+        }
+    }
+
+    /// Mirror the panel into storage. Called after every mutation so the
+    /// persisted list never lags behind what the user sees.
+    private func persist() {
+        guard let data = try? JSONEncoder().encode(entries) else { return }
+        config.saveDownloadHistory(data)
+    }
 
     private func upsert(_ entry: DownloadEntry) {
         if let index = entries.firstIndex(where: { $0.id == entry.id }) {
@@ -254,6 +296,7 @@ public final class DownloadCoordinator {
         } else {
             entries.append(entry)
         }
+        persist()
     }
 
     private func set(state: DownloadState, for id: String) {
@@ -263,6 +306,7 @@ public final class DownloadCoordinator {
             title: entries[index].title, tmdbId: entries[index].tmdbId,
             remoteId: entries[index].remoteId, state: state
         )
+        persist()
     }
 
     /// Attach the service-side id to an already-created local entry.
@@ -273,6 +317,7 @@ public final class DownloadCoordinator {
             title: entries[index].title, tmdbId: entries[index].tmdbId,
             remoteId: remoteId, state: entries[index].state
         )
+        persist()
     }
 
     private func sameTitle(_ a: DownloadEntry, _ b: DownloadEntry) -> Bool {

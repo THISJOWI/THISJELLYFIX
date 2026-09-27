@@ -10,6 +10,7 @@ public struct IntegrationConfig: Sendable {
     public enum DefaultsKey {
         public static let radarrURL = "com.thisjellyfix.integration.radarrURL"
         public static let sonarrURL = "com.thisjellyfix.integration.sonarrURL"
+        public static let downloadHistory = "com.thisjellyfix.integration.downloadHistory"
     }
 
     public enum KeychainKey {
@@ -61,6 +62,23 @@ public struct IntegrationConfig: Sendable {
     public var sonarrApiKey: String? {
         get { keychain.read(key: KeychainKey.sonarrApiKey) }
         nonmutating set { setSecret(newValue, key: KeychainKey.sonarrApiKey) }
+    }
+
+    // MARK: - Download history
+
+    /// JSON-encoded download panel entries. Persisted so leaving the app
+    /// doesn't wipe the history. Not cleared by `reset()`: history is not
+    /// a credential.
+    public var downloadHistoryData: Data? {
+        defaults.data(forKey: DefaultsKey.downloadHistory)
+    }
+
+    public func saveDownloadHistory(_ data: Data) {
+        defaults.set(data, forKey: DefaultsKey.downloadHistory)
+    }
+
+    public func clearDownloadHistory() {
+        defaults.removeObject(forKey: DefaultsKey.downloadHistory)
     }
 
     // MARK: - Queries

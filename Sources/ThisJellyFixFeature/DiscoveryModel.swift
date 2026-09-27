@@ -58,6 +58,11 @@ public final class DiscoveryModel {
         model.hasMetadataProvider = config.hasMetadataProvider
         model.hasDownloadService = config.isConfigured(service: .radarr) || config.isConfigured(service: .sonarr)
         model.hasAnyConfiguration = model.hasMetadataProvider || model.hasDownloadService
+        if model.hasDownloadService {
+            // Adopt the real queue over the hydrated history right away so
+            // relaunched states (progress, completion) are current.
+            Task { await model.refreshDownloads() }
+        }
         return model
     }
 

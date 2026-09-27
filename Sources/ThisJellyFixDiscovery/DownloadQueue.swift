@@ -4,7 +4,8 @@ import ThisJellyFixCore
 // MARK: - State
 
 /// Lifecycle of a single download, as reported by the *arr queue.
-public enum DownloadState: Equatable, Sendable {
+/// Codable: the panel history is persisted across launches.
+public enum DownloadState: Equatable, Sendable, Codable {
     /// Order sent, waiting for the service to accept it into its queue.
     case submitting
     case queued
@@ -45,7 +46,7 @@ public enum DownloadState: Equatable, Sendable {
 
 // MARK: - Entry
 
-public struct DownloadEntry: Identifiable, Sendable, Equatable {
+public struct DownloadEntry: Identifiable, Sendable, Equatable, Codable {
     public let id: String
     public let service: DownloadService
     public let title: String

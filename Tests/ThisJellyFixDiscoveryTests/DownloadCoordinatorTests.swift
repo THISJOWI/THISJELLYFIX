@@ -188,6 +188,111 @@ final class DownloadCoordinatorTests: XCTestCase {
         XCTAssertNotNil(coordinator.lastRefreshError)
     }
 
+    // MARK: - Persistence
+
+    private func seedHistory(_ entries: [DownloadEntry]) throws {
+        config.saveDownloadHistory(try JSONEncoder().encode(entries))
+    }
+
+    func testHistorySurvivesNewCoordinatorInstance() async throws {
+        let radarr = FakeRadarr()
+        config.radarrURL = URL(string: "http://r:7878")
+        config.radarrApiKey = "k"
+        let first = DownloadCoordinator(config: config, radarr: radarr, sonarr: nil)
+        try await first.submit(movie, options: nil)
+        XCTAssertEqual(first.entries.count, 1)
+
+        // App relaunched: fresh coordinator over the same storage.
+        let second = DownloadCoordinator(config: config, radarr: radarr, sonarr: nil)
+        XCTAssertEqual(second.entries.count, 1)
+        XCTAssertEqual(second.entries[0].id, first.entries[0].id)
+        XCTAssertEqual(second.entries[0].remoteId, "1")
+        // In-flight `.submitting` can't be trusted after relaunch; the
+        // first refresh re-adopts the real remote queue entry.
+        XCTAssertEqual(second.entries[0].state, .failed("Envío interrumpido"))
+    }
+
+    func testCompletedHistorySurvivesRefresh() async throws {
+        // Download finished long ago: no longer in any remote queue, but
+        // it IS the history the user asked to keep across launches.
+        let done = DownloadEntry(id: "radarr-5", service: .radarr, title: "Old Movie",
+                                 tmdbId: "111", remoteId: "2", state: .completed)
+        try seedHistory([done])
+        config.radarrURL = URL(string: "http://r:7878")
+        config.radarrApiKey = "k"
+        let radarr = FakeRadarr()   // remote queue empty
+        let coordinator = DownloadCoordinator(config: config, radarr: radarr, sonarr: nil)
+
+        XCTAssertEqual(coordinator.entries, [done])   // hydrated
+        await coordinator.refresh()
+
+        XCTAssertEqual(coordinator.entries, [done])   // not wiped by empty queue
+        XCTAssertNil(coordinator.lastRefreshError)
+    }
+
+    func testRefreshFailureKeepsPreviousList() async throws {
+        let radarr = FakeRadarr()
+        radarr.queueRecords = [
+            DownloadEntry(id: "radarr-7", service: .radarr, title: "Dune",
+                          tmdbId: "438631", remoteId: "5", state: .downloading(progress: 10))
+        ]
+        config.radarrURL = URL(string: "http://r:7878")
+        config.radarrApiKey = "k"
+        let coordinator = DownloadCoordinator(config: config, radarr: radarr, sonarr: nil)
+        await coordinator.refresh()
+        XCTAssertEqual(coordinator.entries.count, 1)
+
+        // Service drops mid-session: rebuilding from an empty remote would
+        // wipe real entries.
+        radarr.queueError = ArrError.unreachable
+        await coordinator.refresh()
+
+        XCTAssertEqual(coordinator.entries.count, 1)
+        XCTAssertEqual(coordinator.entries[0].title, "Dune")
+        XCTAssertNotNil(coordinator.lastRefreshError)
+    }
+
+    func testCancelPersistsRemovalAcrossRestart() async throws {
+        let done = DownloadEntry(id: "radarr-5", service: .radarr,
+                                 title: "Blade Runner 2049",
+                                 tmdbId: "335984", remoteId: "2", state: .completed)
+        try seedHistory([done])
+        config.radarrURL = URL(string: "http://r:7878")
+        config.radarrApiKey = "k"
+        let radarr = FakeRadarr()
+        let coordinator = DownloadCoordinator(config: config, radarr: radarr, sonarr: nil)
+
+        await coordinator.removeEntries(matching: movie)
+        XCTAssertEqual(radarr.deletedIds, ["2"])
+        XCTAssertTrue(coordinator.entries.isEmpty)
+
+        let relaunched = DownloadCoordinator(config: config, radarr: radarr, sonarr: nil)
+        XCTAssertTrue(relaunched.entries.isEmpty)
+    }
+
+    func testInterruptedSubmitHydratesAsFailed() async throws {
+        // App died mid-submit: `.submitting` is meaningless after relaunch.
+        let stuck = DownloadEntry(id: "local-radarr-1", service: .radarr,
+                                  title: "X", tmdbId: "1", remoteId: "9",
+                                  state: .submitting)
+        try seedHistory([stuck])
+        let coordinator = DownloadCoordinator(config: config, radarr: nil, sonarr: nil)
+
+        XCTAssertEqual(coordinator.entries.count, 1)
+        guard case .failed = coordinator.entries[0].state else {
+            return XCTFail("Expected failed, got \(coordinator.entries[0].state)")
+        }
+    }
+
+    func testDownloadStateRoundTripsThroughJSON() throws {
+        let states: [DownloadState] = [
+            .submitting, .queued, .downloading(progress: 42.5), .paused(progress: 3),
+            .completed, .available, .failed("boom"),
+        ]
+        let data = try JSONEncoder().encode(states)
+        XCTAssertEqual(try JSONDecoder().decode([DownloadState].self, from: data), states)
+    }
+
     // MARK: - Removal
 
     func testRemoveEntriesDeletesRemoteIdNotQueueRecordId() async throws {
