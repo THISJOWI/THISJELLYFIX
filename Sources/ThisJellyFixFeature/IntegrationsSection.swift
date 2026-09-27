@@ -13,6 +13,7 @@ import UIKit
 /// URLs live in UserDefaults (`@AppStorage`-compatible keys); API keys go
 /// straight to the Keychain through `IntegrationConfig`.
 struct IntegrationsSection: View {
+    @EnvironmentObject private var discovery: DiscoveryModel
     @AppStorage(IntegrationConfig.DefaultsKey.radarrURL) private var radarrURL = ""
     @AppStorage(IntegrationConfig.DefaultsKey.sonarrURL) private var sonarrURL = ""
 
@@ -215,10 +216,18 @@ struct IntegrationsSection: View {
     }
 
     private func save() {
+        // Save API keys
         config.tmdbApiKey = tmdbKey.trimmingCharacters(in: .whitespacesAndNewlines)
         config.radarrApiKey = radarrKey.trimmingCharacters(in: .whitespacesAndNewlines)
         config.sonarrApiKey = sonarrKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        // Save URLs
+        config.radarrURL = URL(string: radarrURL.trimmingCharacters(in: .whitespacesAndNewlines))
+        config.sonarrURL = URL(string: sonarrURL.trimmingCharacters(in: .whitespacesAndNewlines))
+        // Notify discovery model to refresh its configuration (e.g., download buttons)
+        discovery.reloadConfiguration()
     }
+
+
 
     @MainActor
     private func test(_ service: DownloadService) async {

@@ -1152,10 +1152,8 @@ final class PlayerViewModel {
         // wait. Staging then would arm the auto-start flag (and a muted
         // playing AVPlayer) on a gate that no longer holds.
         guard pipState == .idle, !PipSession.shared.isActive else { return }
-        guard canAutoHandoffToPiP,
-              UIApplication.shared.applicationState == .active
-        else {
-            TJFLog("pip: staging dropped after resolve — playing=\(isPlaying) pausedByUser=\(userPaused) state=\(UIApplication.shared.applicationState.rawValue)")
+        guard canAutoHandoffToPiP else {
+            TJFLog("pip: staging dropped after resolve — playing=\(isPlaying) pausedByUser=\(userPaused)")
             return
         }
 

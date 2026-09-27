@@ -47,8 +47,13 @@ public struct IntegrationConfig: Sendable {
     // MARK: - Radarr
 
     public var radarrURL: URL? {
-        get { url(defaults.string(forKey: DefaultsKey.radarrURL)) }
-        nonmutating set { defaults.set(newValue?.absoluteString, forKey: DefaultsKey.radarrURL) }
+        get {
+            url(defaults.string(forKey: DefaultsKey.radarrURL) ?? UserDefaults.standard.string(forKey: DefaultsKey.radarrURL))
+        }
+        nonmutating set {
+            defaults.set(newValue?.absoluteString, forKey: DefaultsKey.radarrURL)
+            UserDefaults.standard.set(newValue?.absoluteString, forKey: DefaultsKey.radarrURL)
+        }
     }
 
     public var radarrApiKey: String? {
@@ -59,8 +64,13 @@ public struct IntegrationConfig: Sendable {
     // MARK: - Sonarr
 
     public var sonarrURL: URL? {
-        get { url(defaults.string(forKey: DefaultsKey.sonarrURL)) }
-        nonmutating set { defaults.set(newValue?.absoluteString, forKey: DefaultsKey.sonarrURL) }
+        get {
+            url(defaults.string(forKey: DefaultsKey.sonarrURL) ?? UserDefaults.standard.string(forKey: DefaultsKey.sonarrURL))
+        }
+        nonmutating set {
+            defaults.set(newValue?.absoluteString, forKey: DefaultsKey.sonarrURL)
+            UserDefaults.standard.set(newValue?.absoluteString, forKey: DefaultsKey.sonarrURL)
+        }
     }
 
     public var sonarrApiKey: String? {

@@ -127,7 +127,9 @@ struct DetailView: View {
                                 genreBadges(genres)
                             }
 
-                            actionRow(detail: detail)
+                            if detail.type != "Series" {
+                                playButton(detail: detail)
+                            }
 
                             errorBanners
 
@@ -187,75 +189,70 @@ struct DetailView: View {
         #if os(iOS) || os(tvOS) || os(visionOS)
         .toolbarBackground(.hidden, for: .navigationBar)
         #endif
+        .toolbar {
+            #if os(iOS) || os(tvOS) || os(visionOS)
+            ToolbarItem(placement: .topBarTrailing) {
+                actionPill
+            }
+            #else
+            ToolbarItem(placement: .primaryAction) {
+                actionPill
+            }
+            #endif
+        }
     }
 
-    // MARK: - Actions Row
+    // MARK: - Navigation bar actions
 
-    /// Action row below the title: Play / Jump to episodes, plus Watched and Favorite.
-    /// Kept out of the top navigation bar so floating pills do not obstruct character faces in hero backdrops.
-    private func actionRow(detail: JellyfinItemDetail) -> some View {
-        HStack(spacing: 12) {
-            if detail.type != "Series" {
-                playButton(detail: detail)
-            } else {
-                seriesActionButton(detail: detail)
+    /// Play / jump-to-episodes / watched / favorite — lives in the navigation bar.
+    private var actionPill: some View {
+        HStack(spacing: 16) {
+            if let detail {
+                if detail.type != "Series" {
+                    pillButton("play.fill", label: "Reproducir") {
+                        Task { await playMovie(detail) }
+                    }
+                } else {
+                    pillButton("list.bullet", label: "Episodios") {
+                        scrollToEpisodesToken += 1
+                    }
+                }
             }
 
-            actionButton(
-                icon: isPlayed ? "checkmark.circle.fill" : "checkmark.circle",
+            pillButton(
+                isPlayed ? "checkmark.circle.fill" : "checkmark.circle",
                 label: isPlayed ? "Marcar como no visto" : "Marcar como visto",
-                tint: isPlayed ? .green : .white,
                 busy: isSavingPlayed
             ) {
                 togglePlayed()
             }
 
-            actionButton(
-                icon: isFavorite ? "heart.fill" : "heart",
+            pillButton(
+                isFavorite ? "heart.fill" : "heart",
                 label: isFavorite ? "Quitar de favoritos" : "Añadir a favoritos",
-                tint: isFavorite ? .red : .white,
                 busy: isSavingFavorite
             ) {
                 toggleFavorite()
             }
         }
+        .font(.system(size: 16, weight: .semibold))
+        .padding(.horizontal, 16)
+        .padding(.vertical, 9)
+        .actionPillBackground()
     }
 
-    private func actionButton(
-        icon: String,
+    private func pillButton(
+        _ icon: String,
         label: String,
-        tint: Color,
         busy: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Image(systemName: icon)
-                .font(.system(size: 20, weight: .semibold))
-                .foregroundStyle(tint)
-                .frame(width: 50, height: 50)
-                .background(.white.opacity(0.12), in: Circle())
         }
         .accessibilityLabel(label)
-        .buttonStyle(.plain)
         .disabled(busy)
         .opacity(busy ? 0.4 : 1)
-    }
-
-    @ViewBuilder
-    private func seriesActionButton(detail: JellyfinItemDetail) -> some View {
-        Button {
-            scrollToEpisodesToken += 1
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "list.bullet")
-                Text("Episodios")
-            }
-            .font(.headline)
-            .frame(maxWidth: .infinity)
-        }
-        .buttonStyle(.borderedProminent)
-        .tint(.cyan)
-        .controlSize(.large)
     }
 
     // MARK: - Hero
@@ -307,12 +304,12 @@ struct DetailView: View {
                 height: 0,
                 fallbackURL: posterURL(for: detail)
             )
-            .frame(width: width, height: heroHeight)
+            .frame(width: width, height: heroHeight, alignment: .top)
             .clipped()
             .overlay(
-                // Top scrim: legibility for the navigation bar and status bar.
+                // Top scrim: legibility for the navigation bar and toolbar pill
                 LinearGradient(
-                    colors: [.black.opacity(0.55), .clear],
+                    colors: [.black.opacity(0.6), .black.opacity(0.15), .clear],
                     startPoint: .top,
                     endPoint: .center
                 )

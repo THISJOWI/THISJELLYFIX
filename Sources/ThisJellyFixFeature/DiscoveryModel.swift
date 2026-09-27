@@ -8,8 +8,9 @@ import ThisJellyFixDiscovery
 /// `DiscoveryLoader` (row/search shaping) and `DownloadCoordinator`
 /// (submit/refresh), both covered by tests.
 @MainActor
+
 @Observable
-public final class DiscoveryModel {
+public final class DiscoveryModel: ObservableObject {
     // Home
     public private(set) var rows: [CatalogRow] = []
     public private(set) var isLoadingRows = false
@@ -22,6 +23,7 @@ public final class DiscoveryModel {
     /// Last refresh failure for the downloads panel banner.
     public var downloadError: Error? { coordinator.lastRefreshError }
 
+    private let config: IntegrationConfig
     private let loader: DiscoveryLoader
     private let library: () async -> [JellyfinMediaItem]
     private var pollTask: Task<Void, Never>?
@@ -29,20 +31,34 @@ public final class DiscoveryModel {
     public init(
         loader: DiscoveryLoader,
         coordinator: DownloadCoordinator,
+        config: IntegrationConfig = IntegrationConfig(),
         library: @escaping () async -> [JellyfinMediaItem]
     ) {
         self.loader = loader
         self.coordinator = coordinator
+        self.config = config
         self.library = library
     }
 
     /// True when anything at all is configured (drives whether discovery
     /// UI appears at all — no config = app looks exactly as before).
-    public private(set) var hasAnyConfiguration = false
+    public var hasAnyConfiguration: Bool {
+        hasMetadataProvider || hasDownloadService
+    }
     /// TMDB configured → Home rows and catalog search are possible.
-    public private(set) var hasMetadataProvider = false
+    public var hasMetadataProvider: Bool {
+        config.hasMetadataProvider
+    }
     /// Radarr or Sonarr configured → download buttons are possible.
-    public private(set) var hasDownloadService = false
+    public var hasDownloadService: Bool {
+        config.isConfigured(service: .radarr) || config.isConfigured(service: .sonarr)
+    }
+
+    public func reloadConfiguration() {
+        if hasDownloadService {
+            Task { await refreshDownloads() }
+        }
+    }
 
     // MARK: - Setup
 
@@ -53,11 +69,9 @@ public final class DiscoveryModel {
         let model = DiscoveryModel(
             loader: DiscoveryLoader.live(config: config),
             coordinator: DownloadCoordinator.live(config: config),
+            config: config,
             library: library
         )
-        model.hasMetadataProvider = config.hasMetadataProvider
-        model.hasDownloadService = config.isConfigured(service: .radarr) || config.isConfigured(service: .sonarr)
-        model.hasAnyConfiguration = model.hasMetadataProvider || model.hasDownloadService
         if model.hasDownloadService {
             // Adopt the real queue over the hydrated history right away so
             // relaunched states (progress, completion) are current.

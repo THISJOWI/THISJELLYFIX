@@ -7,22 +7,35 @@ import ThisJellyFixCore
 /// library marking) live in `CatalogRecommender`.
 public struct DiscoveryLoader: Sendable {
     /// nil = no provider configured = discovery screens stay hidden.
-    private let provider: (any MetadataProvider)?
+    private let explicitProvider: (any MetadataProvider)?
+    private let config: IntegrationConfig?
     /// Cap on library titles used as recommendation seeds (keeps the
     /// fan-out of TMDB calls bounded on Home load).
     private let maxSeeds: Int
 
+    private var provider: (any MetadataProvider)? {
+        if let explicitProvider { return explicitProvider }
+        if let config, config.hasMetadataProvider, let key = config.tmdbApiKey, !key.isEmpty {
+            return TMDBMetadataProvider(apiKey: key)
+        }
+        return nil
+    }
+
     public init(provider: (any MetadataProvider)?, maxSeeds: Int = 5) {
-        self.provider = provider
+        self.explicitProvider = provider
+        self.config = nil
         self.maxSeeds = maxSeeds
     }
 
-    /// Build from the stored TMDB key; nil when not configured.
+    public init(config: IntegrationConfig, maxSeeds: Int = 5) {
+        self.explicitProvider = nil
+        self.config = config
+        self.maxSeeds = maxSeeds
+    }
+
+    /// Build from the stored TMDB key.
     public static func live(config: IntegrationConfig) -> DiscoveryLoader {
-        guard config.hasMetadataProvider, let key = config.tmdbApiKey else {
-            return DiscoveryLoader(provider: nil)
-        }
-        return DiscoveryLoader(provider: TMDBMetadataProvider(apiKey: key))
+        DiscoveryLoader(config: config)
     }
 
     // MARK: - Home

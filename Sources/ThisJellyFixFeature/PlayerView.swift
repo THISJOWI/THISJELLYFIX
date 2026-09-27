@@ -134,14 +134,10 @@ struct PlayerView: View {
             }
             guard !Task.isCancelled else { return }
             #if os(iOS)
-            // Warm the PiP pipeline WHILE the user is watching: on swipe-up
-            // (.background) the window must open from the cached playlist —
-            // resolving after the app is suspending never finishes in time,
-            // which is exactly why PiP only appeared after pressing the button.
-            viewModel.resolvePipSupport()
-            try? await Task.sleep(for: .seconds(2))
-            guard !Task.isCancelled else { return }
-            await viewModel.warmPictureInPicture()
+            // Warm the PiP pipeline immediately so swipe-up opens near-instantly:
+            Task {
+                await viewModel.warmPictureInPicture()
+            }
             #endif
         }
     }

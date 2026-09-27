@@ -33,8 +33,24 @@ public final class DownloadCoordinator {
     public private(set) var lastRefreshError: Error?
 
     private let config: IntegrationConfig
-    private let radarr: (any RadarrProviding)?
-    private let sonarr: (any SonarrProviding)?
+    private let explicitRadarr: (any RadarrProviding)?
+    private let explicitSonarr: (any SonarrProviding)?
+
+    private var radarr: (any RadarrProviding)? {
+        if let explicitRadarr { return explicitRadarr }
+        if let url = config.radarrURL, let key = config.radarrApiKey, !key.isEmpty {
+            return RadarrClient(baseURL: url, apiKey: key)
+        }
+        return nil
+    }
+
+    private var sonarr: (any SonarrProviding)? {
+        if let explicitSonarr { return explicitSonarr }
+        if let url = config.sonarrURL, let key = config.sonarrApiKey, !key.isEmpty {
+            return SonarrClient(baseURL: url, apiKey: key)
+        }
+        return nil
+    }
 
     public init(
         config: IntegrationConfig,
@@ -42,22 +58,14 @@ public final class DownloadCoordinator {
         sonarr: (any SonarrProviding)? = nil
     ) {
         self.config = config
-        self.radarr = radarr
-        self.sonarr = sonarr
+        self.explicitRadarr = radarr
+        self.explicitSonarr = sonarr
         hydrate()
     }
 
     /// Build the default coordinator from the user's stored settings.
     public static func live(config: IntegrationConfig) -> DownloadCoordinator {
-        var radarr: (any RadarrProviding)?
-        if let url = config.radarrURL, let key = config.radarrApiKey, !key.isEmpty {
-            radarr = RadarrClient(baseURL: url, apiKey: key)
-        }
-        var sonarr: (any SonarrProviding)?
-        if let url = config.sonarrURL, let key = config.sonarrApiKey, !key.isEmpty {
-            sonarr = SonarrClient(baseURL: url, apiKey: key)
-        }
-        return DownloadCoordinator(config: config, radarr: radarr, sonarr: sonarr)
+        DownloadCoordinator(config: config)
     }
 
     // MARK: Submit

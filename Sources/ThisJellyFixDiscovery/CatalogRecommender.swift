@@ -64,16 +64,17 @@ public enum CatalogRecommender {
 
         // Trending is public discovery: keep library titles (they're popular
         // for a reason); only "Para ti" must not recommend what you own.
+        // Cap trending shelves to 10 items.
         if let trendingSeries, !trendingSeries.isEmpty {
             rows.append(CatalogRow(
                 id: "trending-series", title: "Tendencias de series",
-                items: dedupe(markLibrary(trendingSeries, library: library))
+                items: Array(dedupe(markLibrary(trendingSeries, library: library)).prefix(10))
             ))
         }
         if let trendingMovies, !trendingMovies.isEmpty {
             rows.append(CatalogRow(
                 id: "trending-movies", title: "Tendencias de películas",
-                items: dedupe(markLibrary(trendingMovies, library: library))
+                items: Array(dedupe(markLibrary(trendingMovies, library: library)).prefix(10))
             ))
         }
 

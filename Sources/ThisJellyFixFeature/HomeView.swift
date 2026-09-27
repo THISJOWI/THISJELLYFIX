@@ -267,6 +267,15 @@ struct HomeView: View {
             }
             .padding(.top, 16)
         }
+        .refreshable {
+            async let libraryReload: Void = libraryModel.load()
+            #if os(iOS) || os(macOS)
+            async let discoveryReload: Void = discovery?.loadRows() ?? ()
+            _ = await (libraryReload, discoveryReload)
+            #else
+            await libraryReload
+            #endif
+        }
         .onAppear {
             // Refresh resume row whenever Home reappears (tab switch, pop back
             // from DetailView) so "Estás viendo" is never stale.
