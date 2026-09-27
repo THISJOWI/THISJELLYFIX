@@ -244,6 +244,8 @@ public protocol RadarrProviding: Sendable {
     func rootFolders() async throws -> [ArrRootFolder]
     func testConnection() async throws
     func queue() async throws -> [DownloadEntry]
+    /// Run the search for an already-added movie.
+    func triggerSearch(movieId: Int) async throws
     /// Remove the entry (not the downloaded files) from the service.
     func deleteEntry(id: String) async throws
 }
@@ -279,6 +281,18 @@ public struct RadarrClient: RadarrProviding {
         ]
         let response: [String: Any] = try await http.post("movie", body: body)
         return response["id"] as? Int ?? 0
+    }
+
+    /// The search kicked off by `addOptions` runs with a non-Manual trigger,
+    /// so Radarr only looks at `Monitored && IsAvailable()` movies and drops
+    /// the rest ("Performing search for 0 movies"). POSTing the command
+    /// through the API marks it Manual — the same path as clicking search in
+    /// Radarr's UI — which bypasses the availability and delay filters.
+    public func triggerSearch(movieId: Int) async throws {
+        let _: [String: Any] = try await http.post("command", body: [
+            "name": "MoviesSearch",
+            "movieIds": [movieId],
+        ])
     }
 
     public func qualityProfiles() async throws -> [ArrQualityProfile] {
@@ -396,6 +410,8 @@ public protocol SonarrProviding: Sendable {
     func rootFolders() async throws -> [ArrRootFolder]
     func testConnection() async throws
     func queue() async throws -> [DownloadEntry]
+    /// Run the search for an already-added series.
+    func triggerSearch(seriesId: Int) async throws
     /// Remove the entry (not the downloaded files) from the service.
     func deleteEntry(id: String) async throws
 }
@@ -440,6 +456,15 @@ public struct SonarrClient: SonarrProviding {
         ]
         let response: [String: Any] = try await http.post("series", body: body)
         return response["id"] as? Int ?? 0
+    }
+
+    /// Manual trigger (API commands always get it): skips delay profiles and
+    /// aired/availability checks the add-time, non-Manual search would apply.
+    public func triggerSearch(seriesId: Int) async throws {
+        let _: [String: Any] = try await http.post("command", body: [
+            "name": "SeriesSearch",
+            "seriesId": seriesId,
+        ])
     }
 
     public func qualityProfiles() async throws -> [ArrQualityProfile] {

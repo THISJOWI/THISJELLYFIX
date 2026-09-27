@@ -73,6 +73,24 @@ final class ArrClientTests: XCTestCase {
         XCTAssertEqual(addOptions["searchForMovie"] as? Bool, true)
     }
 
+    /// The add-time search runs with a non-Manual trigger, so Radarr skips
+    /// unavailable movies entirely ("Performing search for 0 movies").
+    /// Posting the command through the API marks it Manual → same path as
+    /// clicking search in Radarr's UI, which bypasses the availability filter.
+    func testRadarrTriggerSearchPostsMoviesSearchCommand() async throws {
+        let session = SpySession(json: #"{"id": 7}"#)
+        let client = RadarrClient(baseURL: radarrBase, apiKey: "rk", session: session)
+
+        try await client.triggerSearch(movieId: 42)
+
+        XCTAssertEqual(session.capturedRequest?.httpMethod, "POST")
+        XCTAssertEqual(session.capturedRequest?.url?.path, "/api/v3/command")
+        let body = try XCTUnwrap(session.capturedRequest?.httpBody)
+        let json = try JSONSerialization.jsonObject(with: body) as! [String: Any]
+        XCTAssertEqual(json["name"] as? String, "MoviesSearch")
+        XCTAssertEqual(json["movieIds"] as? [Int], [42])
+    }
+
     // MARK: - Radarr: options (quality profiles, root folders)
 
     func testRadarrQualityProfiles() async throws {
@@ -152,6 +170,23 @@ final class ArrClientTests: XCTestCase {
         XCTAssertEqual(addOptions["searchForMissingEpisodes"] as? Bool, true)
         XCTAssertNil(json["monitor"])
         XCTAssertNil(json["searchForMissingEpisodes"])
+    }
+
+    /// Same as Radarr: the post-add search ignores delay profiles and aired
+    /// checks unless the command carries a Manual trigger, which the API
+    /// assigns to every POST /command request.
+    func testSonarrTriggerSearchPostsSeriesSearchCommand() async throws {
+        let session = SpySession(json: #"{"id": 7}"#)
+        let client = SonarrClient(baseURL: sonarrBase, apiKey: "sk", session: session)
+
+        try await client.triggerSearch(seriesId: 99)
+
+        XCTAssertEqual(session.capturedRequest?.httpMethod, "POST")
+        XCTAssertEqual(session.capturedRequest?.url?.path, "/api/v3/command")
+        let body = try XCTUnwrap(session.capturedRequest?.httpBody)
+        let json = try JSONSerialization.jsonObject(with: body) as! [String: Any]
+        XCTAssertEqual(json["name"] as? String, "SeriesSearch")
+        XCTAssertEqual(json["seriesId"] as? Int, 99)
     }
 
     func testSonarrQualityProfiles() async throws {

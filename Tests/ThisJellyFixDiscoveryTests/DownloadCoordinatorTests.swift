@@ -65,6 +65,53 @@ final class DownloadCoordinatorTests: XCTestCase {
         XCTAssertEqual(radarr.addedMovies[0].tmdbId, "335984")
     }
 
+    /// After the add, the coordinator must post the search command itself:
+    /// the add-time search runs non-Manual and Radarr drops unavailable
+    /// movies from it, so without this the order never downloads.
+    func testSubmitMovieTriggersManualSearchAfterAdd() async throws {
+        let radarr = FakeRadarr()
+        config.radarrURL = URL(string: "http://r:7878")
+        config.radarrApiKey = "k"
+        let coordinator = DownloadCoordinator(config: config, radarr: radarr, sonarr: nil)
+
+        try await coordinator.submit(movie, options: nil)
+
+        XCTAssertEqual(radarr.addedMovies.count, 1)
+        XCTAssertEqual(radarr.searchTriggeredIds, [1])
+    }
+
+    /// The options sheet can turn the immediate search off: then only the
+    /// add happens (no command posted).
+    func testSubmitMovieWithoutSearchNowSkipsManualSearch() async throws {
+        let radarr = FakeRadarr()
+        config.radarrURL = URL(string: "http://r:7878")
+        config.radarrApiKey = "k"
+        let coordinator = DownloadCoordinator(config: config, radarr: radarr, sonarr: nil)
+        let options = AddOptions(qualityProfileId: 1, rootFolderPath: "/films", searchNow: false)
+
+        try await coordinator.submit(movie, options: options)
+
+        XCTAssertEqual(radarr.addedMovies.count, 1)
+        XCTAssertTrue(radarr.searchTriggeredIds.isEmpty)
+    }
+
+    /// The movie is already created server-side when the command is posted:
+    /// a failing command must not flip the entry to failed or lose the id
+    /// cancel needs (the add already asked for a search too).
+    func testTriggerSearchFailureKeepsSubmitSuccessful() async throws {
+        let radarr = FakeRadarr()
+        radarr.triggerError = ArrError.unreachable
+        config.radarrURL = URL(string: "http://r:7878")
+        config.radarrApiKey = "k"
+        let coordinator = DownloadCoordinator(config: config, radarr: radarr, sonarr: nil)
+
+        try await coordinator.submit(movie, options: nil)
+
+        XCTAssertEqual(radarr.searchTriggeredIds, [1])
+        XCTAssertEqual(coordinator.entries[0].state, .submitting)
+        XCTAssertEqual(coordinator.entries[0].remoteId, "1")
+    }
+
     func testSubmitSeriesLooksUpThenGoesToSonarr() async throws {
         let sonarr = FakeSonarr()
         sonarr.lookupResults = [
@@ -87,6 +134,28 @@ final class DownloadCoordinatorTests: XCTestCase {
         XCTAssertEqual(sonarr.addedSeries[0].tvdbId, 81189)
         XCTAssertEqual(coordinator.entries[0].service, .sonarr)
         XCTAssertEqual(coordinator.entries[0].remoteId, "1")
+    }
+
+    /// Series get the same Manual-trigger search as movies: the add-time
+    /// search runs non-Manual, which delay profiles can swallow.
+    func testSubmitSeriesTriggersManualSearchAfterAdd() async throws {
+        let sonarr = FakeSonarr()
+        sonarr.lookupResults = [
+            SonarrSeriesLookup(
+                id: nil, title: "Breaking Bad", year: 2008, tvdbId: 81189,
+                tmdbId: "1396", status: "continuing", network: "AMC",
+                seasonCount: 5, images: nil,
+                seasons: [SonarrSeason(seasonNumber: 1, monitored: true)]
+            )
+        ]
+        config.sonarrURL = URL(string: "http://s:8989")
+        config.sonarrApiKey = "k"
+        let coordinator = DownloadCoordinator(config: config, radarr: nil, sonarr: sonarr)
+
+        try await coordinator.submit(series, options: nil)
+
+        XCTAssertEqual(sonarr.addedSeries.count, 1)
+        XCTAssertEqual(sonarr.searchTriggeredIds, [1])
     }
 
     func testSubmitSeriesWithNoLookupResultThrows() async {
@@ -424,6 +493,13 @@ final class FakeRadarr: RadarrProviding, @unchecked Sendable {
     var rootFoldersResult: [ArrRootFolder] = [ArrRootFolder(id: 1, path: "/films")]
     private(set) var queueFetchCount = 0
     private(set) var deletedIds: [String] = []
+    var triggerError: Error?
+    private(set) var searchTriggeredIds: [Int] = []
+
+    func triggerSearch(movieId: Int) async throws {
+        searchTriggeredIds.append(movieId)
+        if let triggerError { throw triggerError }
+    }
 
     func deleteEntry(id: String) async throws {
         deletedIds.append(id)
@@ -478,6 +554,13 @@ final class FakeSonarr: SonarrProviding, @unchecked Sendable {
     var queueError: Error?
     private(set) var queueFetchCount = 0
     private(set) var deletedIds: [String] = []
+    var triggerError: Error?
+    private(set) var searchTriggeredIds: [Int] = []
+
+    func triggerSearch(seriesId: Int) async throws {
+        searchTriggeredIds.append(seriesId)
+        if let triggerError { throw triggerError }
+    }
 
     func deleteEntry(id: String) async throws {
         deletedIds.append(id)

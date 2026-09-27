@@ -100,7 +100,7 @@ public final class DownloadCoordinator {
             throw DownloadCoordinatorError.serviceNotConfigured(.radarr)
         }
         let resolved = try await resolve(options: options, radarr: radarr)
-        return try await radarr.addMovie(
+        let movieId = try await radarr.addMovie(
             tmdbId: tmdbId,
             title: item.title,
             qualityProfileId: resolved.qualityProfileId,
@@ -108,6 +108,17 @@ public final class DownloadCoordinator {
             monitored: resolved.monitored,
             searchForMovie: resolved.searchNow
         )
+        // The movie exists now: posting the command ourselves marks it
+        // Manual so Radarr doesn't skip unavailable titles. The add already
+        // requested the search too, so a failed command is not fatal.
+        if resolved.searchNow, movieId > 0 {
+            do {
+                try await radarr.triggerSearch(movieId: movieId)
+            } catch {
+                TJFLog("Radarr manual search failed: \(error)")
+            }
+        }
+        return movieId
     }
 
     private func submitSeries(_ item: CatalogItem, options: AddOptions?) async throws -> Int {
@@ -122,7 +133,7 @@ public final class DownloadCoordinator {
             throw DownloadCoordinatorError.lookupReturnedNothing
         }
         let resolved = try await resolve(options: options, sonarr: sonarr)
-        return try await sonarr.addSeries(
+        let seriesId = try await sonarr.addSeries(
             tvdbId: match.tvdbId,
             title: match.title,
             qualityProfileId: resolved.qualityProfileId,
@@ -132,6 +143,16 @@ public final class DownloadCoordinator {
             seasons: match.seasons.map(\.seasonNumber),
             searchForMissing: resolved.searchNow
         )
+        // Same Manual-trigger search as movies: delay profiles would
+        // otherwise swallow the add-time (non-Manual) search.
+        if resolved.searchNow, seriesId > 0 {
+            do {
+                try await sonarr.triggerSearch(seriesId: seriesId)
+            } catch {
+                TJFLog("Sonarr manual search failed: \(error)")
+            }
+        }
+        return seriesId
     }
 
     /// Explicit options win; otherwise pull the service defaults
