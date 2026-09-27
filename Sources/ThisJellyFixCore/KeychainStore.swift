@@ -23,9 +23,18 @@ public enum KeychainKey {
 // MARK: - Constants
 
 private enum KeychainConstants {
-    /// Shared across all THISJELLYFIX targets and, when iCloud Keychain is
-    /// enabled, across all of the user's Apple devices.
-    static let accessGroup = "group.com.thisjellyfix"
+    /// Items are stored in the app's **default** keychain group.
+    ///
+    /// They used to be written with `kSecAttrAccessGroup = "group.…"`, but
+    /// an App Group id is not a keychain access group: the signed build is
+    /// only entitled to the groups listed in `keychain-access-groups`
+    /// (`$(AppIdentifierPrefix)com.thisjellyfix`), so every call failed with
+    /// -34018 and the caller's `try?` swallowed it. Net effect on device:
+    /// API keys and the session token were never stored.
+    ///
+    /// iCloud Keychain (`kSecAttrSynchronizable`) is what still shares
+    /// secrets across the user's devices — it needs no shared group.
+    static let useSynchronizable = true
 }
 
 // MARK: - Implementation
@@ -35,56 +44,57 @@ public struct KeychainStore: KeychainStoring {
 
     public init(service: String = "com.thisjellyfix.auth") {
         self.service = service
-        // Silently migrate any legacy items (written without an access group)
-        // into the shared group so iCloud Keychain can sync them.
-        // This runs at most once per install: once an item lives in the group
-        // it is not found by the legacy query any more.
+        // One-shot upgrade of items written before iCloud sync: once a
+        // synchronizable copy exists the legacy query stops matching.
         migrateIfNeeded()
     }
 
     // MARK: - KeychainStoring
+
+    /// Query for one account, in the app's default keychain group.
+    /// Exposed for tests: the absence of `kSecAttrAccessGroup` is the fix.
+    static func baseQuery(service: String, key: String) -> [String: Any] {
+        [
+            kSecClass as String:       kSecClassGenericPassword,
+            kSecAttrService as String: service,
+            kSecAttrAccount as String: key,
+        ]
+    }
 
     public func save(key: String, value: String) throws {
         deleteIfExists(key: key)
 
         guard let data = value.data(using: .utf8) else { return }
 
-        var query: [String: Any] = [
-            kSecClass as String:              kSecClassGenericPassword,
-            kSecAttrService as String:        service,
-            kSecAttrAccount as String:        key,
-            kSecAttrAccessGroup as String:    KeychainConstants.accessGroup,
-            kSecAttrSynchronizable as String: true,   // iCloud Keychain sync
-            kSecValueData as String:          data,
-        ]
+        var query = Self.baseQuery(service: service, key: key)
+        query[kSecValueData as String] = data
 
-        // kSecAttrSynchronizable is not supported on tvOS simulator; guard it
-        // so a Debug build on the simulator doesn't silently swallow errors.
-        #if targetEnvironment(simulator)
-        query.removeValue(forKey: kSecAttrSynchronizable as String)
+        // kSecAttrSynchronizable is not supported on the tvOS simulator; guard
+        // it so a Debug build there doesn't fail the whole save.
+        #if !targetEnvironment(simulator)
+        if KeychainConstants.useSynchronizable {
+            query[kSecAttrSynchronizable as String] = true
+        }
         #endif
 
-        let status = SecItemAdd(query as CFDictionary, nil)
+        var status = SecItemAdd(query as CFDictionary, nil)
+        if status != errSecSuccess {
+            // iCloud Keychain can be unavailable (no iCloud account, or a
+            // profile without the entitlement). Losing sync is acceptable;
+            // losing the secret is not.
+            var local = Self.baseQuery(service: service, key: key)
+            local[kSecValueData as String] = data
+            status = SecItemAdd(local as CFDictionary, nil)
+        }
         guard status == errSecSuccess else {
             throw KeychainError.saveFailed(status)
         }
     }
 
     public func read(key: String) -> String? {
-        var query: [String: Any] = [
-            kSecClass as String:              kSecClassGenericPassword,
-            kSecAttrService as String:        service,
-            kSecAttrAccount as String:        key,
-            kSecAttrAccessGroup as String:    KeychainConstants.accessGroup,
-            kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
-            kSecReturnData as String:         true,
-            kSecMatchLimit as String:         kSecMatchLimitOne,
-        ]
-
-        #if targetEnvironment(simulator)
-        query.removeValue(forKey: kSecAttrSynchronizable as String)
-        query.removeValue(forKey: kSecAttrAccessGroup as String)
-        #endif
+        var query = Self.baseQuery(service: service, key: key)
+        query[kSecReturnData as String] = true
+        query[kSecMatchLimit as String] = kSecMatchLimitOne
 
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -100,18 +110,7 @@ public struct KeychainStore: KeychainStoring {
     }
 
     public func delete(key: String) throws {
-        var query: [String: Any] = [
-            kSecClass as String:              kSecClassGenericPassword,
-            kSecAttrService as String:        service,
-            kSecAttrAccount as String:        key,
-            kSecAttrAccessGroup as String:    KeychainConstants.accessGroup,
-            kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
-        ]
-
-        #if targetEnvironment(simulator)
-        query.removeValue(forKey: kSecAttrSynchronizable as String)
-        query.removeValue(forKey: kSecAttrAccessGroup as String)
-        #endif
+        let query = Self.baseQuery(service: service, key: key)
 
         let status = SecItemDelete(query as CFDictionary)
         guard status == errSecSuccess || status == errSecItemNotFound else {
@@ -125,16 +124,9 @@ public struct KeychainStore: KeychainStoring {
         var query: [String: Any] = [
             kSecClass as String:              kSecClassGenericPassword,
             kSecAttrService as String:        service,
-            kSecAttrAccessGroup as String:    KeychainConstants.accessGroup,
-            kSecAttrSynchronizable as String: kSecAttrSynchronizableAny,
             kSecReturnAttributes as String:   true,
             kSecMatchLimit as String:         kSecMatchLimitAll,
         ]
-
-        #if targetEnvironment(simulator)
-        query.removeValue(forKey: kSecAttrSynchronizable as String)
-        query.removeValue(forKey: kSecAttrAccessGroup as String)
-        #endif
 
         var result: AnyObject?
         let status = SecItemCopyMatching(query as CFDictionary, &result)
@@ -153,9 +145,9 @@ public struct KeychainStore: KeychainStoring {
 
     // MARK: - Migration
 
-    /// Reads any item written by the old code (no access group, not
-    /// synchronizable) and re-saves it under the shared group so iCloud
-    /// Keychain can start syncing it. The old item is removed afterward.
+    /// Re-saves any item written without iCloud sync so it can start
+    /// syncing. Runs at most once per install: a synchronizable item is no
+    /// longer matched by the legacy query.
     private func migrateIfNeeded() {
         let keys = [
             KeychainKey.accessToken,
@@ -166,17 +158,11 @@ public struct KeychainStore: KeychainStoring {
         ]
 
         for key in keys {
-            // 1. Check whether a shared-group item already exists — nothing to do.
-            if read(key: key) != nil { continue }
-
-            // 2. Try to find a legacy item (no access group, not synchronizable).
-            let legacyQuery: [String: Any] = [
-                kSecClass as String:              kSecClassGenericPassword,
-                kSecAttrService as String:        service,
-                kSecAttrAccount as String:        key,
-                kSecReturnData as String:         true,
-                kSecMatchLimit as String:         kSecMatchLimitOne,
-            ]
+            // 1. Legacy item = default group, explicitly NOT synchronizable.
+            var legacyQuery = Self.baseQuery(service: service, key: key)
+            legacyQuery[kSecAttrSynchronizable as String] = false
+            legacyQuery[kSecReturnData as String] = true
+            legacyQuery[kSecMatchLimit as String] = kSecMatchLimitOne
 
             var result: AnyObject?
             let status = SecItemCopyMatching(legacyQuery as CFDictionary, &result)
@@ -185,16 +171,9 @@ public struct KeychainStore: KeychainStoring {
                   let value = String(data: data, encoding: .utf8)
             else { continue }
 
-            // 3. Write into the shared group (with iCloud sync).
+            // 2. Drop the stale copy, then write the synchronizable one.
+            try? delete(key: key)
             try? save(key: key, value: value)
-
-            // 4. Remove the legacy item so reads from `read()` always hit the group.
-            let deleteQuery: [String: Any] = [
-                kSecClass as String:      kSecClassGenericPassword,
-                kSecAttrService as String: service,
-                kSecAttrAccount as String: key,
-            ]
-            SecItemDelete(deleteQuery as CFDictionary)
         }
     }
 

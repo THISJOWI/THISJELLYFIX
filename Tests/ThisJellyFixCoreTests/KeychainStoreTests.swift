@@ -1,4 +1,5 @@
 import XCTest
+import Security
 @testable import ThisJellyFixCore
 
 final class KeychainStoreTests: XCTestCase {
@@ -46,5 +47,45 @@ final class KeychainStoreTests: XCTestCase {
         try store.deleteAll()
         XCTAssertNil(store.read(key: "a"))
         XCTAssertNil(store.read(key: "b"))
+    }
+
+    // MARK: - Access group
+
+    /// An App Group id (`group.…`) is NOT a keychain access group. Passing
+    /// one made every SecItem call fail with -34018 on signed builds, and
+    /// the swallowed error meant the API keys were never stored at all.
+    func testQueryUsesDefaultAccessGroupNotAppGroup() {
+        let query = KeychainStore.baseQuery(service: "svc", key: "acc")
+
+        XCTAssertNil(query[kSecAttrAccessGroup as String])
+        XCTAssertEqual(query[kSecAttrService as String] as? String, "svc")
+        XCTAssertEqual(query[kSecAttrAccount as String] as? String, "acc")
+    }
+
+    /// Keychain groups must be `<TeamID>.<name>`; the entitlements can't
+    /// declare an App Group id or every query above would be rejected.
+    func testEntitlementsDeclareRealKeychainGroups() throws {
+        let root = URL(fileURLWithPath: #filePath)
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+            .deletingLastPathComponent()
+        for target in ["iOS", "macOS"] {
+            let url = root.appendingPathComponent("Apps/\(target)/ThisJellyfix.entitlements")
+            let data = try Data(contentsOf: url)
+            let plist = try XCTUnwrap(
+                try PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
+            )
+            let groups = try XCTUnwrap(plist["keychain-access-groups"] as? [String])
+            for group in groups {
+                XCTAssertFalse(
+                    group.hasPrefix("group."),
+                    "\(target) declares an App Group id as a keychain group: \(group)"
+                )
+                XCTAssertTrue(
+                    group.hasPrefix("$(") || group.contains("."),
+                    "\(target) keychain group is not team-prefixed: \(group)"
+                )
+            }
+        }
     }
 }

@@ -118,10 +118,16 @@ public struct IntegrationConfig: Sendable {
     // MARK: - Private
 
     private func setSecret(_ value: String?, key: String) {
-        if let value, !value.isEmpty {
-            try? keychain.save(key: key, value: value)
-        } else {
-            try? keychain.delete(key: key)
+        do {
+            if let value, !value.isEmpty {
+                try keychain.save(key: key, value: value)
+            } else {
+                try keychain.delete(key: key)
+            }
+        } catch {
+            // A silently dropped secret is invisible: the field looks filled
+            // and the service just reports "no key" later.
+            TJFLog("Keychain \(key) failed: \(error.localizedDescription)")
         }
     }
 
