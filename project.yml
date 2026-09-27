@@ -73,7 +73,7 @@ targets:
         embed: true
       - package: VLCKitSPM
         product: VLCKitSPM
-    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.ios, INFOPLIST_FILE: Apps/iOS/Info.plist } }
+    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.ios, INFOPLIST_FILE: Apps/iOS/Info.plist, CODE_SIGN_ENTITLEMENTS: Apps/iOS/ThisJellyfix.entitlements } }
 
   Core-macOS:
     type: framework
@@ -131,7 +131,7 @@ targets:
         embed: true
       - package: VLCKitSPM
         product: VLCKitSPM
-    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.macos, ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-macOS, GENERATE_INFOPLIST_FILE: NO, INFOPLIST_FILE: Apps/macOS/Info.plist } }
+    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.macos, ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-macOS, GENERATE_INFOPLIST_FILE: NO, INFOPLIST_FILE: Apps/macOS/Info.plist, CODE_SIGN_ENTITLEMENTS: Apps/macOS/ThisJellyfix.entitlements } }
 
   Core-tvOS:
     type: framework
@@ -189,7 +189,7 @@ targets:
         embed: true
       - package: VLCKitSPM
         product: VLCKitSPM
-    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.tvos } }
+    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.tvos, CODE_SIGN_ENTITLEMENTS: Apps/tvOS/ThisJellyfix.entitlements } }
 
   Core-visionOS:
     type: framework
@@ -247,4 +247,4 @@ targets:
         embed: true
       - package: VLCKitSPM
         product: VLCKitSPM
-    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.visionos } }
+    settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.visionos, CODE_SIGN_ENTITLEMENTS: Apps/visionOS/ThisJellyfix.entitlements } }

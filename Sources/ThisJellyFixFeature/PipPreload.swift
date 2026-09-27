@@ -33,6 +33,12 @@ final class PipPreload {
     private var player: AVPlayer?
     private var layer: AVPlayerLayer?
     private var statusObserver: NSKeyValueObservation?
+    /// A session is using the pipeline right now. Ownership is NOT
+    /// transferred (old `adopt()` did, and an aborted start destroyed the
+    /// preload — the NEXT handoff then had to load cold: device log attempt
+    /// 2). The session pauses it on cleanup; the preload just must not
+    /// interfere while it is in use.
+    private var borrowed = false
 
     /// Starts loading `url`, muted. Returns false when PiP preparation can't
     /// run here — the caller then falls back to the plain HTTP warm.
@@ -40,6 +46,7 @@ final class PipPreload {
         // Already loading/loaded this very stream → nothing to do.
         if self.url == url, player != nil { return true }
         reset()
+        borrowed = false
         #if os(iOS)
         guard AVPictureInPictureController.isPictureInPictureSupported() else { return false }
 
@@ -73,6 +80,12 @@ final class PipPreload {
         case .readyToPlay:
             statusObserver?.invalidate()
             statusObserver = nil
+            if borrowed {
+                // In use by a live session: pausing here would fight its
+                // playback — the session owns pause/resume from now on.
+                TJFLog("pip: preloaded item ready (in use by session)")
+                return
+            }
             player.pause()
             TJFLog("pip: preload ready → paused (window can open instantly)")
         case .failed:
@@ -88,14 +101,12 @@ final class PipPreload {
         self.url == url && player != nil
     }
 
-    /// Hands the pipeline to a starting session. The session owns it from
-    /// here (it pauses/stops/releases it in `cleanup()`).
-    func adopt() -> Adopted? {
+    /// Hands the pipeline to a starting session WITHOUT giving up ownership:
+    /// if the start is aborted, the next attempt re-borrows the very same
+    /// (ready) player instead of loading cold from scratch.
+    func borrow() -> Adopted? {
         guard let player, let layer else { return nil }
-        statusObserver?.invalidate()
-        statusObserver = nil
-        self.player = nil
-        self.layer = nil
+        borrowed = true
         return Adopted(player: player, layer: layer)
     }
 
@@ -107,5 +118,6 @@ final class PipPreload {
         player = nil
         layer = nil
         url = nil
+        borrowed = false
     }
 }

@@ -2,6 +2,9 @@ import Observation
 import SwiftUI
 import ThisJellyFixCore
 import ThisJellyFixNetworking
+#if canImport(CoreSpotlight)
+import CoreSpotlight
+#endif
 #if os(iOS)
 import AVFoundation
 #endif
@@ -36,6 +39,18 @@ public struct ThisJellyFixRootView: View {
     #endif
 
     public init() {}
+
+    /// Decoded Handoff payload waiting to be acted on once the library is loaded.
+    @State private var pendingHandoff: HandoffPayload?
+
+    /// Lightweight struct carrying everything decoded from a NSUserActivity.
+    private struct HandoffPayload {
+        let itemId: String
+        let serverURL: URL
+        let title: String
+        let mediaType: String
+        let position: Double?   // non-nil only for "playing" activities
+    }
 
     public var body: some View {
         ZStack {
@@ -144,6 +159,88 @@ public struct ThisJellyFixRootView: View {
             if model.server != nil && !authModel.isAuthenticated {
                 _ = await authModel.restoreSession(serverURL: model.server!.baseURL)
             }
+        }
+        // MARK: - Handoff reception
+        // Browsing: just open the app — nothing extra to do.
+        .onContinueUserActivity(HandoffActivity.browsing) { _ in
+            #if os(iOS)
+            selectedTab = .home
+            #endif
+        }
+        // Detail: navigate to the item's detail screen.
+        .onContinueUserActivity(HandoffActivity.detail) { activity in
+            guard let info       = activity.userInfo,
+                  let itemId     = info[HandoffActivity.Key.itemId]     as? String,
+                  let serverStr  = info[HandoffActivity.Key.serverURL]  as? String,
+                  let serverURL  = URL(string: serverStr),
+                  let title      = info[HandoffActivity.Key.title]      as? String,
+                  let mediaType  = info[HandoffActivity.Key.mediaType]  as? String
+            else { return }
+
+            pendingHandoff = HandoffPayload(
+                itemId: itemId,
+                serverURL: serverURL,
+                title: title,
+                mediaType: mediaType,
+                position: nil
+            )
+            #if os(iOS)
+            selectedTab = .home
+            #endif
+        }
+        // Playing: open the detail screen (or the player directly if possible)
+        // at the stored position so the user picks up right where they left off.
+        .onContinueUserActivity(HandoffActivity.playing) { activity in
+            guard let info       = activity.userInfo,
+                  let itemId     = info[HandoffActivity.Key.itemId]     as? String,
+                  let serverStr  = info[HandoffActivity.Key.serverURL]  as? String,
+                  let serverURL  = URL(string: serverStr),
+                  let title      = info[HandoffActivity.Key.title]      as? String
+            else { return }
+
+            let position = info[HandoffActivity.Key.position] as? Double
+
+            pendingHandoff = HandoffPayload(
+                itemId: itemId,
+                serverURL: serverURL,
+                title: title,
+                mediaType: "",
+                position: position
+            )
+            #if os(iOS)
+            selectedTab = .home
+            #endif
+        }
+        #if canImport(CoreSpotlight)
+        // Spotlight Search result tapped by the user in system search.
+        .onContinueUserActivity(CSSearchableItemActionType) { activity in
+            guard let identifier = activity.userInfo?[CSSearchableItemActivityIdentifier] as? String else { return }
+            let prefix = "tjf://item/"
+            let itemId = identifier.hasPrefix(prefix) ? String(identifier.dropFirst(prefix.count)) : identifier
+            guard let server = model.server else { return }
+
+            pendingHandoff = HandoffPayload(
+                itemId: itemId,
+                serverURL: server.baseURL,
+                title: "",
+                mediaType: "",
+                position: nil
+            )
+            #if os(iOS)
+            selectedTab = .home
+            #endif
+        }
+        #endif
+        // Once a payload arrives AND the library is loaded, find the item and
+        // push the DetailView. The library may still be loading when the
+        // activity fires, so we watch both triggers.
+        .onChange(of: pendingHandoff?.itemId) { _, newId in
+            guard newId != nil else { return }
+            resolveHandoffIfReady()
+        }
+        .onChange(of: libraryModel != nil) { _, ready in
+            guard ready else { return }
+            resolveHandoffIfReady()
         }
     }
 
@@ -325,6 +422,35 @@ public struct ThisJellyFixRootView: View {
         await libModel.load()
         // Rows landed: discovery can now seed recommendations from them.
         await discoveryModel?.loadRows()
+    }
+
+    // MARK: - Handoff resolution
+
+    /// Called whenever a pending Handoff payload arrives OR the library finishes
+    /// loading — whichever comes last.  Finds the item by ID in the already-loaded
+    /// rows and pushes a navigation destination (iOS: NavigationLink value via
+    /// a dedicated @State property; all platforms share the same logic path).
+    private func resolveHandoffIfReady() {
+        guard let payload = pendingHandoff,
+              let lib = libraryModel else { return }
+
+        // Find the item in the already-loaded library rows.
+        let match = lib.allItems.first { $0.id == payload.itemId }
+
+        // Clear the pending payload regardless of whether we found the item —
+        // a second trigger (e.g. library reloaded) must not repeat the navigation.
+        pendingHandoff = nil
+
+        guard let item = match else {
+            // Item not in the local library yet (e.g. library still loading).
+            // Could try a direct API call here in a future iteration.
+            return
+        }
+
+        // For iOS: switch to home tab and inject the item for NavigationLink.
+        // The navigation is handled by the NavigationStack in HomeView, so we
+        // store it in LibraryModel as a pending navigation target.
+        lib.pendingNavigationItem = item
     }
 }
 

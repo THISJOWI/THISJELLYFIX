@@ -13,12 +13,15 @@ struct HomeView: View {
     @State private var directItem: JellyfinMediaItem?
     /// nil = discovery not configured (or tvOS/visionOS) → rows never render.
     @Environment(DiscoveryModel.self) private var discovery: DiscoveryModel?
+    /// Programmatic navigation path: Handoff resolution injects an item here so
+    /// the NavigationStack pushes the DetailView immediately.
+    @State private var navigationPath = NavigationPath()
 
     var body: some View {
         #if os(macOS)
         sidebarLayout
         #else
-        NavigationStack {
+        NavigationStack(path: $navigationPath) {
             scrollContent
                 .navigationDestination(for: JellyfinMediaItem.self) { item in
                     DetailView(
@@ -38,6 +41,20 @@ struct HomeView: View {
                     CatalogDetailView(item: item)
                 }
                 #endif
+        }
+        // Publish a Handoff activity so the user can continue browsing on
+        // another Apple device. The activity is always active while this
+        // view is visible; the system picks it up via Bluetooth/Wi-Fi.
+        .userActivity(HandoffActivity.browsing) { activity in
+            activity.title = "Explorando la biblioteca"
+            activity.isEligibleForHandoff = true
+            activity.isEligibleForSearch  = false
+        }
+        // React to a Handoff-resolved item coming from LibraryModel.
+        .onChange(of: libraryModel.pendingNavigationItem) { _, item in
+            guard let item else { return }
+            navigationPath.append(item)
+            libraryModel.pendingNavigationItem = nil
         }
         #endif
     }

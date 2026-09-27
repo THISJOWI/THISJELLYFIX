@@ -19,11 +19,15 @@ public struct IntegrationConfig: Sendable {
         public static let sonarrApiKey = "com.thisjellyfix.integration.sonarrApiKey"
     }
 
+    /// Suite identifier for the shared App Group — matches the entitlements
+    /// and `KeychainConstants.accessGroup` without the `group.` prefix.
+    public static let appGroupSuite = "group.com.thisjellyfix"
+
     private let defaults: UserDefaults
     private let keychain: any KeychainStoring
 
     public init(
-        defaults: UserDefaults = .standard,
+        defaults: UserDefaults = UserDefaults(suiteName: appGroupSuite) ?? .standard,
         keychain: any KeychainStoring = KeychainStore(service: "com.thisjellyfix.integration")
     ) {
         self.defaults = defaults

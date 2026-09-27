@@ -106,7 +106,7 @@ final class PipSession: NSObject {
     /// Set per start: AVPlayer's item reached `readyToPlay` — the caller
     /// should pause the primary player NOW (VLC kept the audio alive until
     /// this moment, so the handoff has no silence gap).
-    var onVideoReady: (() -> Void)?
+    var onVideoReady: (@MainActor () async -> Void)?
     /// Set per start: the handoff died AFTER the window opened (HLS item
     /// failed, session killed). Without this the owner's `pipState` stayed
     /// `.active` forever — PiP could never start again for that player and a
@@ -140,6 +140,15 @@ final class PipSession: NSObject {
     /// component producing audio, and iOS suspending us there is a black tile.
     private var handoffBackgroundTask: UIBackgroundTaskIdentifier = .invalid
     private var didStartFlag = false
+    /// Re-entry latch for `startWindow()` (background start vs. button).
+    private var startWindowInFlight = false
+    /// Bumped on every `prepare()`: a scheduled `failedToStart` retry must
+    /// not fire on a DIFFERENT session (the singleton outlives them).
+    private var generation = 0
+    /// `failedToStart` retries: on device the ONE start issued with the
+    /// scene already backgrounded was rejected once; a couple of paced
+    /// retries cover transient rejections and surface the real error code.
+    private var startRetryCount = 0
     /// Item reached `readyToPlay` and the handoff seek finished — together
     /// with `didStartFlag` these gate `maybeHandoffOver()`.
     private var itemReadyFlag = false
@@ -151,6 +160,9 @@ final class PipSession: NSObject {
     /// Layer to embed in the fullscreen player's view hierarchy while active.
     var currentLayer: AVPlayerLayer? { playerLayer }
 
+    /// The system window is (or already was) confirmed open.
+    var windowStarted: Bool { didStartFlag }
+
     // MARK: - Lifecycle
 
     /// Hand playback over to AVPlayer and open the floating window.
@@ -159,20 +171,28 @@ final class PipSession: NSObject {
     /// transcode + buffer) fills it in as soon as it is ready, and
     /// `onVideoReady` tells the caller when to pause the primary player.
     /// Returns true only when the system PiP window actually started.
-    func start(
+    /// Stage 1 — build the WHOLE apparatus (player, layer attached, KVO,
+    /// controller) without opening the window, while the app is still
+    /// active. The system then opens PiP itself at the active → background
+    /// transition (`canStartPictureInPictureAutomaticallyFromInline`), which
+    /// is the only moment iOS reliably accepts: a manual
+    /// `startPictureInPicture()` issued AFTER the scene is backgrounded was
+    /// rejected on device (`failedToStart`, state=2), while every start made
+    /// with the scene active succeeded.
+    /// - Returns: false when nothing could be staged.
+    func prepare(
         hlsURL: URL,
         position: Double,
         context: Context,
         preload: PipPreload? = nil,
-        onVideoReady: (() -> Void)? = nil,
+        onVideoReady: (@MainActor () async -> Void)? = nil,
         onAborted: (() -> Void)? = nil
-    ) async -> Bool {
+    ) -> Bool {
         guard !isActive else { return false }
         guard AVPictureInPictureController.isPictureInPictureSupported() else {
             TJFLog("pip: not supported on this device")
             return false
         }
-        beginHandoffBackgroundTask()
 
         do {
             let audioSession = AVAudioSession.sharedInstance()
@@ -194,18 +214,20 @@ final class PipSession: NSObject {
         self.restoreRequested = false
         self.programmaticStop = false
         self.lastProgressReport = Date()
+        self.startRetryCount = 0
+        self.generation += 1
 
         // A pipeline preloaded during fullscreen playback (same URL) is
-        // adopted as-is: its item is already ready, so the system reports
+        // borrowed as-is: its item is already ready, so the system reports
         // `isPictureInPicturePossible == true` IMMEDIATELY and the window
         // opens without waiting for a cold HLS load.
-        let adopted = ((preload?.matches(url: hlsURL)) ?? false) ? preload?.adopt() : nil
+        let adopted = ((preload?.matches(url: hlsURL)) ?? false) ? preload?.borrow() : nil
         let avPlayer: AVPlayer
         let layer: AVPlayerLayer
         if let adopted {
             avPlayer = adopted.player
             layer = adopted.layer
-            TJFLog("pip: adopted preloaded pipeline status=\(avPlayer.currentItem?.status.rawValue ?? -1) tcs=\(avPlayer.timeControlStatus.rawValue)")
+            TJFLog("pip: borrowed preloaded pipeline status=\(avPlayer.currentItem?.status.rawValue ?? -1) tcs=\(avPlayer.timeControlStatus.rawValue)")
         } else {
             let item = AVPlayerItem(url: hlsURL)
             // Bias toward a fast first frame — PiP prefers startup latency over
@@ -218,7 +240,7 @@ final class PipSession: NSObject {
             layer.videoGravity = .resizeAspect
         }
         // Muted until the system confirms the window (`maybeHandoffOver`
-        // unmutes): an adopted player may still be running from the preload,
+        // unmutes): a borrowed player may still be running from the preload,
         // and hearing it before the window exists would double with VLC.
         avPlayer.isMuted = true
         self.player = avPlayer
@@ -232,6 +254,11 @@ final class PipSession: NSObject {
             contentSource: AVPictureInPictureController.ContentSource(playerLayer: layer)
         )
         pip.delegate = self
+        // THE sanctioned path for "swipe up while watching": the system
+        // starts PiP itself during the background transition (from a live
+        // scene), instead of us calling startPictureInPicture() once the
+        // scene is already dead and getting failedToStart.
+        pip.canStartPictureInPictureAutomaticallyFromInline = true
         self.pipController = pip
 
         // Track position and report progress every ~10s while floating.
@@ -254,24 +281,46 @@ final class PipSession: NSObject {
         }
 
         isActive = true
-        TJFLog("pip: starting at \(String(format: "%.1f", position))s url=\(hlsURL.absoluteString)")
+        TJFLog("pip: staged at \(String(format: "%.1f", position))s state=\(UIApplication.shared.applicationState.rawValue) url=\(hlsURL.absoluteString)")
         if adopted != nil {
             // The preload can have gone ready BEFORE this KVO observer was
             // registered (`.new` never fires for a status that won't change):
-            // kick the ready → seek → handoff chain once, then keep the
-            // pipeline silently re-buffering (muted) while we wait for the
-            // system to consider the controller possible.
+            // kick the ready → seek → handoff chain once.
             handleItemStatus(avPlayer)
-            avPlayer.play()
         }
+        // Load (muted) in BOTH cases: a player that never starts loading
+        // never reaches `readyToPlay`, so `isPictureInPicturePossible`
+        // cannot flip and the system's auto-start has nothing to open.
+        avPlayer.play()
+        return true
+    }
+
+    /// Stage 2 — open the window. Called when the app is already in
+    /// background (safety net when the system did not auto-start, e.g. the
+    /// item only became ready AFTER the transition) or from the foreground
+    /// paths (PiP button, view exit). No-op when the system already opened
+    /// the window by itself.
+    func startWindow() async -> Bool {
+        guard isActive else { return false }
+        guard !startWindowInFlight else {
+            TJFLog("pip: startWindow already in flight")
+            return false
+        }
+        if didStartFlag || (pipController?.isPictureInPictureActive ?? false) {
+            TJFLog("pip: window already up (system auto-start)")
+            return true
+        }
+        guard let pip = pipController else { return false }
+        beginHandoffBackgroundTask()
+        startWindowInFlight = true
+        defer { startWindowInFlight = false }
 
         // `startPictureInPicture()` is a SILENT NO-OP while
         // `isPictureInPicturePossible == false`: no error, no delegate call,
         // no retry. On device (cold HLS) `possible` only flips true seconds
         // later, when the item becomes ready — device log evidence:
         // "possible=false waited=1500ms" → call → "didStart never arrived
-        // (possible=true)" → no window. The foreground button works because
-        // there `possible` turns true within the old 1.5s budget. So WAIT for
+        // (possible=true)" → no window. So WAIT for
         // the system's own readiness signal — up to 15s, covered by the
         // handoff background lease — and only then start, exactly like the
         // button does. Caller cancellation still wins instantly: the user
@@ -285,10 +334,15 @@ final class PipSession: NSObject {
             waitedMs += 100
         }
         // The session can be torn down while we wait (user closed it): no
-        // continuation exists yet, so proceeding would hang `start()` forever.
+        // continuation exists yet, so proceeding would hang `startWindow()` forever.
         guard isActive else {
             TJFLog("pip: start aborted while waiting for isPictureInPicturePossible")
             return false
+        }
+        // The system may have auto-started while we waited.
+        if didStartFlag || pip.isPictureInPictureActive {
+            TJFLog("pip: window auto-started during wait (\(waitedMs)ms)")
+            return true
         }
         // The caller gave up (user came back to the app, view gone): opening
         // the window NOW would pop it over the fullscreen player.
@@ -297,7 +351,7 @@ final class PipSession: NSObject {
             cleanup()
             return false
         }
-        TJFLog("pip: system possible=\(pip.isPictureInPicturePossible) waited=\(waitedMs)ms state=\(UIApplication.shared.applicationState.rawValue) layer=\(String(describing: layer.frame.size))")
+        TJFLog("pip: system possible=\(pip.isPictureInPicturePossible) waited=\(waitedMs)ms state=\(UIApplication.shared.applicationState.rawValue) layer=\(String(describing: playerLayer?.frame.size))")
 
         let started: Bool = await withCheckedContinuation { continuation in
             self.startContinuation = continuation
@@ -317,21 +371,37 @@ final class PipSession: NSObject {
             // Evidence: a window that opened but whose HLS item never became
             // ready (black/frozen tile) must still say so in the log. Stored
             // so `cleanup()` can cancel it (a restart inside 12s would
-            // otherwise log a false alarm about the NEW session).
+            // otherwise log a false alarm about the NEW session). It also
+            // releases the handoff lease: `maybeHandoffOver` is the other
+            // only path that ends it, and leaving it to the ~30s system
+            // expiry is what gets apps terminated for over-budget background
+            // tasks.
             let readyWatchdog = DispatchWorkItem { [weak self] in
                 guard let self, self.isActive, !self.itemReadyFlag else { return }
-                TJFLog("pip: window up but item NOT ready after 12s — status=\(self.player?.currentItem?.status.rawValue ?? -1) tcs=\(self.player?.timeControlStatus.rawValue ?? -1)")
+                TJFLog("pip: window up but item NOT ready after 12s — status=\(self.player?.currentItem?.status.rawValue ?? -1) tcs=\(self.player?.timeControlStatus.rawValue ?? -1) → releasing handoff lease")
+                self.endHandoffBackgroundTask()
             }
             self.readyWatchdogWork = readyWatchdog
             DispatchQueue.main.asyncAfter(deadline: .now() + 12, execute: readyWatchdog)
 
             // Open the floating window NOW — do not gate it on the HLS
             // handoff (manifest + transcode spin-up can take seconds).
+            TJFLog("pip: manual startPictureInPicture() state=\(UIApplication.shared.applicationState.rawValue)")
             pip.startPictureInPicture()
         }
 
         TJFLog("pip: start result=\(started)")
         return started
+    }
+
+    /// Drop a staged session that never opened a window (user returned to
+    /// the app before the system started it, gate changed, …). Nothing was
+    /// frozen or handed over — the user just keeps watching fullscreen.
+    func cancelStaged() {
+        guard isActive, !didStartFlag else { return }
+        TJFLog("pip: staged session cancelled (no window was opened)")
+        cleanup()
+        resumeStart(false)
     }
 
     /// Item KVO: `.readyToPlay` hands audio over; `.failed` cancels.
@@ -348,7 +418,7 @@ final class PipSession: NSObject {
                 Task { @MainActor in
                     guard self.isActive else { return }
                     self.seekDoneFlag = true
-                    self.maybeHandoffOver()
+                    await self.maybeHandoffOver()
                 }
             }
         case .failed:
@@ -381,14 +451,17 @@ final class PipSession: NSObject {
     /// "blocked image": VLC paused (and the AVPlayer seeking) for a window that
     /// then failed to open, leaving a frozen picture while playback state was
     /// already handed to nobody.
-    private func maybeHandoffOver() {
+    private func maybeHandoffOver() async {
         guard isActive, itemReadyFlag, seekDoneFlag, didStartFlag else { return }
         // Capture + clear first: a nil callback must not keep the window from
         // playing (the window is proven at this point either way).
         let notify = onVideoReady
         onVideoReady = nil
         TJFLog("pip: window confirmed + item ready → handing audio over")
-        notify?()
+        // AWAIT the caller's hand-over (it pauses the fullscreen player):
+        // unmuting before VLC actually stops would double the audio for a
+        // main-loop hop on every handoff.
+        await notify?()
         if let player {
             // Preloaded pipelines run MUTED until this exact moment — from
             // here the AVPlayer is the audible source of the session.
@@ -488,7 +561,11 @@ final class PipSession: NSObject {
     // MARK: - Reporting
 
     private func tick(time: CMTime) {
-        guard isActive else { return }
+        // Position and progress only mean something once the WINDOW owns
+        // playback: a staged player is already running (muted) while the
+        // user still watches VLC, and reporting its clock would advance the
+        // server's resume point past what was actually watched.
+        guard isActive, didStartFlag else { return }
         let seconds = time.seconds
         // Monotonic: an ADOPTED preloaded player starts at its old (lower)
         // clock until the handoff seek lands — taking that value here would
@@ -569,7 +646,9 @@ extension PipSession: @preconcurrency AVPictureInPictureControllerDelegate {
         startTimeoutWork = nil
         // If the item was already ready and seeked, THIS is the moment the
         // fullscreen player may freeze (window + content both proven).
-        maybeHandoffOver()
+        Task { @MainActor in
+            await self.maybeHandoffOver()
+        }
         resumeStart(true)
     }
 
@@ -577,7 +656,27 @@ extension PipSession: @preconcurrency AVPictureInPictureControllerDelegate {
         _ pictureInPictureController: AVPictureInPictureController,
         failedToStartPictureInPictureWithError error: any Error
     ) {
-        TJFLog("pip: failedToStart: \(error.localizedDescription)")
+        let ns = error as NSError
+        TJFLog("pip: failedToStart code=\(ns.code) domain=\(ns.domain) desc=\(error.localizedDescription) state=\(UIApplication.shared.applicationState.rawValue) possible=\(pictureInPictureController.isPictureInPicturePossible) tcs=\(player?.timeControlStatus.rawValue ?? -1) status=\(player?.currentItem?.status.rawValue ?? -1) retry=\(startRetryCount)")
+        // Retry a couple of times: the one on-device rejection happened the
+        // instant the item flipped ready while the scene was going down —
+        // a paced retry rides out transient rejections. If they keep
+        // failing, the error code above tells us exactly WHY.
+        if startRetryCount < 2, isActive, !didStartFlag {
+            startRetryCount += 1
+            let attempt = startRetryCount
+            let gen = generation
+            Task { @MainActor [weak self] in
+                try? await Task.sleep(for: .milliseconds(1_200))
+                guard let self, self.isActive, !self.didStartFlag,
+                      self.generation == gen,
+                      let pip = self.pipController
+                else { return }
+                TJFLog("pip: retrying startPictureInPicture (\(attempt)/2) state=\(UIApplication.shared.applicationState.rawValue) possible=\(pip.isPictureInPicturePossible)")
+                pip.startPictureInPicture()
+            }
+            return
+        }
         programmaticStop = true
         pictureInPictureController.stopPictureInPicture()
         cleanup()

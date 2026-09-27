@@ -329,3 +329,37 @@ Otro hallazgo del log: la sesión de las 17:21 canceló a los 1 s porque el usua
 - (ya en 4a) espera de `possible` hasta 15 s antes de llamar al sistema.
 
 Pendiente: **test con espera** — deslizar y esperar ~10 s sin volver; y sesión ≥75 s para la fila.
+
+### Ronda 4c — 2026-09-27 (preload del pipeline PiP)
+
+Objetivo: ventana "casi instantánea" al salir. `PipPreload.swift` (nuevo) crea el pipeline real (AVPlayer + capa + misma URL HLS) **2 s después de empezar a ver**, muted; al quedar `readyToPlay` lo **pausa** (buffer retenido, sin doble audio, sin drenar transcode mientras miras). `PipSession.start` lo **adopta** si coincide la URL → `isPictureInPicturePossible` ya es `true` → ventana inmediata; el audio se desmutea sólo en `maybeHandoffOver` (ventana confirmada). `tick` pasa a ser monótono (el player adoptado arranca con su reloj viejo hasta que aterriza el seek del handoff). `PipPreload.swift` registrado en el pbxproj (el proyecto usa referencias explícitas, no synchronized groups).
+
+Evidencia de dispositivo (log 11:17-11:18): el preload se quedó 5 s en `.unknown` (frío) en el primer swipe; el contenido se puso listo a los ~8 s.
+
+### Ronda 5 — 2026-09-27 (el swipe-up no abría PiP)
+
+**Causa raíz (log 11:17-11:18, 5 intentos):**
+
+| # | Gesto | `appState` | Contenido | Resultado |
+|---|-------|-----------|-----------|-----------|
+| 1 | swipe 11:17:15 | **2 (background)** | preload listo a los 2,3 s | **`failedToStart`** |
+| 2 | swipe 11:17:24 | 2 | frío (preload destruido en #1) | `possible` nunca llegó; vuelta a los 8 s → cancelado |
+| 3 | X 11:17:34 | **0 (active)** | transcode caliente | ✓ `didStart` 2,9 s |
+| 4 | swipe 11:18:04 | 2 | preload no listo (4 s) | vuelta a los 2 s → cancelado |
+| 5 | X 11:18:09 | **0 (active)** | caliente | ✓ `didStart` 2,8 s (vídeo interno +4 s = seek) |
+
+Todos los arranques manuales con la escena activa funcionar; el único que llegó a `startPictureInPicture()` en background fue rechazado. Soporte externo: *"AVPictureInPicture needs an active UIScene during activation"* (StackOverflow) y la API de Apple para este caso: `canStartPictureInPictureAutomaticallyFromInline` (iOS 14.2+).
+
+**Fixes:**
+- `PipSession.start()` partido en **`prepare()`** (etapa 1: player + capa adjunta + controller + `canStartPictureInPictureAutomaticallyFromInline = true`, SIN abrir ventana) y **`startWindow()`** (etapa 2: espera `possible` ≤15 s → llamada manual → watchdog `didStart` 8 s; no-op si el sistema ya abrió la ventana).
+- `PlayerView`: en `.inactive` (viniendo de `.active`) se lanza `warmPictureInPicture` + `preparePictureInPicture`; en `.background` la cadena **espera al staging** y luego llama `startPictureInPicture()` como red de seguridad. `.inactive` desde `.background` (vuelta) cancela ambas cadenas; `.active` cancela el staging y, si hay sesión staged sin ventana, `cancelPreparedPictureInPicture()`.
+- `PipPreload.adopt()` → **`borrow()` no destructivo**: abortar un intento ya no destruye la precarga (el intento #2 arrancaba en frío por esto).
+- `failedToStart`: log del `NSError` completo (code/domain/estado/possible/tcs/status) + **2 reintentos** a 1,2 s, con token de generación para no reintentar sobre otra sesión.
+- `prepare()` reproduce el player **muted también en frío** (si nunca carga, `possible` no puede ponerse `true` y el auto-arranque no tiene nada que abrir).
+- `tick` sólo con ventana abierta (`didStartFlag`): un player staged corre mientras VLC sigue en pantalla y reportaría progreso de algo que el usuario no vio.
+- Relevo de audio sin solape: `onVideoReady` pasa a `async` y `maybeHandoffOver()` la **awaitea antes de desmutear** (antes había ~100-300 ms de doble audio en cada handoff).
+- `finishPipStart` sólo reanima VLC si estaba realmente congelado (`pipVLCFrozen`) y ya no limpia `userPaused` (el camino staged nunca congeló nada: reanudar ahí pisaba una pausa del usuario).
+- Watchdog de "item no listo a los 12 s" ahora **libera la background lease** (dejarla dangle la dejaba expirar sola: iOS penaliza los background tasks sobredimensionados).
+- `handleViewExit` con sesión staged sin ventana: cancela el staging y **sigue por el handoff normal** (antes paraba la reproducción).
+
+Pendiente de verificación en dispositivo: (a) swipe-up con el item ya listo (≥10 s de reproducción) → ventana inmediata vía auto-arranque del sistema; (b) swipe-up en frío (4-5 s) → la red de seguridad + reintentos, con el código de error real en el log; (c) sesión ≥75 s → fila "Estás viendo" (el log 11:17 ya muestra `refreshResume items=1 ids=…:46s` — el umbral real del servidor está entre 10 y 46 s, no en 5 %).

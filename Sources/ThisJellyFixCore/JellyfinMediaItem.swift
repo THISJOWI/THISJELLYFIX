@@ -13,6 +13,7 @@ public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable, Has
     public let backdropImageTags: [String]?
     public let officialRating: String?
     public let communityRating: Double?
+    public let genres: [String]?
     public let userData: UserData?
     /// External provider ids the server knows ("Tmdb", "Imdb", "Tvdb", …).
     public let providerIds: [String: String]?
@@ -30,6 +31,7 @@ public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable, Has
         case backdropImageTags = "BackdropImageTags"
         case officialRating = "OfficialRating"
         case communityRating = "CommunityRating"
+        case genres = "Genres"
         case userData = "UserData"
         case providerIds = "ProviderIds"
     }
@@ -55,7 +57,7 @@ public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable, Has
 
     /// Resume position in seconds. nil if no resume data.
     public var resumePositionSeconds: Double? {
-        userData?.playbackPositionTicks.map { Double($0) / 10_000_000.0 }
+        userData?.resumePositionSeconds
     }
 
     /// Episode label like "T1 E3" for episodes, nil for movies/series.
@@ -85,10 +87,19 @@ public struct JellyfinMediaItem: Codable, Sendable, Equatable, Identifiable, Has
 public struct UserData: Codable, Sendable, Equatable, Hashable {
     public let playbackPositionTicks: Int64?
     public let playedPercentage: Double?
+    public let isFavorite: Bool?
+    public let played: Bool?
 
     enum CodingKeys: String, CodingKey {
         case playbackPositionTicks = "PlaybackPositionTicks"
         case playedPercentage = "PlayedPercentage"
+        case isFavorite = "IsFavorite"
+        case played = "Played"
+    }
+
+    /// Resume position in seconds. nil when the item has never been started.
+    public var resumePositionSeconds: Double? {
+        playbackPositionTicks.map { Double($0) / 10_000_000.0 }
     }
 }
 
@@ -158,7 +169,7 @@ public struct JellyfinEpisode: Codable, Sendable, Equatable, Identifiable {
 
     /// Resume position in seconds. nil if no resume data.
     public var resumePositionSeconds: Double? {
-        userData?.playbackPositionTicks.map { Double($0) / 10_000_000.0 }
+        userData?.resumePositionSeconds
     }
 
     public var episodeLabel: String {

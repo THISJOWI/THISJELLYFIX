@@ -178,6 +178,11 @@ final class PlayerViewModel {
     /// A `startPictureInPicture()` call is between its guards and the system
     /// start — blocks a second concurrent caller (see the latch inside it).
     private var pipStartInFlight = false
+    /// VLC is paused waiting for the floating window to take the audio. Only
+    /// a frozen player may be un-paused by a failed handoff: the staged
+    /// (windowless) path never froze anything, and "resuming" there would
+    /// override a pause the user made while the start was pending.
+    private var pipVLCFrozen = false
     /// Resume target not yet reached. Progress/stop reports never send a
     /// lower position while it is pending, so exiting before the resume seek
     /// lands cannot overwrite the server's saved resume point with 0.
@@ -1105,6 +1110,127 @@ final class PlayerViewModel {
         pipWarmed = await HlsStreamResolver().warmUp(hlsURL: url, token: token)
     }
 
+    /// Stage the WHOLE PiP apparatus while the app is still active — called
+    /// from scenePhase .inactive, the first half of leaving. The window is
+    /// **not** opened here: iOS starts PiP itself at the background
+    /// transition (`canStartPictureInPictureAutomaticallyFromInline`), and a
+    /// manual start during a Control Centre / app-switcher peek would pop it
+    /// over the video the user is still watching (documented regression),
+    /// while a manual start issued AFTER the scene is backgrounded gets
+    /// rejected on device (`failedToStart`, state=2).
+    func preparePictureInPicture() async {
+        guard pipState == .idle, !pipStartInFlight else { return }
+        guard canAutoHandoffToPiP else { return }
+        pipStartInFlight = true
+        defer { pipStartInFlight = false }
+        // A slow or failed prefetch must not hide the feature: resolve now.
+        var resolvedURL = hlsURL
+        if resolvedURL == nil {
+            resolvedURL = await resolvePipURL()
+        }
+        // The view may have torn the chain down mid-resolve — staging a
+        // session nobody owns would block the foreground start (latch).
+        if Task.isCancelled {
+            TJFLog("pip: staging cancelled during resolve")
+            return
+        }
+        let url = resolvedURL
+        guard let url, reportingConfigured,
+              let itemId, let serverURL, let token, let userId
+        else {
+            TJFLog("pip: stage skipped — hls=\(url != nil) configured=\(reportingConfigured) item=\(itemId != nil)")
+            return
+        }
+        // Only stage while something is actually playing.
+        guard isPlaying || (currentTime > 0 && (duration <= 0 || currentTime < duration)) else {
+            TJFLog("pip: stage skipped — not playing")
+            return
+        }
+        // Re-check AFTER the awaits: the foreground start path (button,
+        // view exit) can run while we are resolving the playlist, AND the
+        // user can come right back to the app or finish the item while we
+        // wait. Staging then would arm the auto-start flag (and a muted
+        // playing AVPlayer) on a gate that no longer holds.
+        guard pipState == .idle, !PipSession.shared.isActive else { return }
+        guard canAutoHandoffToPiP,
+              UIApplication.shared.applicationState == .active
+        else {
+            TJFLog("pip: staging dropped after resolve — playing=\(isPlaying) pausedByUser=\(userPaused) state=\(UIApplication.shared.applicationState.rawValue)")
+            return
+        }
+
+        let position = max(currentTime, pendingResumePosition ?? 0)
+        TJFLog("pip: staging handoff at \(String(format: "%.1f", position))s state=\(UIApplication.shared.applicationState.rawValue)")
+        pipState = .active
+
+        let context = PipSession.Context(
+            itemId: itemId, serverURL: serverURL, token: token,
+            userId: userId, playSessionId: reportingSessionId,
+            streamURL: currentStreamURL,
+            title: playbackTitle,
+            mediaStreams: serverMediaStreams
+        )
+        let ok = PipSession.shared.prepare(
+            hlsURL: url, position: position, context: context,
+            preload: pipPreload,
+            onVideoReady: makePipOnVideoReady(),
+            onAborted: makePipOnAborted()
+        )
+        if !ok {
+            TJFLog("pip: staging failed")
+            pipState = .idle
+        }
+    }
+
+    /// Back in the foreground with a staged-but-never-started session (the
+    /// user only pulled down Control Centre / peeked the app switcher):
+    /// drop the staging. No window opened, VLC was never frozen — playback
+    /// just continues fullscreen.
+    func cancelPreparedPictureInPicture() {
+        guard pipState == .active, !PipSession.shared.windowStarted else { return }
+        TJFLog("pip: staged session cancelled (user back in app)")
+        PipSession.shared.cancelStaged()
+        pipState = .idle
+    }
+
+    /// AVPlayer took over — freeze VLC at the handoff position.
+    /// Async on purpose: the session awaits this BEFORE unmuting its own
+    /// player, so the two audio sources never overlap.
+    private func makePipOnVideoReady() -> (@MainActor () async -> Void)? {
+        { @MainActor [weak self] in
+            guard let self, self.pipState == .active else { return }
+            TJFLog("pip: freezing VLC for handoff")
+            self.pipVLCFrozen = true
+            self.reportProgress(at: self.currentTime)
+            self.stopUpdating()
+            await self.engine.pause()
+            self.isPlaying = false
+            self.finishExitHandoff()
+        }
+    }
+
+    /// The window opened and then died (HLS item failed): roll the state
+    /// back so PiP can be started again, and save progress when this player
+    /// already left the screen.
+    private func makePipOnAborted() -> () -> Void {
+        { [weak self] in
+            guard let self, self.pipState == .active else { return }
+            TJFLog("pip: session aborted → rolling back pipState")
+            self.pipState = .idle
+            if self.exitHandoffPending {
+                self.exitHandoffPending = false
+                self.stopSync(reportStop: true)
+            } else {
+                Task { @MainActor [weak self] in
+                    guard let self else { return }
+                    await self.engine.play()
+                    self.isPlaying = true
+                    self.startUpdating()
+                }
+            }
+        }
+    }
+
     /// Hand playback over to the floating PiP window — automatically on
     /// background or when the player is dismissed, or manually via the
     /// controls button. On failure falls back to VLC background audio
@@ -1112,6 +1238,18 @@ final class PlayerViewModel {
     /// - Returns: true when the system window actually started.
     @discardableResult
     func startPictureInPicture() async -> Bool {
+        // Already staged at scenePhase .inactive — only the window is
+        // missing (the system may even have opened it by itself by now).
+        if PipSession.shared.isActive {
+            guard !pipStartInFlight else {
+                TJFLog("pip: start skipped — startWindow in flight")
+                return false
+            }
+            pipStartInFlight = true
+            defer { pipStartInFlight = false }
+            let started = await PipSession.shared.startWindow()
+            return await finishPipStart(started)
+        }
         guard pipState == .idle, !pipStartInFlight else {
             TJFLog("pip: start skipped — pipState=\(pipState) inFlight=\(pipStartInFlight)")
             return false
@@ -1162,44 +1300,24 @@ final class PlayerViewModel {
             title: playbackTitle,
             mediaStreams: serverMediaStreams
         )
-        let started = await PipSession.shared.start(
+        let prepared = PipSession.shared.prepare(
             hlsURL: url, position: position, context: context,
             preload: pipPreload,
-            onVideoReady: { [weak self] in
-                // AVPlayer took over — freeze VLC at the handoff position.
-                guard let self, self.pipState == .active else { return }
-                TJFLog("pip: freezing VLC for handoff")
-                self.reportProgress(at: self.currentTime)
-                self.stopUpdating()
-                Task { @MainActor [weak self] in
-                    await self?.engine.pause()
-                    self?.isPlaying = false
-                }
-                self.finishExitHandoff()
-            },
-            onAborted: { [weak self] in
-                // The window opened and then died (HLS item failed): roll the
-                // state back so PiP can be started again, and save progress
-                // when this player already left the screen.
-                guard let self, self.pipState == .active else { return }
-                TJFLog("pip: session aborted → rolling back pipState")
-                self.pipState = .idle
-                if self.exitHandoffPending {
-                    self.exitHandoffPending = false
-                    self.stopSync(reportStop: true)
-                } else {
-                    Task { @MainActor [weak self] in
-                        guard let self else { return }
-                        await self.engine.play()
-                        self.isPlaying = true
-                        self.startUpdating()
-                    }
-                }
-            }
+            onVideoReady: makePipOnVideoReady(),
+            onAborted: makePipOnAborted()
         )
+        if !prepared {
+            TJFLog("pip: prepare failed")
+            return await finishPipStart(false)
+        }
+        let started = await PipSession.shared.startWindow()
+        return await finishPipStart(started)
+    }
 
+    /// Shared post-start handling: log + roll back state + VLC fallback.
+    private func finishPipStart(_ started: Bool) async -> Bool {
         if started {
-            TJFLog("pip: started item=\(itemId)")
+            TJFLog("pip: started item=\(itemId ?? "nil")")
         } else {
             TJFLog("pip: start failed → resuming VLC (background audio fallback)")
             if pipState == .active { pipState = .idle }
@@ -1208,17 +1326,17 @@ final class PlayerViewModel {
                 // no UI — end the session cleanly instead of ghost audio.
                 exitHandoffPending = false
                 stopSync(reportStop: true)
-            } else if !PipSession.shared.isActive, !engineStopped {
-                // The system window never took playback over. A VLC that was
-                // frozen for it must never stay frozen — that is the "blocked
-                // image" state — and it must do so even when a concurrent
-                // resume already flipped `pipState` (playing again is a no-op
-                // if it did). An ALREADY STOPPED engine stays stopped: the
-                // abort path may have ended it on purpose.
+            } else if pipVLCFrozen, !PipSession.shared.isActive, !engineStopped {
+                // The system window never took playback over and VLC WAS
+                // frozen for it: it must not stay frozen — that is the
+                // "blocked image" state — and it must do so even when a
+                // concurrent resume already flipped `pipState` (playing
+                // again is a no-op if it did). An ALREADY STOPPED engine stays
+                // stopped: the abort path may have ended it on purpose.
                 TJFLog("pip: no window → unfreezing primary player")
+                pipVLCFrozen = false
                 await engine.play()
                 isPlaying = true
-                userPaused = false
                 startUpdating()
             }
         }
@@ -1329,16 +1447,26 @@ final class PlayerViewModel {
     func handleViewExit(handoffAllowed: Bool = true) {
         #if os(iOS)
         if pipState == .active {
-            if PipSession.shared.isActive {
+            if PipSession.shared.windowStarted {
                 TJFLog("pip: view exit while floating — VLC released, playback continues")
                 stopSync(reportStop: false)
-            } else {
+                return
+            }
+            if !PipSession.shared.isActive {
                 // pipState was stale (session already gone): skipping the stop
                 // report here would silently discard the episode's progress.
                 TJFLog("pip: view exit — stale pipState, stopping with report")
                 stopSync(reportStop: true)
+                return
             }
-            return
+            // Staged at .inactive but the system never opened a window: nothing
+            // floats yet — drop the staging and fall through to the normal exit
+            // handoff below (VLC is still playing, so handing off is exactly
+            // what the X button is for; stopping instead would kill playback
+            // the user only meant to hand over).
+            TJFLog("pip: view exit with staged (unstarted) session → cancel staging, re-run handoff")
+            PipSession.shared.cancelStaged()
+            pipState = .idle
         }
         if errorMessage != nil {
             // An error path tore this player down (failed prepare/swap/engine):

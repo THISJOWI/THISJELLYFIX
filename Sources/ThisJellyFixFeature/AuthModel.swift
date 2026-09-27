@@ -103,5 +103,7 @@ final class AuthModel {
         username = ""
         password = ""
         errorMessage = nil
+
+        SpotlightIndexer.shared.deleteAll()
     }
 }

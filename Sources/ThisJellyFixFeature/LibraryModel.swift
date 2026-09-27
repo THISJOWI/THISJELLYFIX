@@ -36,6 +36,11 @@ final class LibraryModel {
     /// succeed, so the UI offers "Cerrar sesión" instead of a dead "Reintentar".
     var sessionExpired = false
 
+    /// Handoff: set by the root view when a Handoff continuation resolves to a
+    /// known library item. HomeView consumes this value immediately by pushing
+    /// it onto the NavigationStack, then resets it to nil.
+    var pendingNavigationItem: JellyfinMediaItem?
+
     private let libraryClient: any JellyfinLibraryProviding
     private let serverURL: URL
     private let userId: String
@@ -133,6 +138,8 @@ final class LibraryModel {
 
         if rows.isEmpty, errorMessage == nil {
             errorMessage = "No se pudo cargar la biblioteca."
+        } else if !rows.isEmpty {
+            SpotlightIndexer.shared.index(allItems, serverURL: serverURL)
         }
     }
 

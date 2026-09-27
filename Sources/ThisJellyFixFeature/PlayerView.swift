@@ -72,6 +72,10 @@ struct PlayerView: View {
     /// The warm/resolve chain launched by a scenePhase change — cancelled on
     /// disappear so it can never start PiP from a view that is gone.
     @State private var pipLeaveTask: Task<Void, Never>?
+    /// Stage-1 chain (warm + stage the PiP apparatus) launched on the way
+    /// OUT (.inactive with .active before it). The background chain awaits
+    /// it instead of cancelling it.
+    @State private var pipStagingTask: Task<Void, Never>?
     /// Fullscreen players currently on screen. The root's restore handler
     /// consults it so a restore can never present a SECOND player over a
     /// cover that already owns the UI (presentation fails silently and the
@@ -352,6 +356,8 @@ struct PlayerView: View {
             // view (it could start a floating window nobody owns).
             pipLeaveTask?.cancel()
             pipLeaveTask = nil
+            pipStagingTask?.cancel()
+            pipStagingTask = nil
             #endif
             // Drop any playback work still in flight BEFORE stopping: a task
             // resuming after teardown would call play()/seek() on a dead engine.
@@ -386,27 +392,89 @@ struct PlayerView: View {
             }
             wasPlaying = playing
         }
+        // Handoff: publish the current playback state so the user can resume on
+        // another Apple device. Only published when we have a full session
+        // (itemId + serverURL + userId present); the token is deliberately
+        // omitted — the receiving device reads its own from the shared Keychain.
+        .userActivity(
+            HandoffActivity.playing,
+            isActive: itemId != nil && serverURL != nil && userId != nil
+        ) { activity in
+            guard let itemId, let serverURL, let userId else { return }
+            let handoffItem = HandoffMediaItem(id: itemId, name: title, type: "")
+            let built = HandoffActivity.playingActivity(
+                item: handoffItem,
+                serverURL: serverURL,
+                userId: userId,
+                position: viewModel.currentTime
+            )
+            activity.title              = built.title
+            activity.isEligibleForHandoff = true
+            activity.isEligibleForSearch  = false
+            activity.userInfo           = built.userInfo
+        }
         #if os(iOS)
-        .onChange(of: scenePhase) { _, newPhase in
+        .onChange(of: scenePhase) { oldPhase, newPhase in
             // Every transition is evidence: the swipe-up handoff used to fail
             // with ZERO log output, so a device repro told us nothing.
             TJFLog("pip: scenePhase → \(newPhase) appState=\(UIApplication.shared.applicationState.rawValue)")
             if newPhase == .active {
                 leavingApp = false
+                pipLeaveTask?.cancel()
+                pipLeaveTask = nil
+                // A staging chain suspended in its resolve would otherwise
+                // resume and arm a session on an app the user just came
+                // back to (it holds the start latch, so nobody could undo
+                // it until it finished).
+                pipStagingTask?.cancel()
+                pipStagingTask = nil
                 if viewModel.pipState == .active {
-                    // Foregrounded without tapping the window (app switcher) —
-                    // pull playback back into fullscreen. The tap path is driven
-                    // by the PiP delegate instead.
-                    Task { await viewModel.resumeFromPictureInPicture() }
+                    if PipSession.shared.windowStarted {
+                        // Foregrounded without tapping the window (app switcher) —
+                        // pull playback back into fullscreen. The tap path is driven
+                        // by the PiP delegate instead.
+                        Task { await viewModel.resumeFromPictureInPicture() }
+                    } else {
+                        // Staged on the way out but the system never opened a
+                        // window (Control Centre / switcher peek): drop it and
+                        // keep watching fullscreen.
+                        viewModel.cancelPreparedPictureInPicture()
+                    }
                 }
             } else if newPhase == .inactive {
                 // iOS also reports .inactive for notification centre, Control
                 // Centre, screenshots, incoming calls and the app switcher peek
-                // — starting PiP here popped the window while the user was
-                // still watching. Only pre-fetch the playlist so the real
-                // handoff below is instant; never start from this phase.
-                pipLeaveTask?.cancel()
-                pipLeaveTask = Task { await viewModel.warmPictureInPicture() }
+                // — so this phase NEVER opens the window itself (that regression
+                // popped it over the video the user was still watching).
+                if oldPhase == .active {
+                    // First half of leaving: STAGE the whole apparatus now,
+                    // while the scene is still alive. iOS opens PiP itself at
+                    // the background transition
+                    // (`canStartPictureInPictureAutomaticallyFromInline`) —
+                    // a manual startPictureInPicture() issued after the scene
+                    // is backgrounded was rejected on device (failedToStart).
+                    guard viewModel.canAutoHandoffToPiP else {
+                        TJFLog("pip: staging skipped — playing=\(viewModel.isPlaying) pausedByUser=\(viewModel.userPaused) pos=\(String(format: "%.1f", viewModel.currentTime))s err=\(viewModel.errorMessage != nil)")
+                        return
+                    }
+                    pipStagingTask?.cancel()
+                    pipStagingTask = Task {
+                        await viewModel.warmPictureInPicture()
+                        guard !Task.isCancelled else {
+                            TJFLog("pip: staging cancelled at warm")
+                            return
+                        }
+                        await viewModel.preparePictureInPicture()
+                    }
+                } else {
+                    // background → inactive: the user is coming BACK — abort
+                    // the pending handoff before it can open over them.
+                    leavingApp = false
+                    pipLeaveTask?.cancel()
+                    pipLeaveTask = nil
+                    pipStagingTask?.cancel()
+                    pipStagingTask = nil
+                }
             } else if newPhase == .background {
                 // The definitive "user left" signal — and only when playback
                 // may hand off: a player the USER paused must not float itself
@@ -415,9 +483,14 @@ struct PlayerView: View {
                 // that was the swipe-up "no me persigue" bug.
                 guard viewModel.canAutoHandoffToPiP else {
                     TJFLog("pip: background handoff skipped — playing=\(viewModel.isPlaying) pausedByUser=\(viewModel.userPaused) pos=\(String(format: "%.1f", viewModel.currentTime))s/\(String(format: "%.1f", viewModel.duration))s err=\(viewModel.errorMessage != nil)")
+                    // A staged apparatus must not outlive this gate: with the
+                    // auto-start flag armed, iOS would float it away anyway.
+                    viewModel.cancelPreparedPictureInPicture()
                     return
                 }
                 leavingApp = true
+                let staging = pipStagingTask
+                pipStagingTask = nil
                 pipLeaveTask?.cancel()
                 pipLeaveTask = Task {
                     // Keep the process alive past suspension: a cold playlist
@@ -441,15 +514,16 @@ struct PlayerView: View {
                         if bgTask != .invalid { app.endBackgroundTask(bgTask) }
                         bgTask = .invalid
                     }
-                    // Resolve FIRST. Starting before the playlist is cached
-                    // blocks on the network, and a resolve landing after the
-                    // user came back would pop the window over the fullscreen
-                    // player they are now watching.
-                    await viewModel.warmPictureInPicture()
+                    // The staging chain (warm + stage 1) must finish first:
+                    // it owns the apparatus the system may auto-start at any
+                    // moment, and it holds the start latch while resolving.
+                    await staging?.value
                     guard leavingApp, !Task.isCancelled else {
-                        TJFLog("pip: background start aborted after warm — leavingApp=\(leavingApp) cancelled=\(Task.isCancelled)")
+                        TJFLog("pip: background start aborted after staging — leavingApp=\(leavingApp) cancelled=\(Task.isCancelled)")
                         return
                     }
+                    // No-op when the system already opened the window itself;
+                    // safety net (manual start + retries) when it did not.
                     await viewModel.startPictureInPicture()
                 }
             }
