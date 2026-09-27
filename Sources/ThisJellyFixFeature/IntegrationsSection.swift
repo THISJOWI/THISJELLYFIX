@@ -2,6 +2,9 @@
 import SwiftUI
 import ThisJellyFixCore
 import ThisJellyFixDiscovery
+#if os(iOS)
+import UIKit
+#endif
 
 /// Profile section for the external services: TMDB key, Radarr/Sonarr
 /// endpoint + key, and a connection test per service.
@@ -22,6 +25,9 @@ struct IntegrationsSection: View {
 
     @State private var testing: DownloadService?
     @State private var testResult: [DownloadService: Bool] = [:]
+    /// Why the last test failed. Without it every cause (Red local, ATS,
+    /// key rejected, dead tunnel) looked like the same red label.
+    @State private var testFailure: [DownloadService: String] = [:]
     @State private var tmdbTesting = false
     @State private var tmdbResult: Bool?
 
@@ -155,8 +161,30 @@ struct IntegrationsSection: View {
                     )
                     .font(.caption)
                     .foregroundStyle(ok ? .green : .red)
+
+                    if !ok {
+                        // Say why: the user cannot tell a blocked local
+                        // network from a rejected key by looking at a label.
+                        Text(testFailure[service] ?? "")
+                            .font(.caption2)
+                            .foregroundStyle(.red)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
                 }
             }
+
+            #if os(iOS)
+            if testResult[isRadarr ? .radarr : .sonarr] == false {
+                // Red local lives in the app's Settings page.
+                Button("Abrir ajustes del sistema") {
+                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                    UIApplication.shared.open(url)
+                }
+                .font(.caption)
+                .buttonStyle(.borderless)
+                .foregroundStyle(.secondary)
+            }
+            #endif
         }
     }
 
@@ -185,6 +213,7 @@ struct IntegrationsSection: View {
             let config = IntegrationConfig()
             guard let url = config.baseURL(service: service), let key = config.apiKey(service: service) else {
                 testResult[service] = false
+                testFailure[service] = "Falta la URL o la API key."
                 return
             }
             switch service {
@@ -194,8 +223,11 @@ struct IntegrationsSection: View {
                 try await SonarrClient(baseURL: url, apiKey: key).testConnection()
             }
             ok = true
+            testFailure[service] = nil
         } catch {
             ok = false
+            testFailure[service] = (error as? LocalizedError)?.errorDescription
+                ?? error.localizedDescription
         }
         testResult[service] = ok
     }

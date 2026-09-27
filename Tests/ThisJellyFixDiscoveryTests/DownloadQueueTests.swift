@@ -85,7 +85,11 @@ final class DownloadQueueTests: XCTestCase {
             _ = try await DownloadQueue(client: .sonarr(client)).fetch()
             XCTFail("Expected error")
         } catch let error as ArrError {
-            XCTAssertEqual(error, .unreachable)
+            // Transport failures now carry the system's wording (and the
+            // Red local hint) instead of collapsing into `.unreachable`.
+            guard case .connectionFailed = error else {
+                return XCTFail("Expected connectionFailed, got \(error)")
+            }
         } catch {
             XCTFail("Unexpected \(error)")
         }

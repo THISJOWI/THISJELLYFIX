@@ -225,14 +225,63 @@ final class ArrClientTests: XCTestCase {
         }
     }
 
-    func testConnectionRefusedThrowsUnreachable() async {
+    /// A refused connection is the local-network case on iOS: the user must
+    /// see the system's own wording plus the Red local hint, not a bare
+    /// "unreachable" that hides every cause behind one message.
+    func testConnectionRefusedSurfacesSystemDetailAndLocalNetworkHint() async {
         let session = SpySession(json: "", statusCode: 0, error: URLError(.cannotConnectToHost))
         let client = SonarrClient(baseURL: sonarrBase, apiKey: "sk", session: session)
         do {
             _ = try await client.qualityProfiles()
             XCTFail("Expected error")
         } catch let error as ArrError {
-            XCTAssertEqual(error, .unreachable)
+            guard case .connectionFailed(let detail) = error else {
+                return XCTFail("Expected connectionFailed, got \(error)")
+            }
+            XCTAssertTrue(
+                detail.contains(URLError(.cannotConnectToHost).localizedDescription),
+                "Keeps the system description: \(detail)"
+            )
+            // sonarrBase host is sonarr.local → local-network hint applies.
+            XCTAssertTrue(detail.contains("Red local"), detail)
+        } catch {
+            XCTFail("Unexpected \(error)")
+        }
+    }
+
+    /// A public host (tunnel, remote domain) is not a local-network case:
+    /// no permission hint, just the system detail.
+    func testRemoteHostConnectionFailureHasNoLocalNetworkHint() async {
+        let session = SpySession(json: "", statusCode: 0, error: URLError(.timedOut))
+        let client = RadarrClient(
+            baseURL: URL(string: "https://arr.example.com")!, apiKey: "rk", session: session
+        )
+        do {
+            _ = try await client.testConnection()
+            XCTFail("Expected error")
+        } catch let error as ArrError {
+            guard case .connectionFailed(let detail) = error else {
+                return XCTFail("Expected connectionFailed, got \(error)")
+            }
+            XCTAssertFalse(detail.contains("Red local"), detail)
+        } catch {
+            XCTFail("Unexpected \(error)")
+        }
+    }
+
+    /// ATS blocking the plain HTTP *arr use deserves its own message.
+    func testAppTransportSecurityIsCalledOut() async {
+        let session = SpySession(
+            json: "", statusCode: 0,
+            error: URLError(.appTransportSecurityRequiresSecureConnection)
+        )
+        let client = RadarrClient(baseURL: radarrBase, apiKey: "rk", session: session)
+        do {
+            _ = try await client.testConnection()
+            XCTFail("Expected error")
+        } catch let error as ArrError {
+            XCTAssertEqual(error, .transportSecurityBlocked)
+            XCTAssertTrue(error.localizedDescription.contains("red local"))
         } catch {
             XCTFail("Unexpected \(error)")
         }

@@ -9,6 +9,11 @@ public enum ArrError: LocalizedError, Equatable {
     case unauthorized
     /// Service did not answer (LAN/túnel caído, URL mal, timeout).
     case unreachable
+    /// Transport failure carrying the system's own wording, so a refused
+    /// connection, a blocked LAN address and a dead tunnel don't look alike.
+    case connectionFailed(String)
+    /// App Transport Security refused the request (plain HTTP outside LAN).
+    case transportSecurityBlocked
     /// Non-2xx with the service's own explanation (nil = empty body).
     case serverError(Int, String?)
     case invalidResponse
@@ -19,6 +24,9 @@ public enum ArrError: LocalizedError, Equatable {
         switch self {
         case .unauthorized: "API key rechazada por el servicio."
         case .unreachable: "No se pudo contactar con el servicio. Revisa la URL."
+        case .connectionFailed(let detail): "No se pudo conectar con el servicio. \(detail)"
+        case .transportSecurityBlocked:
+            "iOS bloqueó la conexión: los servicios *arr solo pueden usarse en HTTP plano dentro de la red local."
         case .serverError(let code, let message):
             if let message, !message.isEmpty {
                 "El servicio devolvió un error (código \(code)): \(message)"
@@ -162,7 +170,7 @@ struct ArrHTTPClient {
             (data, response) = try await session.data(for: request)
         } catch {
             TJFLog("\(service) \(method) \(path) unreachable: \(error)")
-            throw ArrError.unreachable
+            throw Self.classify(error, host: request.url?.host)
         }
 
         guard let http = response as? HTTPURLResponse else { throw ArrError.invalidResponse }
@@ -178,6 +186,37 @@ struct ArrHTTPClient {
             TJFLog("\(service) \(method) \(path) status=\(http.statusCode) message=\(message ?? "-")")
             throw ArrError.serverError(http.statusCode, message)
         }
+    }
+
+    /// Turn a transport error into something the user can act on. Local
+    /// network addresses get the Red local hint: on iOS that permission is
+    /// the difference between "works" and a silent connection refusal.
+    private static func classify(_ error: Error, host: String?) -> ArrError {
+        guard let urlError = error as? URLError else { return .unreachable }
+        if urlError.code == .appTransportSecurityRequiresSecureConnection {
+            return .transportSecurityBlocked
+        }
+        let hint = isLocalNetworkHost(host)
+            ? " Comprueba que el permiso de Red local esté activado en Ajustes."
+            : ""
+        return .connectionFailed(urlError.localizedDescription + hint)
+    }
+
+    /// Private IPv4 ranges, IPv6 loopback/link-local and `.local` names.
+    private static func isLocalNetworkHost(_ host: String?) -> Bool {
+        guard let host = host?.lowercased(), !host.isEmpty else { return false }
+        if host == "localhost" || host.hasSuffix(".local") { return true }
+        if host == "::1" || host.hasPrefix("fe80:") { return true }
+        let parts = host.split(separator: ".")
+        guard parts.count == 4,
+              parts.allSatisfy({ Int($0).map { (0...255).contains($0) } ?? false })
+        else { return false }
+        let octets = parts.compactMap { Int($0) }
+        if octets[0] == 10 || octets[0] == 127 { return true }
+        if octets[0] == 192, octets[1] == 168 { return true }
+        if octets[0] == 172, (16...31).contains(octets[1]) { return true }
+        if octets[0] == 169, octets[1] == 254 { return true }
+        return false
     }
 }
 
