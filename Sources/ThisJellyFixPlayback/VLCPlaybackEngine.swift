@@ -8,6 +8,12 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
 
     private let mediaPlayer: VLCMediaPlayer
 
+    /// E2: VLCKit keeps its delegate WEAK — without a strong owner the
+    /// `.error` state is silently dropped and the UI never learns playback
+    /// died (spinner forever). This relay is retained by the engine and
+    /// forwards state changes to the view model.
+    private let delegateRelay: VLCStateRelay
+
     /// One-time libvlc file logger — captures internal messages (es_out,
     /// decoder, "slave N EOF", demux) that TJFLog alone can't show.
     private static let installVLCLoggerOnce: Void = {
@@ -28,12 +34,23 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
         }
     }()
 
+    /// E2: forwarded VLCMediaPlayerState (main-thread) — view model maps
+    /// `.error` to a user-visible message.
+    public var onStateChanged: ((VLCMediaPlayerState) -> Void)? {
+        get { delegateRelay.onStateChange }
+        set { delegateRelay.onStateChange = newValue }
+    }
+
     public init() {
         _ = Self.installVLCLoggerOnce
-        // Configure VLC for stable network streaming
+        delegateRelay = VLCStateRelay()
+        // Configure VLC for stable network streaming.
+        // network-caching is the read-ahead buffer libvlc refills after EVERY
+        // seek: 10000ms meant multi-second freezes on each scrub. 2000ms keeps
+        // enough headroom for jittery networks while seeks resume quickly.
         mediaPlayer = VLCMediaPlayer(
             options: [
-                "--network-caching=10000",
+                "--network-caching=2000",
                 "--file-caching=1000",
                 "--live-caching=1000",
                 "--sout-mux-caching=1000",
@@ -43,6 +60,7 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
         // VLC letterboxes natively (videoFitMode) — subs are composed by VLC
         // inside the visible area, so they follow fit/fill correctly.
         mediaPlayer.videoFitMode = .smaller
+        mediaPlayer.delegate = delegateRelay
     }
 
     /// Fit (letterbox) or fill (cover, crop overflow) — VLC-native so the
@@ -66,12 +84,12 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
 
     public func prepare(_ request: PlaybackRequest) async throws {
         let media = VLCMedia(url: request.streamURL)
-        // Open DIRECTLY at the resume position via input option — VLC seeks as part
-        // of opening the media, so there is no open-at-0 → seek → HTTP re-buffer
-        // round trip (the slow resume). Must be added before playback starts.
-        if let media, let start = request.startTime, start > 0 {
-            media.addOption(":start-time=\(Int(start))")
-        }
+        // NEVER add `:start-time` here — on VLCKit 4.0.0-alpha.21 (iOS) it
+        // blocks play() ~10s on the main thread, reports duration MINUS the
+        // offset and freezes time at 0, so resume verification can never
+        // land (device logs: stuck "playing at 0" → user exits → PositionTicks:0
+        // wipes the saved resume). Resume opens at 0 and seeks explicitly
+        // afterwards instead (PlayerViewModel.seek after play).
         mediaPlayer.media = media
 
         // Brief pause so the media object is fully associated
@@ -167,5 +185,17 @@ public final class VLCPlaybackEngine: PlaybackEngine, @unchecked Sendable {
     /// Direct access to the VLCMediaPlayer for rendering.
     public func vlcMediaPlayer() -> VLCMediaPlayer {
         mediaPlayer
+    }
+}
+
+/// Strong owner for VLCMediaPlayer's weak delegate slot. Forwards state
+/// changes on VLC's callback thread; the view model hops to the main actor.
+private final class VLCStateRelay: NSObject, VLCMediaPlayerDelegate, @unchecked Sendable {
+    /// Called for every VLCMediaPlayerState transition (opening/playing/
+    /// stopped/error…). Written from the main actor, read from VLC's thread.
+    var onStateChange: ((VLCMediaPlayerState) -> Void)?
+
+    func mediaPlayerStateChanged(_ newState: VLCMediaPlayerState) {
+        onStateChange?(newState)
     }
 }

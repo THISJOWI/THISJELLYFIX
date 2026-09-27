@@ -2,6 +2,9 @@ import Observation
 import SwiftUI
 import ThisJellyFixCore
 import ThisJellyFixNetworking
+#if os(iOS)
+import AVFoundation
+#endif
 
 public struct ThisJellyFixRootView: View {
     @State private var model = ServerConnectionModel()
@@ -13,12 +16,40 @@ public struct ThisJellyFixRootView: View {
     @State private var discoveryModel: DiscoveryModel?
     #if os(iOS)
     @State private var selectedTab: MareaTab = .home
+    @Environment(\.scenePhase) private var scenePhase
+    /// Floating PiP whose fullscreen player was already dismissed: the root
+    /// view is the only owner that survives the player, so it re-presents it
+    /// when the system asks for the UI back (4.5 — the old restore closure
+    /// lived in the player's view model and died with it).
+    @State private var restoredPlayback: RestoredPlayback?
+    /// Root registrations live for the process lifetime (static, not @State:
+    /// SwiftUI may rebuild the view, re-registering must not stack handlers).
+    private static var pipRestoreHandlerId: UUID?
+    private static var pipClosedHandlerId: UUID?
+
+    /// Everything needed to rebuild the fullscreen player at `position`.
+    private struct RestoredPlayback: Identifiable {
+        let id = UUID()
+        let context: PipSession.Context
+        let position: Double
+    }
     #endif
 
     public init() {}
 
     public var body: some View {
         ZStack {
+            #if os(iOS)
+            // Layer host for the floating PiP session. It must be alive for the
+            // WHOLE app lifetime: PipSession attaches the layer synchronously
+            // the moment a session starts, and starting PiP a render early (with
+            // `superlayer == nil`) is what made the window never appear. It sits
+            // BEHIND the opaque gradient so an active session can never paint
+            // over Home (the black box that was covering the rows); `cleanup()`
+            // detaches the layer when the session ends.
+            PipLayerHostView(isActive: PipSession.shared.isActive)
+                .allowsHitTesting(false)
+            #endif
             LinearGradient(
                 colors: [.black, Color(red: 0.05, green: 0.08, blue: 0.15), .black],
                 startPoint: .topLeading,
@@ -28,10 +59,9 @@ public struct ThisJellyFixRootView: View {
 
             if let server = model.server {
                 if authModel.isAuthenticated {
-                    if isLoadingLibrary {
-                        ProgressView("Cargando biblioteca…")
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else if let libModel = libraryModel {
+                    if let libModel = libraryModel {
+                        // Home renders its own loading skeleton, so the app is
+                        // interactive while the row requests are still flying.
                         #if os(iOS)
                         mainContent(libModel: libModel, server: server)
                             .environment(discoveryModel)
@@ -49,6 +79,9 @@ public struct ThisJellyFixRootView: View {
                         )
                         .environment(discoveryModel)
                         #endif
+                    } else if isLoadingLibrary {
+                        ProgressView("Cargando biblioteca…")
+                            .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         Color.clear
                             .onAppear {
@@ -69,12 +102,42 @@ public struct ThisJellyFixRootView: View {
         }
         .preferredColorScheme(.dark)
         #if os(iOS)
+        // The system asks for the fullscreen UI back when the user taps the
+        // floating window and no player is alive to claim the request.
+        .fullScreenCover(item: $restoredPlayback) { restored in
+            PlayerView(
+                streamURL: restored.context.streamURL ?? fallbackStreamURL(restored.context),
+                title: restored.context.title,
+                startPosition: restored.position,
+                onDismiss: {
+                    restoredPlayback = nil
+                    refreshResumeSoon()
+                },
+                itemId: restored.context.itemId,
+                serverURL: restored.context.serverURL,
+                token: restored.context.token,
+                userId: restored.context.userId,
+                playSessionId: restored.context.playSessionId,
+                mediaStreams: restored.context.mediaStreams
+            )
+        }
         .onChange(of: selectedTab) { _, tab in
             // TabView keeps views alive, so onAppear won't re-fire on tab
             // switches — refresh resume when user returns to Inicio.
             if tab == .home, let lib = libraryModel {
                 Task { await lib.refreshResume() }
             }
+        }
+        .onChange(of: scenePhase) { _, phase in
+            // Coming back from another app/client: Home is still mounted, so
+            // NO onAppear fires, and progress recorded elsewhere (web, TV,
+            // another phone) never reached "Estás viendo".
+            guard phase == .active, let lib = libraryModel else { return }
+            Task { await lib.refreshResume() }
+        }
+        .onAppear {
+            configureAudioSession()
+            registerPipHandlers()
         }
         #endif
         .task {
@@ -83,6 +146,81 @@ public struct ThisJellyFixRootView: View {
             }
         }
     }
+
+    #if os(iOS)
+    /// Static stream URL (4.3): the app only ever let VLCKit / PipSession set
+    /// up the session implicitly — background audio then depended on whoever
+    /// happened to configure it first. Category is set once, up front;
+    /// activation stays with the players (activating on the login screen would
+    /// silence whatever else is playing).
+    private func configureAudioSession() {
+        do {
+            try AVAudioSession.sharedInstance()
+                .setCategory(.playback, mode: .moviePlayback)
+            TJFLog("audio session: category=.playback configured")
+        } catch {
+            TJFLog("audio session: configure FAILED \(error)")
+        }
+    }
+
+    /// Permanent PiP observers: the live player registers while its view is on
+    /// screen and unregisters on disappear, so without these the system's
+    /// restore request had NO owner once the cover closed → PiP died (4.5).
+    private func registerPipHandlers() {
+        if let id = Self.pipRestoreHandlerId {
+            PipSession.shared.removeRestoreHandler(id)
+        }
+        if let id = Self.pipClosedHandlerId {
+            PipSession.shared.removeClosedHandler(id)
+        }
+
+        Self.pipRestoreHandlerId = PipSession.shared.addRestoreHandler { [self] position in
+            // Another fullscreen player already owns the UI (Home's direct
+            // player, DetailView's cover): presenting a SECOND one on top
+            // fails silently — the system had already been told "yes", so the
+            // window closed with nothing playing. Refuse instead: the session
+            // then reports stop and the resume entry survives.
+            guard PlayerView.presentedCount == 0 else {
+                TJFLog("pip: root refuses restore — \(PlayerView.presentedCount) fullscreen player(s) on screen")
+                return false
+            }
+            guard let request = PipSession.shared.restoreRequest,
+                  request.context.streamURL != nil
+            else {
+                TJFLog("pip: root cannot restore — request=\(PipSession.shared.restoreRequest != nil)")
+                return false
+            }
+            TJFLog("pip: root re-presenting fullscreen player at \(String(format: "%.1f", position))s")
+            restoredPlayback = RestoredPlayback(context: request.context, position: position)
+            return true
+        }
+        Self.pipClosedHandlerId = PipSession.shared.addClosedHandler { [self] in
+            // Floating window closed while root owned the player: the session
+            // reported the stop, so the row must reflect it right now.
+            restoredPlayback = nil
+            refreshResumeSoon()
+        }
+    }
+
+    /// Forced resume-row refresh AFTER the stop POST has had time to land.
+    /// Refreshing immediately (or relying on the 5s cooldown) let the row be
+    /// fetched in its pre-stop state and then blocked the correction — the
+    /// user then saw the episode as "progress lost".
+    private func refreshResumeSoon() {
+        guard let lib = libraryModel else { return }
+        Task {
+            try? await Task.sleep(for: .seconds(2))
+            await lib.refreshResume(force: true)
+        }
+    }
+
+    /// Defensive: a context without a stream URL would crash the restored
+    /// player — the handler refuses the restore instead, but keep a value for
+    /// the memberwise parameter so the call stays total.
+    private func fallbackStreamURL(_ context: PipSession.Context) -> URL {
+        context.serverURL.appendingPathComponent("Videos/\(context.itemId)/stream")
+    }
+    #endif
 
     #if os(iOS)
     @ViewBuilder
@@ -175,13 +313,16 @@ public struct ThisJellyFixRootView: View {
             userId: user.id,
             token: token
         )
-        await libModel.load()
+        // Publish BEFORE loading: the view tree switches straight to Home (which
+        // shows its own skeleton) instead of holding the whole screen hostage
+        // until every row request finishes.
         libraryModel = libModel
         // Discovery reads the live library through the same reference, so its
         // TMDB matching sees rows as they land.
         discoveryModel = DiscoveryModel.live { [weak libModel] in
             libModel?.allItems ?? []
         }
+        await libModel.load()
         // Rows landed: discovery can now seed recommendations from them.
         await discoveryModel?.loadRows()
     }

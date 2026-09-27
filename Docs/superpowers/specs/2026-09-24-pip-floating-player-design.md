@@ -134,3 +134,19 @@ Manual: botón PiP ───────────────┘
   al inicio de reproducción para calentar; carga aceptada en server doméstico).
 - **AVPlayerLayer fuera de pantalla:** si iOS rechaza arrancar PiP con la capa
   no visible, adjuntarla al layer del player VLC (fallback documentado).
+
+## v2 — Handoff instantáneo (2026-09-25)
+
+Feedback: el usuario debía esperar a que cargara el HLS antes de poder salir
+de la app (el seek de AVPlayer bloqueaba `startPictureInPicture()`).
+
+- **Ventana inmediata**: `startPictureInPicture()` se llama al instante tras
+  crear el controller — nunca se espera al seek ni al manifest.
+- **Audio sin hueco**: VLC sigue reproduciendo (background mode) hasta que el
+  item de AVPlayer llega a `readyToPlay` (KVO); recién ahí `onVideoReady`
+  pausa VLC, busca la posición y arranca AVPlayer. Fallback intacto: si el
+  item falla o `didStart` no llega (8s), VLC nunca se pausó.
+- **Warm-up**: `scenePhase → .inactive` dispara `warmPictureInPicture()` —
+  master → variant → primer segmento (`HlsStreamResolver.warmUp`), pre-enciende
+  el transcode de Jellyfin. Una vez por reproducción; best-effort.
+- `preferredForwardBufferDuration = 4` — sesga a primer frame rápido.

@@ -65,6 +65,85 @@ final class HlsStreamResolverTests: XCTestCase {
         let transcoding = try XCTUnwrap(profile["TranscodingProfiles"] as? [[String: Any]])
         XCTAssertEqual(transcoding.first?["Protocol"] as? String, "hls")
     }
+
+    func testFirstVariantParsesMasterPlaylist() {
+        let master = """
+        #EXTM3U
+        #EXT-X-STREAM-INF:BANDWIDTH=2000000,RESOLUTION=1280x720
+        hls1/main/0.m3u8
+        #EXT-X-STREAM-INF:BANDWIDTH=800000
+        hls1/main/1.m3u8
+        """
+        let base = URL(string: "http://localhost:8096/Videos/i1/master.m3u8?api_key=tok")!
+
+        let url = HlsStreamResolver.firstVariant(in: Data(master.utf8), base: base)
+
+        XCTAssertEqual(
+            url?.absoluteString,
+            "http://localhost:8096/Videos/i1/hls1/main/0.m3u8"
+        )
+    }
+
+    func testFirstSegmentParsesVariantPlaylist() {
+        let variant = """
+        #EXTM3U
+        #EXT-X-TARGETDURATION:3
+        #EXTINF:3.000000,
+        0.ts?device=1
+        #EXTINF:3.000000,
+        1.ts
+        """
+        let base = URL(string: "http://localhost:8096/Videos/i1/hls1/main/0.m3u8?api_key=tok")!
+
+        let url = HlsStreamResolver.firstSegment(in: Data(variant.utf8), base: base)
+
+        XCTAssertEqual(
+            url?.absoluteString,
+            "http://localhost:8096/Videos/i1/hls1/main/0.ts?device=1"
+        )
+    }
+
+    func testWarmUpFetchesMasterVariantAndSegmentInOrder() async {
+        let master = """
+        #EXTM3U
+        #EXT-X-STREAM-INF:BANDWIDTH=2000000
+        variant.m3u8
+        """
+        let variant = """
+        #EXTM3U
+        #EXTINF:3.000000,
+        seg0.ts
+        """
+        let session = RoutingStubSession(routes: [
+            "master.m3u8": Data(master.utf8),
+            "variant.m3u8": Data(variant.utf8),
+            "seg0.ts": Data("segment-bytes".utf8),
+        ])
+
+        await HlsStreamResolver(session: session).warmUp(
+            hlsURL: URL(string: "http://localhost:8096/Videos/i1/master.m3u8?ApiKey=tok")!,
+            token: "tok"
+        )
+
+        XCTAssertEqual(session.requestedPaths, [
+            "/Videos/i1/master.m3u8",
+            "/Videos/i1/variant.m3u8",
+            "/Videos/i1/seg0.ts",
+        ])
+    }
+
+    func testWarmUpToleratesMissingVariant() async {
+        let session = RoutingStubSession(routes: [
+            "master.m3u8": Data("#EXTM3U".utf8),
+        ])
+
+        await HlsStreamResolver(session: session).warmUp(
+            hlsURL: URL(string: "http://localhost:8096/Videos/i1/master.m3u8?ApiKey=tok")!,
+            token: "tok"
+        )
+
+        XCTAssertEqual(session.requestedPaths, ["/Videos/i1/master.m3u8"])
+    }
 }
 
 // MARK: - Mock
@@ -83,5 +162,25 @@ private final class StubSession: JellyfinNetworkSession, @unchecked Sendable {
             url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil
         )!
         return (mockData, response)
+    }
+}
+
+/// Serves canned bodies keyed by URL path suffix and records every request.
+private final class RoutingStubSession: JellyfinNetworkSession, @unchecked Sendable {
+    private let routes: [String: Data]
+    private(set) var requestedPaths: [String] = []
+
+    init(routes: [String: Data]) {
+        self.routes = routes
+    }
+
+    func data(for request: URLRequest) async throws -> (Data, URLResponse) {
+        let path = request.url!.path
+        requestedPaths.append(path)
+        let body = routes.first(where: { path.hasSuffix($0.key) })?.value ?? Data()
+        let response = HTTPURLResponse(
+            url: request.url!, statusCode: 200, httpVersion: nil, headerFields: nil
+        )!
+        return (body, response)
     }
 }

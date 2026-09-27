@@ -54,15 +54,10 @@ public struct JellyfinPlaybackClient: JellyfinPlaybackProviding {
             throw LibraryError.invalidResponse
         }
 
-        // Write raw response to file for debugging
-        if let body = String(data: data, encoding: .utf8) {
-            let log = "[PlaybackClient] URL: \(url)\n[PlaybackClient] Status: \(httpResponse.statusCode)\n[PlaybackClient] Body: \(body)\n"
-            let logPath = NSTemporaryDirectory() + "tjf_playback.log"
-            if let fd = fopen(logPath, "a") {
-                fputs(log, fd)
-                fclose(fd)
-            }
-        }
+        // Diagnostic line through TJFLog: redacts `api_key`/`AccessToken`
+        // (raw body used to be appended to a file that grew forever) and
+        // truncates so a big DeviceProfile answer can't flood the log.
+        TJFLog("[PlaybackClient] status=\(httpResponse.statusCode) body=\(Self.truncated(String(data: data, encoding: .utf8) ?? "", limit: 800))")
 
         switch httpResponse.statusCode {
         case 200: break
@@ -71,13 +66,12 @@ public struct JellyfinPlaybackClient: JellyfinPlaybackProviding {
         }
 
         let decoded = try JSONDecoder().decode(PlaybackInfo.self, from: data)
-        let log2 = "[PlaybackClient] Decoded mediaSources count: \(decoded.mediaSources.count)\n"
-        let logPath2 = NSTemporaryDirectory() + "tjf_playback.log"
-        if let fd = fopen(logPath2, "a") {
-            fputs(log2, fd)
-            fclose(fd)
-        }
+        TJFLog("[PlaybackClient] decoded mediaSources=\(decoded.mediaSources.count)")
         return decoded
+    }
+
+    private static func truncated(_ text: String, limit: Int) -> String {
+        text.count > limit ? String(text.prefix(limit)) + "…(\(text.count) chars)" : text
     }
 
     private var deviceOS: String {
@@ -156,6 +150,15 @@ public struct JellyfinPlaybackReporter: Sendable {
         positionTicks: Int64,
         isPaused: Bool
     ) async {
+        // PositionTicks:0 is AUTHORITATIVE for Jellyfin: the server stores it
+        // and the item stops being resumable (the resume row drops it). No
+        // caller has a legitimate reason to send it — a handoff that captured
+        // position 0 (seek not landed yet) must not erase the saved progress,
+        // so this is the single choke point that protects every path.
+        guard positionTicks > 0 else {
+            TJFLog("reportProgress SKIPPED positionTicks<=0 item=\(itemId) (preserves saved resume)")
+            return
+        }
         let body: [String: Any] = [
             "ItemId": itemId,
             "MediaSourceId": mediaSourceId,
@@ -181,6 +184,11 @@ public struct JellyfinPlaybackReporter: Sendable {
         mediaSourceId: String,
         positionTicks: Int64
     ) async {
+        // Same rule as progress — a stop at 0 wipes the resume entry.
+        guard positionTicks > 0 else {
+            TJFLog("reportStopped SKIPPED positionTicks<=0 item=\(itemId) (preserves saved resume)")
+            return
+        }
         let body: [String: Any] = [
             "ItemId": itemId,
             "MediaSourceId": mediaSourceId,

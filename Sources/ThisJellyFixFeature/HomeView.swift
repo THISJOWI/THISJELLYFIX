@@ -25,9 +25,11 @@ struct HomeView: View {
                         item: item, serverURL: serverURL, token: token, userId: userId,
                         onPlayerDismiss: { Task {
                             // Wait for the async reportStopped HTTP request to land
-                            // before re-fetching, otherwise the server has no progress yet
+                            // before re-fetching, otherwise the server has no progress yet.
+                            // Only the resume row changes after playback, so refresh
+                            // just that row instead of re-running the whole library load.
                             try? await Task.sleep(for: .seconds(2))
-                            await libraryModel.load()
+                            await libraryModel.refreshResume(force: true)
                         } }
                     )
                 }
@@ -95,9 +97,11 @@ struct HomeView: View {
                             item: item, serverURL: serverURL, token: token, userId: userId,
                             onPlayerDismiss: { Task {
                             // Wait for the async reportStopped HTTP request to land
-                            // before re-fetching, otherwise the server has no progress yet
+                            // before re-fetching, otherwise the server has no progress yet.
+                            // Only the resume row changes after playback, so refresh
+                            // just that row instead of re-running the whole library load.
                             try? await Task.sleep(for: .seconds(2))
-                            await libraryModel.load()
+                            await libraryModel.refreshResume(force: true)
                         } }
                         )
                     }
@@ -118,9 +122,11 @@ struct HomeView: View {
                             item: item, serverURL: serverURL, token: token, userId: userId,
                             onPlayerDismiss: { Task {
                             // Wait for the async reportStopped HTTP request to land
-                            // before re-fetching, otherwise the server has no progress yet
+                            // before re-fetching, otherwise the server has no progress yet.
+                            // Only the resume row changes after playback, so refresh
+                            // just that row instead of re-running the whole library load.
                             try? await Task.sleep(for: .seconds(2))
-                            await libraryModel.load()
+                            await libraryModel.refreshResume(force: true)
                         } }
                         )
                     }
@@ -176,6 +182,20 @@ struct HomeView: View {
                 }
                 .padding(.horizontal, 32)
 
+                // E4: dead token — the retry button can never succeed, so the
+                // banner (and the empty-state button) offer a real way out.
+                if libraryModel.sessionExpired {
+                    HStack(spacing: 12) {
+                        Label("Sesión expirada", systemImage: "person.crop.circle.badge.exclamationmark")
+                            .foregroundStyle(.orange)
+                        Spacer()
+                        Button("Cerrar sesión", action: onLogout)
+                            .buttonStyle(.bordered)
+                            .tint(.cyan)
+                    }
+                    .padding(.horizontal, 32)
+                }
+
                 if libraryModel.isLoading && libraryModel.rows.isEmpty {
                     ProgressView("Cargando biblioteca…")
                         .frame(maxWidth: .infinity)
@@ -187,9 +207,15 @@ struct HomeView: View {
                             .foregroundStyle(.orange)
                         Text(error)
                             .multilineTextAlignment(.center)
-                        Button("Reintentar") { Task { await libraryModel.load() } }
-                            .buttonStyle(.borderedProminent)
-                            .tint(.cyan)
+                        if libraryModel.sessionExpired {
+                            Button("Cerrar sesión", action: onLogout)
+                                .buttonStyle(.borderedProminent)
+                                .tint(.cyan)
+                        } else {
+                            Button("Reintentar") { Task { await libraryModel.load() } }
+                                .buttonStyle(.borderedProminent)
+                                .tint(.cyan)
+                        }
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.top, 60)
@@ -262,7 +288,7 @@ struct HomeView: View {
         directItem = nil
         Task {
             try? await Task.sleep(for: .seconds(2))
-            await libraryModel.load()
+            await libraryModel.refreshResume(force: true)
         }
     }
 }
@@ -291,7 +317,13 @@ private struct ContentRowView: View {
                         let card = MediaCardView(
                             item: item,
                             imageURL: libraryModel.imageURL(for: item, wide: isResumeRow),
-                            wide: isResumeRow
+                            wide: isResumeRow,
+                            // Wide (Thumb/Backdrop) fetches fail more often than
+                            // the poster: fall back so the resume tile never
+                            // sits there as a dead black card.
+                            fallbackImageURL: isResumeRow
+                                ? libraryModel.imageURL(for: item, wide: false)
+                                : nil
                         )
 
                         if item.type == "Episode" || item.type == "Movie" {

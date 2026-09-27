@@ -64,7 +64,9 @@ struct DetailView: View {
         #else
         detailContent
             .navigationTitle("")
+            #if !os(tvOS)
             .navigationBarTitleDisplayMode(.inline)
+            #endif
             .navigationBarBackButtonHidden(showPlayer)
             .fullScreenCover(isPresented: $showPlayer) {
                 if let streamURL {
@@ -364,37 +366,24 @@ struct DetailView: View {
             )
 
             guard let source = info.mediaSources.first else {
-                playbackError = "No hay fuente de reproducción disponible."
+                failPlayback("No hay fuente de reproducción disponible.")
                 return
             }
 
             currentPlaySessionId = info.playSessionId
             currentMediaStreams = source.mediaStreams
 
-            let url: URL?
-
-            if let urlString = source.directStreamUrl {
-                var components = URLComponents(string: urlString)
-                var queryItems = components?.queryItems ?? []
-                queryItems.append(URLQueryItem(name: "ApiKey", value: token))
-                components?.queryItems = queryItems
-                url = components?.url
-            } else if let urlString = source.transcodingUrl {
-                url = URL(string: urlString)
-            } else {
-                var components = URLComponents(
-                    url: serverURL.appendingPathComponent("Videos/\(itemId)/stream"),
-                    resolvingAgainstBaseURL: false
-                )
-                components?.queryItems = [
-                    URLQueryItem(name: "static", value: "true"),
-                    URLQueryItem(name: "ApiKey", value: token),
-                ]
-                url = components?.url
-            }
+            // Shared resolution: relative paths + ApiKey on every branch.
+            let url = StreamURLResolver.playbackURL(
+                directStreamUrl: source.directStreamUrl,
+                transcodingUrl: source.transcodingUrl,
+                serverURL: serverURL,
+                itemId: itemId,
+                token: token
+            )
 
             guard let finalURL = url else {
-                playbackError = "URL de stream inválida."
+                failPlayback("URL de stream inválida.")
                 return
             }
 
@@ -407,8 +396,19 @@ struct DetailView: View {
             streamStartPosition = startPosition
             showPlayer = true
         } catch {
-            playbackError = error.localizedDescription
+            // A failed next-episode swap must return to the detail screen where
+            // the error is visible, instead of stranding a stopped player.
+            failPlayback(error.localizedDescription)
         }
+    }
+
+    /// Record the failure and tear the player down BECAUSE of it — the flag
+    /// tells `PlayerView.onDisappear` to skip the auto-PiP handoff instead of
+    /// floating a broken episode over the error screen.
+    private func failPlayback(_ message: String) {
+        playbackError = message
+        PlayerTeardown.noteError()
+        showPlayer = false
     }
 
     private func playEpisode(_ episode: JellyfinEpisode) async {
@@ -424,11 +424,10 @@ struct DetailView: View {
         return episodes[index + 1]
     }
 
-    /// Credits overlay → tear down the current player and start the next one.
+    /// Credits overlay → start the next episode IN PLACE. The cover stays
+    /// presented, so `PlayerView.onChange(of: streamURL)` swaps the stream and
+    /// the user never lands back on the episode list.
     private func playNextEpisode(_ episode: JellyfinEpisode) async {
-        showPlayer = false
-        // Let the full-screen cover dismiss and VLC stop before re-presenting.
-        try? await Task.sleep(for: .milliseconds(500))
         await playEpisode(episode)
     }
 

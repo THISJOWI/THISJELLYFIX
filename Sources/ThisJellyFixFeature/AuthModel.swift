@@ -29,6 +29,17 @@ final class AuthModel {
         self.authClient = authClient
         self.keychain = keychain
         self.deviceId = deviceId ?? DeviceIdentifier(keychain: keychain).current()
+
+        // Restore synchronously (three Keychain reads, no network) so the FIRST
+        // frame is already Home. Restoring after first paint flashed LoginView
+        // and rebuilt the whole tree three times on every launch.
+        if let token = keychain.read(key: KeychainKey.accessToken),
+           let userId = keychain.read(key: KeychainKey.userId),
+           let userName = keychain.read(key: KeychainKey.userName),
+           !token.isEmpty {
+            currentUser = JellyfinUser(id: userId, name: userName)
+            isAuthenticated = true
+        }
     }
 
     // MARK: - Login

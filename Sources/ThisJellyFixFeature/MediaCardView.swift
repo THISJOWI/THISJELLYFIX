@@ -6,6 +6,8 @@ struct MediaCardView: View {
     let imageURL: URL?
     /// Render the card in landscape 16:9 (resume row) instead of portrait poster.
     var wide: Bool = false
+    /// Portrait poster tried when the wide frame can't be fetched.
+    var fallbackImageURL: URL? = nil
     @State private var isAppeared = false
 
     private var isEpisode: Bool { item.type == "Episode" }
@@ -18,7 +20,8 @@ struct MediaCardView: View {
                 url: imageURL,
                 placeholder: String(item.name.prefix(1)),
                 width: cardWidth,
-                height: cardHeight
+                height: cardHeight,
+                fallbackURL: fallbackImageURL
             )
             .clipShape(RoundedRectangle(cornerRadius: 8))
             .overlay(alignment: .bottom) {

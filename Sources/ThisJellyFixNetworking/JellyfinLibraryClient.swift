@@ -153,15 +153,29 @@ public struct JellyfinLibraryClient: JellyfinLibraryProviding {
             URLQueryItem(name: "Recursive", value: "true"),
         ]
 
-        let data = try await fetchData(from: components.url!, token: token)
+        let data = try await fetchData(
+            from: components.url!, token: token,
+            // The resume row must reflect what OTHER clients just played: a
+            // cached response would keep serving pre-existing progress.
+            cachePolicy: .reloadIgnoringLocalCacheData
+        )
+        // Raw evidence: is the server answering `Items: []` (then the answer
+        // lives server-side) or dropping/failing the query?
+        if let raw = String(data: data, encoding: .utf8) {
+            TJFLog("resume raw (\(raw.count)b): \(raw.prefix(400))")
+        }
         let response = try JSONDecoder().decode(JellyfinItemsResponse.self, from: data)
         return response.items
     }
 
     // MARK: - Private
 
-    private func fetchData(from url: URL, token: String) async throws -> Data {
-        var request = URLRequest(url: url)
+    private func fetchData(
+        from url: URL,
+        token: String,
+        cachePolicy: URLRequest.CachePolicy = .useProtocolCachePolicy
+    ) async throws -> Data {
+        var request = URLRequest(url: url, cachePolicy: cachePolicy)
         request.timeoutInterval = 15
         request.setValue(
             "MediaBrowser Client=\"thisjellyfix\", Device=\"\(deviceOS)\", DeviceId=\"\(DeviceIdentifier().current())\", Version=\"0.1\", Token=\"\(token)\"",

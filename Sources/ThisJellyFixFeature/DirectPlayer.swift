@@ -109,37 +109,24 @@ struct DirectPlayer: View {
             )
 
             guard let source = info.mediaSources.first else {
-                errorMessage = "No hay fuente de reproducción disponible."
+                failPlayback("No hay fuente de reproducción disponible.")
                 return
             }
 
             playSessionId = info.playSessionId
             mediaStreams = source.mediaStreams
 
-            let url: URL?
-
-            if let urlString = source.directStreamUrl {
-                var components = URLComponents(string: urlString)
-                var queryItems = components?.queryItems ?? []
-                queryItems.append(URLQueryItem(name: "ApiKey", value: token))
-                components?.queryItems = queryItems
-                url = components?.url
-            } else if let urlString = source.transcodingUrl {
-                url = URL(string: urlString)
-            } else {
-                var components = URLComponents(
-                    url: serverURL.appendingPathComponent("Videos/\(currentItemId)/stream"),
-                    resolvingAgainstBaseURL: false
-                )
-                components?.queryItems = [
-                    URLQueryItem(name: "static", value: "true"),
-                    URLQueryItem(name: "ApiKey", value: token),
-                ]
-                url = components?.url
-            }
+            // Shared resolution: relative paths + ApiKey on every branch.
+            let url = StreamURLResolver.playbackURL(
+                directStreamUrl: source.directStreamUrl,
+                transcodingUrl: source.transcodingUrl,
+                serverURL: serverURL,
+                itemId: currentItemId,
+                token: token
+            )
 
             guard let finalURL = url else {
-                errorMessage = "URL de stream inválida."
+                failPlayback("URL de stream inválida.")
                 return
             }
 
@@ -150,16 +137,24 @@ struct DirectPlayer: View {
 
             streamURL = finalURL
         } catch {
-            errorMessage = error.localizedDescription
+            // A failed swap must surface the error screen instead of leaving a
+            // stopped player up with no way forward.
+            failPlayback(error.localizedDescription)
         }
     }
 
-    /// Tear down the current player and start another episode in place.
-    private func play(_ episode: JellyfinEpisode) async {
+    /// Record the failure and tear the player down BECAUSE of it — the flag
+    /// tells `PlayerView.onDisappear` to skip the auto-PiP handoff instead of
+    /// floating a broken episode over the error screen.
+    private func failPlayback(_ message: String) {
+        errorMessage = message
+        PlayerTeardown.noteError()
         streamURL = nil
-        // Let PlayerView unmount (stops VLC, restores orientation) before re-mounting.
-        try? await Task.sleep(for: .milliseconds(500))
+    }
 
+    /// Start another episode IN PLACE. `streamURL` stays non-nil, so PlayerView
+    /// never unmounts — its onChange swaps the stream inside the player.
+    private func play(_ episode: JellyfinEpisode) async {
         currentItemId = episode.id
         currentTitle = episode.name
         currentStartPosition = episode.resumePositionSeconds

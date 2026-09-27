@@ -1,4 +1,5 @@
 import SwiftUI
+import ThisJellyFixCore
 
 // MARK: - Image Cache
 
@@ -50,8 +51,13 @@ private final class CachedImageLoader: ObservableObject {
     @Published var isLoading = false
 
     private var currentURL: URL?
+    /// Portrait poster to fall back to when the preferred (wide) frame fails:
+    /// a failed Thumb/Backdrop fetch used to leave a dead dark card.
+    private var fallbackURL: URL?
+    private var triedFallbackFor: URL?
 
-    func load(url: URL) {
+    func load(url: URL, fallback: URL? = nil) {
+        if let fallback { fallbackURL = fallback }
         // Return cached image immediately
         if let cached = ImageCache.shared.image(for: url) {
             self.image = cached
@@ -66,10 +72,14 @@ private final class CachedImageLoader: ObservableObject {
             do {
                 var request = URLRequest(url: url)
                 request.timeoutInterval = 15
-                let (data, _) = try await URLSession.shared.data(for: request)
+                let (data, response) = try await URLSession.shared.data(for: request)
+                let status = (response as? HTTPURLResponse)?.statusCode ?? 200
 
-                guard let downloaded = PlatformImage(data: data) else {
-                    await MainActor.run { self.isLoading = false }
+                // A 4xx/5xx body decodes to nothing — without the status check
+                // we used to treat "error JSON" as a broken image and give up.
+                guard (200..<300).contains(status),
+                      let downloaded = PlatformImage(data: data) else {
+                    await self.retryWithFallback(url: url)
                     return
                 }
 
@@ -82,9 +92,26 @@ private final class CachedImageLoader: ObservableObject {
                     self.isLoading = false
                 }
             } catch {
-                await MainActor.run { self.isLoading = false }
+                await self.retryWithFallback(url: url)
             }
         }
+    }
+
+    /// One retry with the portrait poster when the preferred frame is missing
+    /// or unreadable; otherwise settle on the placeholder (never spin forever).
+    private func retryWithFallback(url: URL) async {
+        guard let fallback = fallbackURL,
+              fallback != url,
+              triedFallbackFor != url,
+              currentURL == url
+        else {
+            isLoading = false
+            return
+        }
+        TJFLog("image: fallback \(url.lastPathComponent) → \(fallback.lastPathComponent)")
+        triedFallbackFor = url
+        currentURL = nil
+        load(url: fallback)
     }
 
     func cancel() {
@@ -99,14 +126,18 @@ struct MareaImageView: View {
     let placeholder: String
     let width: CGFloat
     let height: CGFloat
+    /// Tried once when `url` fails (missing Thumb/Backdrop frame) so the card
+    /// shows the portrait poster instead of a dead dark rectangle.
+    var fallbackURL: URL? = nil
 
     @StateObject private var loader = CachedImageLoader()
 
-    init(url: URL?, placeholder: String = "?", width: CGFloat = 150, height: CGFloat = 220) {
+    init(url: URL?, placeholder: String = "?", width: CGFloat = 150, height: CGFloat = 220, fallbackURL: URL? = nil) {
         self.url = url
         self.placeholder = placeholder
         self.width = width
         self.height = height
+        self.fallbackURL = fallbackURL
     }
 
     var body: some View {
@@ -132,7 +163,7 @@ struct MareaImageView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .task(id: url) {
             if let url {
-                loader.load(url: url)
+                loader.load(url: url, fallback: fallbackURL)
             }
         }
     }

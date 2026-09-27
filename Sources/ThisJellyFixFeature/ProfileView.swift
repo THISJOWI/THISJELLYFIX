@@ -48,6 +48,9 @@ struct ProfileView: View {
                     IntegrationsSection()
                     #endif
 
+                    // Diagnostics
+                    DiagnosticsSection()
+
                     // Actions
                     VStack(spacing: 12) {
                         Button {
@@ -76,6 +79,39 @@ struct ProfileView: View {
 }
 
 // MARK: - Skip Settings
+
+private struct DiagnosticsSection: View {
+    private var logURL: URL? {
+        let path = TJFLogExport.filePath
+        return FileManager.default.fileExists(atPath: path) ? URL(fileURLWithPath: path) : nil
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("Diagnóstico")
+                .font(.headline)
+
+            if let logURL {
+                ShareLink(item: logURL) {
+                    Label("Compartir registro de reproducción", systemImage: "doc.text.magnifyingglass")
+                        .frame(maxWidth: .infinity)
+                        .padding(14)
+                        .background(.white.opacity(0.08), in: RoundedRectangle(cornerRadius: 12))
+                }
+                Text("Últimos eventos de reproducción y PiP, sin contraseñas.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            } else {
+                Text("El registro aún no existe: reproduce algo primero.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .padding(16)
+        .background(.white.opacity(0.05), in: RoundedRectangle(cornerRadius: 12))
+        .padding(.horizontal, 24)
+    }
+}
 
 private struct SkipSettingsSection: View {
     // @AppStorage inside @Observable-adjacent views: plain @State-free view,
@@ -135,7 +171,7 @@ private struct LanguageSettingsSection: View {
                 .font(.headline)
 
             Picker("Audio preferido", selection: $preferredAudio) {
-                Text("Sin preferencia").tag(String?.none)
+                Text("Sin preferencia").tag(String?.some(LanguagePreferences.noPreference))
                 ForEach(options, id: \.self) { code in
                     Text(label(for: code)).tag(String?.some(code))
                 }
@@ -144,7 +180,7 @@ private struct LanguageSettingsSection: View {
             Divider()
 
             Picker("Subtítulos preferidos", selection: $preferredSubtitles) {
-                Text("Sin preferencia").tag(String?.none)
+                Text("Sin preferencia").tag(String?.some(LanguagePreferences.noPreference))
                 ForEach(options, id: \.self) { code in
                     Text(label(for: code)).tag(String?.some(code))
                 }

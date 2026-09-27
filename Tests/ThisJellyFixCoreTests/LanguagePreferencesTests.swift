@@ -37,8 +37,20 @@ final class LanguagePreferencesTests: XCTestCase {
     }
 
     func testSystemLanguageDefault() {
-        let systemCode = Locale.current.language.languageCode?.identifier
-        XCTAssertEqual(LanguagePreferences.systemDefault, systemCode)
+        // Preferred languages are authoritative (Locale.current follows region).
+        let expected = Locale.preferredLanguages
+            .first { !LanguagePreferences.baseLanguageCode($0).isEmpty }
+            .map { LanguagePreferences.baseLanguageCode($0) }
+        XCTAssertEqual(LanguagePreferences.systemDefault, expected)
+        XCTAssertNotNil(LanguagePreferences.systemDefault)
+    }
+
+    func testBaseLanguageCodeNormalization() {
+        XCTAssertEqual(LanguagePreferences.baseLanguageCode("es-ES"), "es")
+        XCTAssertEqual(LanguagePreferences.baseLanguageCode("pt_BR"), "pt")
+        XCTAssertEqual(LanguagePreferences.baseLanguageCode("zh-Hans-CN"), "zh")
+        XCTAssertEqual(LanguagePreferences.baseLanguageCode("EN"), "en")
+        XCTAssertEqual(LanguagePreferences.baseLanguageCode(""), "")
     }
 
     // MARK: - Language matching
@@ -100,5 +112,67 @@ final class LanguagePreferencesTests: XCTestCase {
         let tracks = [AudioTrack(id: 0, name: "English", language: "en")]
         let match = LanguagePreferences.selectTrack(in: tracks, preferred: nil) { $0.language }
         XCTAssertNil(match)
+    }
+
+    // MARK: - Language names (VLC reports names, not codes)
+
+    func testEnglishNameMatchesPreferredEnglish() {
+        XCTAssertTrue(LanguagePreferences.matches(preferred: "en", trackLanguage: "English"))
+        XCTAssertTrue(LanguagePreferences.matches(preferred: "en", trackLanguage: "Inglés"))
+    }
+
+    func testSpanishNameMatchesPreferredSpanish() {
+        XCTAssertTrue(LanguagePreferences.matches(preferred: "es", trackLanguage: "Spanish"))
+        XCTAssertTrue(LanguagePreferences.matches(preferred: "es", trackLanguage: "Español"))
+    }
+
+    func testTrackNameMatchesPreferredName() {
+        // Both sides may be display names (e.g. preference seeded from a locale name).
+        XCTAssertTrue(LanguagePreferences.matches(preferred: "Spanish", trackLanguage: "spa"))
+        XCTAssertTrue(LanguagePreferences.matches(preferred: "Inglés", trackLanguage: "English"))
+    }
+
+    func testRegionalizedNameMatchesBaseCode() {
+        XCTAssertTrue(LanguagePreferences.matches(preferred: "es", trackLanguage: "Español (Latinoamérica)"))
+        XCTAssertTrue(LanguagePreferences.matches(preferred: "en", trackLanguage: "English (US)"))
+        XCTAssertTrue(LanguagePreferences.matches(preferred: "pt", trackLanguage: "Português, Brasileiro"))
+    }
+
+    func testUnknownLanguageMarkersDoNotMatch() {
+        XCTAssertFalse(LanguagePreferences.matches(preferred: "es", trackLanguage: "und"))
+        XCTAssertFalse(LanguagePreferences.matches(preferred: "es", trackLanguage: "mul"))
+        XCTAssertFalse(LanguagePreferences.matches(preferred: "es", trackLanguage: "zxx"))
+        XCTAssertFalse(LanguagePreferences.matches(preferred: "en", trackLanguage: "und"))
+    }
+
+    func testSelectsTrackByLanguageNameWhenCodeMissing() {
+        let tracks = [
+            AudioTrack(id: 0, name: "Track 1", language: nil),
+            AudioTrack(id: 1, name: "Español", language: "Spanish"),
+            AudioTrack(id: 2, name: "Track 3", language: nil),
+        ]
+        let match = LanguagePreferences.selectTrack(in: tracks, preferred: "es") { $0.language }
+        XCTAssertEqual(match?.id, 1)
+    }
+
+    func testSystemDefaultSelectsMatchingTrack() {
+        // The reported bug: preference unset → player must fall back to system language.
+        guard let system = LanguagePreferences.systemDefault else {
+            return XCTFail("systemDefault must exist")
+        }
+        let tracks = [
+            AudioTrack(id: 0, name: "English", language: "English"),
+            AudioTrack(id: 1, name: "Español", language: "Español"),
+        ]
+        let match = LanguagePreferences.selectTrack(in: tracks, preferred: system) { $0.language }
+        XCTAssertNotNil(match, "system language \(system) must match one of the name-labelled tracks")
+    }
+
+    func testNoPreferenceConstantSelectsNothing() {
+        XCTAssertEqual(LanguagePreferences.noPreference, "")
+        let tracks = [AudioTrack(id: 0, name: "Español", language: "es")]
+        XCTAssertNil(
+            LanguagePreferences.selectTrack(in: tracks, preferred: LanguagePreferences.noPreference) { $0.language }
+        )
     }
 }
