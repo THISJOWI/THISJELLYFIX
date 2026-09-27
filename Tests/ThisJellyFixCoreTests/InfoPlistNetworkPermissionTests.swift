@@ -48,4 +48,18 @@ final class InfoPlistNetworkPermissionTests: XCTestCase {
             "Sandboxed macOS app cannot reach Radarr/Sonarr without network.client"
         )
     }
+
+    func testIOSDeclaresBonjourServicesForLocalNetworkPrompt() throws {
+        let info = try plist("Apps/iOS/Info.plist")
+        let bonjourServices = try XCTUnwrap(info["NSBonjourServices"] as? [String])
+        XCTAssertTrue(bonjourServices.contains("_http._tcp"), "Must contain _http._tcp")
+        XCTAssertTrue(bonjourServices.contains("_bonjour._tcp"), "Must contain _bonjour._tcp")
+    }
+
+    func testMacOSDeclaresBonjourServicesForLocalNetworkPrompt() throws {
+        let info = try plist("Apps/macOS/Info.plist")
+        let bonjourServices = try XCTUnwrap(info["NSBonjourServices"] as? [String])
+        XCTAssertTrue(bonjourServices.contains("_http._tcp"), "Must contain _http._tcp")
+        XCTAssertTrue(bonjourServices.contains("_bonjour._tcp"), "Must contain _bonjour._tcp")
+    }
 }

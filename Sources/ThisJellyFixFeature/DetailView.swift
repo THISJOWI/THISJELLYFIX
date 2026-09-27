@@ -127,9 +127,7 @@ struct DetailView: View {
                                 genreBadges(genres)
                             }
 
-                            if detail.type != "Series" {
-                                playButton(detail: detail)
-                            }
+                            actionRow(detail: detail)
 
                             errorBanners
 
@@ -144,6 +142,7 @@ struct DetailView: View {
                                     Text(overview)
                                         .font(.body)
                                         .foregroundStyle(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
                                 }
                             }
 
@@ -154,10 +153,12 @@ struct DetailView: View {
                         }
                         .padding(.horizontal, 24)
                         .padding(.top, 16)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
                         // Spacer ensures scroll area extends beyond content
                         Spacer(minLength: 80)
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
                 } else if isLoading {
                     ProgressView("Cargando detalle…")
                         .frame(maxWidth: .infinity, minHeight: 400)
@@ -174,6 +175,7 @@ struct DetailView: View {
                     .frame(maxWidth: .infinity, minHeight: 400)
                 }
             }
+            .frame(maxWidth: .infinity)
             // The hero owns the whole top of the screen; the navigation bar floats
             // above it (hidden background) so the backdrop bleeds under the status bar.
             .ignoresSafeArea(edges: .top)
@@ -185,99 +187,111 @@ struct DetailView: View {
         #if os(iOS) || os(tvOS) || os(visionOS)
         .toolbarBackground(.hidden, for: .navigationBar)
         #endif
-        .toolbar {
-            #if os(iOS) || os(tvOS) || os(visionOS)
-            ToolbarItem(placement: .topBarTrailing) {
-                actionPill
-            }
-            #else
-            // `navigationBar`/`topBarTrailing` don't exist on macOS — the pill
-            // rides in the window toolbar instead.
-            ToolbarItem(placement: .primaryAction) {
-                actionPill
-            }
-            #endif
-        }
     }
 
-    // MARK: - Navigation bar actions
+    // MARK: - Actions Row
 
-    /// Play / jump-to-episodes / watched / favorite — lives in the navigation bar
-    /// so it lines up with the back button instead of floating over the artwork.
-    private var actionPill: some View {
-        HStack(spacing: 16) {
-            if let detail {
-                if detail.type != "Series" {
-                    pillButton("play.fill", label: "Reproducir") {
-                        Task { await playMovie(detail) }
-                    }
-                } else {
-                    pillButton("list.bullet", label: "Episodios") {
-                        scrollToEpisodesToken += 1
-                    }
-                }
+    /// Action row below the title: Play / Jump to episodes, plus Watched and Favorite.
+    /// Kept out of the top navigation bar so floating pills do not obstruct character faces in hero backdrops.
+    private func actionRow(detail: JellyfinItemDetail) -> some View {
+        HStack(spacing: 12) {
+            if detail.type != "Series" {
+                playButton(detail: detail)
+            } else {
+                seriesActionButton(detail: detail)
             }
 
-            pillButton(
-                isPlayed ? "checkmark.circle.fill" : "checkmark.circle",
+            actionButton(
+                icon: isPlayed ? "checkmark.circle.fill" : "checkmark.circle",
                 label: isPlayed ? "Marcar como no visto" : "Marcar como visto",
+                tint: isPlayed ? .green : .white,
                 busy: isSavingPlayed
             ) {
                 togglePlayed()
             }
 
-            pillButton(
-                isFavorite ? "heart.fill" : "heart",
+            actionButton(
+                icon: isFavorite ? "heart.fill" : "heart",
                 label: isFavorite ? "Quitar de favoritos" : "Añadir a favoritos",
+                tint: isFavorite ? .red : .white,
                 busy: isSavingFavorite
             ) {
                 toggleFavorite()
             }
         }
-        .font(.system(size: 16, weight: .semibold))
-        .padding(.horizontal, 16)
-        .padding(.vertical, 9)
-        .background(.regularMaterial, in: Capsule())
     }
 
-    private func pillButton(
-        _ icon: String,
+    private func actionButton(
+        icon: String,
         label: String,
+        tint: Color,
         busy: Bool = false,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
             Image(systemName: icon)
+                .font(.system(size: 20, weight: .semibold))
+                .foregroundStyle(tint)
+                .frame(width: 50, height: 50)
+                .background(.white.opacity(0.12), in: Circle())
         }
         .accessibilityLabel(label)
+        .buttonStyle(.plain)
         .disabled(busy)
         .opacity(busy ? 0.4 : 1)
+    }
+
+    @ViewBuilder
+    private func seriesActionButton(detail: JellyfinItemDetail) -> some View {
+        Button {
+            scrollToEpisodesToken += 1
+        } label: {
+            HStack(spacing: 10) {
+                Image(systemName: "list.bullet")
+                Text("Episodios")
+            }
+            .font(.headline)
+            .frame(maxWidth: .infinity)
+        }
+        .buttonStyle(.borderedProminent)
+        .tint(.cyan)
+        .controlSize(.large)
     }
 
     // MARK: - Hero
 
     private func hero(detail: JellyfinItemDetail) -> some View {
-        ZStack(alignment: .bottomLeading) {
-            backdropImage(detail: detail)
+        GeometryReader { proxy in
+            ZStack(alignment: .bottomLeading) {
+                backdropImage(detail: detail, width: proxy.size.width)
 
-            // Bottom scrim keeps the badges readable on light artwork and blends
-            // the image into the black content below.
-            LinearGradient(
-                colors: [.clear, .black.opacity(0.85)],
-                startPoint: .center,
-                endPoint: .bottom
-            )
+                // Bottom scrim keeps the badges readable on light artwork and blends
+                // the image into the black content below.
+                LinearGradient(
+                    colors: [
+                        .clear,
+                        .clear,
+                        .black.opacity(0.3),
+                        .black.opacity(0.7),
+                        .black.opacity(0.95),
+                        .black
+                    ],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
 
-            heroBadges(detail: detail)
-                .padding(.horizontal, 24)
-                .padding(.bottom, 14)
+                heroBadges(detail: detail)
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, 16)
+            }
+            .frame(width: proxy.size.width, height: heroHeight)
+            .clipped()
         }
         .frame(height: heroHeight)
-        .clipped()
     }
 
     @ViewBuilder
-    private func backdropImage(detail: JellyfinItemDetail) -> some View {
+    private func backdropImage(detail: JellyfinItemDetail, width: CGFloat) -> some View {
         if detail.hasBackdrop {
             let url = serverURL
                 .appendingPathComponent("Items/\(detail.id)/Images/Backdrop")
@@ -289,19 +303,18 @@ struct DetailView: View {
             MareaImageView(
                 url: url,
                 placeholder: String(detail.name.prefix(1)),
-                width: 600,
-                height: 400,
+                width: 0,
+                height: 0,
                 fallbackURL: posterURL(for: detail)
             )
-            .frame(maxWidth: .infinity)
-            .frame(height: heroHeight)
+            .frame(width: width, height: heroHeight)
             .clipped()
             .overlay(
                 // Top scrim: legibility for the navigation bar and status bar.
                 LinearGradient(
-                    colors: [.black.opacity(0.45), .clear],
+                    colors: [.black.opacity(0.55), .clear],
                     startPoint: .top,
-                    endPoint: .bottom
+                    endPoint: .center
                 )
             )
         } else {
@@ -313,6 +326,7 @@ struct DetailView: View {
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
             }
+            .frame(width: width, height: heroHeight)
         }
     }
 
@@ -366,6 +380,7 @@ struct DetailView: View {
             Text(detail.name)
                 .font(.largeTitle.bold())
                 .foregroundStyle(.white)
+                .fixedSize(horizontal: false, vertical: true)
 
             if let year = detail.year {
                 Text(String(year))
@@ -373,6 +388,7 @@ struct DetailView: View {
                     .foregroundStyle(.secondary)
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -427,6 +443,8 @@ struct DetailView: View {
             Text(message)
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -517,17 +535,20 @@ struct DetailView: View {
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 } else {
-                    ForEach(episodes) { episode in
-                        EpisodeRow(
-                            episode: episode,
-                            serverURL: serverURL
-                        ) {
-                            Task { await playEpisode(episode) }
+                    LazyVStack(alignment: .leading, spacing: 8) {
+                        ForEach(episodes) { episode in
+                            EpisodeRow(
+                                episode: episode,
+                                serverURL: serverURL
+                            ) {
+                                Task { await playEpisode(episode) }
+                            }
                         }
                     }
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     // MARK: - Playback
@@ -765,11 +786,14 @@ struct DetailView: View {
 
     // MARK: - Metrics
 
+    /// The navigation bar floats over the top of the hero, so it has to be tall
+    /// enough to still show artwork below the pill. 58% of the screen height
+    /// (min 460pt, max 620pt) or 520pt on macOS/visionOS makes the hero tall and immersive.
     private var heroHeight: CGFloat {
         #if os(macOS) || os(visionOS)
-        460
+        520
         #else
-        min(max(screenHeight * 0.45, 280), 520)
+        min(max(screenHeight * 0.58, 460), 620)
         #endif
     }
 
@@ -786,6 +810,31 @@ struct DetailView: View {
         let rest = minutes % 60
         guard hours > 0 else { return "\(rest) min" }
         return rest > 0 ? "\(hours)h \(rest) min" : "\(hours)h"
+    }
+}
+
+// MARK: - Action Pill Background
+
+/// iOS 26 already renders its own glass shape around toolbar items — adding a
+/// `.regularMaterial` capsule on top of it was the "double glass" look.
+private struct ActionPillBackground: ViewModifier {
+    @ViewBuilder
+    func body(content: Content) -> some View {
+        #if os(iOS)
+        if #available(iOS 26.0, *) {
+            content
+        } else {
+            content.background(.regularMaterial, in: Capsule())
+        }
+        #else
+        content.background(.regularMaterial, in: Capsule())
+        #endif
+    }
+}
+
+private extension View {
+    func actionPillBackground() -> some View {
+        modifier(ActionPillBackground())
     }
 }
 
@@ -854,7 +903,7 @@ private struct EpisodeRow: View {
                 let thumbURL = serverURL
                     .appendingPathComponent("Items/\(episode.id)/Images/\(hasBackdrop ? "Backdrop" : "Primary")")
                     .appending(queryItems: [
-                        URLQueryItem(name: "maxWidth", value: "200"),
+                        URLQueryItem(name: "maxWidth", value: "300"),
                         URLQueryItem(name: "quality", value: "90"),
                     ])
 
@@ -870,7 +919,10 @@ private struct EpisodeRow: View {
                     }
             }
 
-            // Episode info
+            // Episode info.
+            // `.frame(maxWidth: .infinity)` is not cosmetic: without it a long
+            // episode title reports its unwrapped width, the HStack grows past
+            // the screen and the vertical ScrollView becomes pannable sideways.
             VStack(alignment: .leading, spacing: 4) {
                 Text(episode.episodeLabel)
                     .font(.caption)
@@ -879,6 +931,7 @@ private struct EpisodeRow: View {
                 Text(episode.name)
                     .font(.subheadline.weight(.medium))
                     .lineLimit(2)
+                    .multilineTextAlignment(.leading)
 
                 if let duration = episode.durationMinutes {
                     Text("\(duration) min")
@@ -886,8 +939,10 @@ private struct EpisodeRow: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
 
-            Spacer()
+            Spacer(minLength: 4)
 
             // Play button
             Button(action: onPlay) {
@@ -898,5 +953,6 @@ private struct EpisodeRow: View {
             .buttonStyle(.plain)
         }
         .padding(.vertical, 4)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }

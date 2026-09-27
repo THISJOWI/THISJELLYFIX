@@ -17,6 +17,15 @@
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>ThisJellyfix se conecta a Radarr y Sonarr en tu red local para buscar y descargar películas y series.</string>
 
+	<!-- Bonjour services: required in iOS 14+ for local network discovery
+	     and for triggering the Local Network permission dialog reliably. -->
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+		<string>_bonjour._tcp</string>
+		<string>_lnp._tcp.</string>
+	</array>
+
 	<!-- Radarr/Sonarr on http://192.168.x.x:7878 speak plain HTTP: ATS
 	     blocks it unless local networking is explicitly allowed. -->
 	<key>NSAppTransportSecurity</key>

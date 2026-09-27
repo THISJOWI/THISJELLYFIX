@@ -32,6 +32,14 @@
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>ThisJellyfix se conecta a Radarr y Sonarr en tu red local para buscar y descargar películas y series.</string>
 
+	<!-- Bonjour services: required in macOS 15+ / iOS 14+ for local network discovery. -->
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_http._tcp</string>
+		<string>_bonjour._tcp</string>
+		<string>_lnp._tcp.</string>
+	</array>
+
 	<key>NSUserActivityTypes</key>
 	<array>
 		<string>com.thisjellyfix.activity.browsing</string>

@@ -2,6 +2,7 @@
 import SwiftUI
 import ThisJellyFixCore
 import ThisJellyFixDiscovery
+import ThisJellyFixNetworking
 #if os(iOS)
 import UIKit
 #endif
@@ -140,7 +141,14 @@ struct IntegrationsSection: View {
                 .buttonStyle(.borderless)
             }
 
+            Text("Consigue la API key en \(isRadarr ? "Radarr" : "Sonarr") → Settings → General → Security → API Key")
+                .font(.caption2)
+                .foregroundStyle(.secondary)
+
             HStack(spacing: 12) {
+                let isFilled = !url.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                    && !key.wrappedValue.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+
                 Button {
                     Task { await test(service) }
                 } label: {
@@ -152,7 +160,7 @@ struct IntegrationsSection: View {
                 }
                 .buttonStyle(.bordered)
                 .tint(.cyan)
-                .disabled(url.wrappedValue.isEmpty || key.wrappedValue.isEmpty || testing != nil)
+                .disabled(!isFilled || testing != nil)
 
                 if let ok = testResult[service] {
                     Label(
@@ -175,14 +183,23 @@ struct IntegrationsSection: View {
 
             #if os(iOS)
             if testResult[isRadarr ? .radarr : .sonarr] == false {
-                // Red local lives in the app's Settings page.
-                Button("Abrir ajustes del sistema") {
-                    guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
-                    UIApplication.shared.open(url)
+                HStack(spacing: 12) {
+                    Button("Permiso de red local") {
+                        LocalNetworkAuthorizer.shared.triggerPrompt()
+                    }
+                    .font(.caption)
+                    .buttonStyle(.bordered)
+                    .tint(.cyan)
+
+                    Button("Abrir ajustes del sistema") {
+                        guard let url = URL(string: UIApplication.openSettingsURLString) else { return }
+                        UIApplication.shared.open(url)
+                    }
+                    .font(.caption)
+                    .buttonStyle(.borderless)
+                    .foregroundStyle(.secondary)
                 }
-                .font(.caption)
-                .buttonStyle(.borderless)
-                .foregroundStyle(.secondary)
+                .padding(.top, 2)
             }
             #endif
         }
@@ -194,33 +211,55 @@ struct IntegrationsSection: View {
         tmdbKey = config.tmdbApiKey ?? ""
         radarrKey = config.radarrApiKey ?? ""
         sonarrKey = config.sonarrApiKey ?? ""
+        LocalNetworkAuthorizer.shared.triggerPrompt()
     }
 
     private func save() {
-        config.tmdbApiKey = tmdbKey
-        config.radarrApiKey = radarrKey
-        config.sonarrApiKey = sonarrKey
+        config.tmdbApiKey = tmdbKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        config.radarrApiKey = radarrKey.trimmingCharacters(in: .whitespacesAndNewlines)
+        config.sonarrApiKey = sonarrKey.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
     @MainActor
     private func test(_ service: DownloadService) async {
         save()
+        LocalNetworkAuthorizer.shared.triggerPrompt()
         testing = service
         defer { testing = nil }
 
+        let isRadarr = service == .radarr
+        let rawURL = (isRadarr ? radarrURL : sonarrURL).trimmingCharacters(in: .whitespacesAndNewlines)
+        let rawKey = (isRadarr ? radarrKey : sonarrKey).trimmingCharacters(in: .whitespacesAndNewlines)
+        let name = isRadarr ? "Radarr" : "Sonarr"
+
+        guard !rawURL.isEmpty else {
+            testResult[service] = false
+            testFailure[service] = "Falta la URL de \(name)."
+            return
+        }
+        guard !rawKey.isEmpty else {
+            testResult[service] = false
+            testFailure[service] = "Falta la API key de \(name) (encuéntrala en Ajustes → General → Seguridad de \(name))."
+            return
+        }
+
+        var normalizedString = rawURL
+        if !normalizedString.contains("://") { normalizedString = "http://" + normalizedString }
+        while normalizedString.hasSuffix("/") { normalizedString.removeLast() }
+
+        guard let targetURL = URL(string: normalizedString) else {
+            testResult[service] = false
+            testFailure[service] = "La URL no tiene un formato válido."
+            return
+        }
+
         let ok: Bool
         do {
-            let config = IntegrationConfig()
-            guard let url = config.baseURL(service: service), let key = config.apiKey(service: service) else {
-                testResult[service] = false
-                testFailure[service] = "Falta la URL o la API key."
-                return
-            }
             switch service {
             case .radarr:
-                try await RadarrClient(baseURL: url, apiKey: key).testConnection()
+                try await RadarrClient(baseURL: targetURL, apiKey: rawKey).testConnection()
             case .sonarr:
-                try await SonarrClient(baseURL: url, apiKey: key).testConnection()
+                try await SonarrClient(baseURL: targetURL, apiKey: rawKey).testConnection()
             }
             ok = true
             testFailure[service] = nil

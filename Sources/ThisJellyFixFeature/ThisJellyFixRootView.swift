@@ -153,6 +153,7 @@ public struct ThisJellyFixRootView: View {
         .onAppear {
             configureAudioSession()
             registerPipHandlers()
+            LocalNetworkAuthorizer.shared.triggerPrompt()
         }
         #endif
         .task {
