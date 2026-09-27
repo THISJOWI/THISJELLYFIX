@@ -10,5 +10,28 @@
 	<array>
 		<string>audio</string>
 	</array>
+
+	<!-- Local network: Radarr/Sonarr answer on the user's LAN. Without this
+	     key iOS 14+ denies those connections and shows NO dialog at all,
+	     so the app just reports "unreachable". -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>ThisJellyfix se conecta a Radarr y Sonarr en tu red local para buscar y descargar películas y series.</string>
+
+	<!-- Radarr/Sonarr on http://192.168.x.x:7878 speak plain HTTP: ATS
+	     blocks it unless local networking is explicitly allowed. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+	</dict>
+
+	<!-- Handoff: activity types this app can both publish and receive.
+	     Without this key the system silently drops incoming Handoff requests. -->
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.thisjellyfix.activity.browsing</string>
+		<string>com.thisjellyfix.activity.detail</string>
+		<string>com.thisjellyfix.activity.playing</string>
+	</array>
 </dict>
 </plist>

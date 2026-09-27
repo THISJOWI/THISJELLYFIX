@@ -24,5 +24,19 @@
 	<string>1</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>$(MACOSX_DEPLOYMENT_TARGET)</string>
+
+	<!-- Handoff: activity types this app can both publish and receive. -->
+	<!-- Local network: Radarr/Sonarr answer on the user's LAN. Without this
+	     key macOS 15+ denies those connections and shows NO dialog at all,
+	     so the app just reports "unreachable". -->
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>ThisJellyfix se conecta a Radarr y Sonarr en tu red local para buscar y descargar películas y series.</string>
+
+	<key>NSUserActivityTypes</key>
+	<array>
+		<string>com.thisjellyfix.activity.browsing</string>
+		<string>com.thisjellyfix.activity.detail</string>
+		<string>com.thisjellyfix.activity.playing</string>
+	</array>
 </dict>
 </plist>
