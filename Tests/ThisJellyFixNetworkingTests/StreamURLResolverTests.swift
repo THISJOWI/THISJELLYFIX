@@ -1,4 +1,5 @@
 import XCTest
+import ThisJellyFixCore
 @testable import ThisJellyFixNetworking
 
 final class StreamURLResolverTests: XCTestCase {
@@ -93,6 +94,60 @@ final class StreamURLResolverTests: XCTestCase {
                 itemId: "i1",
                 token: "tok"
             )
+        )
+        XCTAssertEqual(url.absoluteString, "http://localhost:8096/Videos/i1/stream?static=true&ApiKey=tok")
+    }
+
+    // MARK: - playbackURL(source:) — AVPlayer ladder
+
+    private func source(
+        container: String?,
+        direct: String?,
+        transcoding: String?,
+        streams: [[String: Any]]
+    ) -> MediaSource {
+        try! JSONDecoder().decode(MediaSource.self, from: JSONSerialization.data(withJSONObject: [
+            "Id": "i1",
+            "Name": "file",
+            "Container": container as Any,
+            "DirectStreamUrl": direct as Any,
+            "TranscodingUrl": transcoding as Any,
+            "MediaStreams": streams,
+        ]))
+    }
+
+    func testSourcePlaybackURLPicksMp4Direct() throws {
+        let src = source(
+            container: "mp4",
+            direct: "/Videos/i1/stream?static=true",
+            transcoding: "/Videos/i1/master.m3u8",
+            streams: [["Type": "Video", "Codec": "h264"], ["Type": "Audio", "Codec": "aac"]]
+        )
+        let url = try XCTUnwrap(
+            StreamURLResolver.playbackURL(source: src, serverURL: server, itemId: "i1", token: "tok")
+        )
+        XCTAssertTrue(url.absoluteString.hasPrefix("http://localhost:8096/Videos/i1/stream?static=true"))
+        XCTAssertTrue(url.absoluteString.contains("ApiKey=tok"))
+    }
+
+    func testSourcePlaybackURLSkipsUnplayableDirectForHls() throws {
+        // mp4 direct but dts audio: AVPlayer can't decode it → HLS branch.
+        let src = source(
+            container: "mp4",
+            direct: "/Videos/i1/stream?static=true",
+            transcoding: "/Videos/i1/master.m3u8",
+            streams: [["Type": "Video", "Codec": "h264"], ["Type": "Audio", "Codec": "dts"]]
+        )
+        let url = try XCTUnwrap(
+            StreamURLResolver.playbackURL(source: src, serverURL: server, itemId: "i1", token: "tok")
+        )
+        XCTAssertTrue(url.absoluteString.contains("master.m3u8"))
+    }
+
+    func testSourcePlaybackURLFallsBackToStaticWhenEmpty() throws {
+        let src = source(container: nil, direct: nil, transcoding: nil, streams: [])
+        let url = try XCTUnwrap(
+            StreamURLResolver.playbackURL(source: src, serverURL: server, itemId: "i1", token: "tok")
         )
         XCTAssertEqual(url.absoluteString, "http://localhost:8096/Videos/i1/stream?static=true&ApiKey=tok")
     }

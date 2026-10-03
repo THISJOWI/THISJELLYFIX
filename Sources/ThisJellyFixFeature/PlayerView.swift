@@ -1,9 +1,11 @@
 import SwiftUI
 import ThisJellyFixCore
 import ThisJellyFixPlayback
-import VLCKitSPM
+import AVKit
 #if os(iOS)
 import UIKit
+#elseif os(macOS)
+import AppKit
 #endif
 
 /// Why the fullscreen player is being torn down.
@@ -46,11 +48,15 @@ struct PlayerView: View {
     // Next episode wiring — when provided, the credits overlay offers it
     var nextEpisode: JellyfinEpisode? = nil
     var onPlayNextEpisode: ((JellyfinEpisode) -> Void)? = nil
-    @Environment(\.dismiss) private var dismiss
     #if os(iOS)
-    @Environment(\.scenePhase) private var scenePhase
+    /// The floating PiP session's live view model: restore hands it back so
+    /// playback continues uninterrupted (same AVPlayer — no re-prepare, no
+    /// re-buffer). nil = fresh playback session.
+    var restoredViewModel: PlayerViewModel? = nil
     #endif
-    @State private var viewModel = PlayerViewModel()
+
+    @Environment(\.dismiss) private var dismiss
+    @State private var viewModel: PlayerViewModel
     @State private var seekIndicator: SeekIndicator?
     @State private var controlsTimer: Timer?
     @State private var wasPlaying = false
@@ -64,24 +70,58 @@ struct PlayerView: View {
     @State private var isPinching = false
     @State private var lastPinchEnd: Date = .distantPast
     #if os(iOS)
-    /// True from the moment the user starts leaving the app (scenePhase
-    /// → .inactive/.background) until they come back — gates the deferred
-    /// PiP handoff so a slow playlist resolve never pops the window AFTER
-    /// the user returned to fullscreen.
-    @State private var leavingApp = false
-    /// The warm/resolve chain launched by a scenePhase change — cancelled on
-    /// disappear so it can never start PiP from a view that is gone.
-    @State private var pipLeaveTask: Task<Void, Never>?
-    /// Stage-1 chain (warm + stage the PiP apparatus) launched on the way
-    /// OUT (.inactive with .active before it). The background chain awaits
-    /// it instead of cancelling it.
-    @State private var pipStagingTask: Task<Void, Never>?
     /// Fullscreen players currently on screen. The root's restore handler
     /// consults it so a restore can never present a SECOND player over a
     /// cover that already owns the UI (presentation fails silently and the
     /// floating window dies with nothing playing).
     nonisolated(unsafe) static var presentedCount = 0
     #endif
+
+    init(
+        streamURL: URL,
+        title: String,
+        allowStop: Bool = true,
+        startPosition: Double? = nil,
+        onDismiss: (() -> Void)? = nil,
+        itemId: String? = nil,
+        serverURL: URL? = nil,
+        token: String? = nil,
+        userId: String? = nil,
+        playSessionId: String? = nil,
+        mediaStreams: [MediaStream] = [],
+        nextEpisode: JellyfinEpisode? = nil,
+        onPlayNextEpisode: ((JellyfinEpisode) -> Void)? = nil,
+        restoredViewModel: PlayerViewModel? = nil
+    ) {
+        self.streamURL = streamURL
+        self.title = title
+        self.allowStop = allowStop
+        self.startPosition = startPosition
+        self.onDismiss = onDismiss
+        self.itemId = itemId
+        self.serverURL = serverURL
+        self.token = token
+        self.userId = userId
+        self.playSessionId = playSessionId
+        self.mediaStreams = mediaStreams
+        self.nextEpisode = nextEpisode
+        self.onPlayNextEpisode = onPlayNextEpisode
+        #if os(iOS)
+        self.restoredViewModel = restoredViewModel
+        _viewModel = State(initialValue: restoredViewModel ?? PlayerViewModel())
+        #else
+        _viewModel = State(initialValue: PlayerViewModel())
+        #endif
+    }
+
+    /// Restore-from-PiP mount: the item is already playing in the adopted VM.
+    private var isRestoring: Bool {
+        #if os(iOS)
+        restoredViewModel != nil
+        #else
+        false
+        #endif
+    }
 
     private func dismissPlayer() {
         onDismiss?() ?? dismiss()
@@ -96,10 +136,7 @@ struct PlayerView: View {
             TJFLog("onAppear: reporting NOT configured itemId=\(itemId != nil) serverURL=\(serverURL != nil) token=\(token != nil) userId=\(userId != nil)")
         }
         viewModel.configureMediaStreams(mediaStreams)
-        #if os(iOS)
-        // Warm the HLS playlist for PiP — non-blocking.
-        viewModel.resolvePipSupport()
-        #endif
+        viewModel.configureNowPlaying(title: title)
         wireNextEpisode()
     }
 
@@ -119,26 +156,16 @@ struct PlayerView: View {
     private func startPlayback() {
         playbackTask = Task {
             await viewModel.prepareStream(url: streamURL, startPosition: startPosition)
-            // Wait for VLCPlayerBridge to attach drawable before playing
-            try? await Task.sleep(for: .milliseconds(500))
-            // Cancel must actually stop the chain: `try? await Task.sleep`
-            // swallows CancellationError, and during the exit-handoff window
-            // (engineStopped still false) a cancelled task could pause/resume
-            // VLC underneath the floating window.
+            // AVPlayer presents the layer itself — no drawable to attach, no
+            // warm/resolve chain (native PiP uses the same AVPlayerLayer).
             guard !Task.isCancelled else { return }
             await viewModel.togglePlayPause()
-            // Resume from saved position — the media opens at 0 (no
-            // `:start-time`, see VLCPlaybackEngine.prepare), so seek explicitly.
+            // Resume from saved position — the media opens at 0, so seek
+            // explicitly after play() (AVPlayer cannot seek on a nil item).
             if let start = startPosition, start > 0 {
                 await viewModel.seek(to: start)
             }
             guard !Task.isCancelled else { return }
-            #if os(iOS)
-            // Warm the PiP pipeline immediately so swipe-up opens near-instantly:
-            Task {
-                await viewModel.warmPictureInPicture()
-            }
-            #endif
         }
     }
 
@@ -146,13 +173,13 @@ struct PlayerView: View {
         // Use .overlay() instead of ZStack so ControlsOverlay is always the
         // topmost AppKit hosting view — critical after toggleFullScreen restructures
         // the window hierarchy and can reorder ZStack children.
-        // Fit/fill is applied INSIDE VLC (videoFitMode): a SwiftUI scaleEffect
-        // here would crop VLC's subtitle layer off-screen in fill mode.
-        VLCPlayerBridge(viewModel: viewModel)
+        // Fit/fill is applied on the layer (videoGravity): no SwiftUI
+        // scaleEffect, so native embedded subtitles are never cropped.
+        PlayerLayerBridge(viewModel: viewModel)
             .ignoresSafeArea()
             .background(Color.black.ignoresSafeArea())
 
-            // Episode swap — the player stays mounted, so cover VLC's black
+            // Episode swap — the player stays mounted, so cover the black
             // loading gap with an in-player indicator instead of dropping back
             // out to the episode list.
             // NOTE: an active PiP session's AVPlayerLayer is hosted by
@@ -199,6 +226,24 @@ struct PlayerView: View {
                     }
             }
 
+            // External subtitles (SRT composed client-side) — embedded ones are
+            // painted by AVPlayerLayer itself via the legible media selection.
+            .overlay(alignment: .bottom) {
+                if let text = viewModel.subtitleText {
+                    Text(text)
+                        .font(.title3)
+                        .fontWeight(.semibold)
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 24)
+                        .padding(.vertical, 6)
+                        .background(.black.opacity(0.55), in: RoundedRectangle(cornerRadius: 6))
+                        .padding(.bottom, viewModel.showControls ? 150 : 40)
+                        .allowsHitTesting(false)
+                        .transition(.opacity)
+                }
+            }
+
             // Controls overlay — always the topmost hosting view
             .overlay {
                 if viewModel.showControls {
@@ -212,6 +257,18 @@ struct PlayerView: View {
                                 nsWindow.toggleFullScreen(nil)
                             }
                             #endif
+                        },
+                        onAirPlayPresenting: { presenting in
+                            if presenting {
+                                // System route sheet up: freeze auto-hide so
+                                // this overlay (the picker's host view) can't
+                                // unmount mid-presentation — that left the
+                                // AVRoutePickerView dead: later taps no-op.
+                                controlsTimer?.invalidate()
+                                viewModel.showControls = true
+                            } else if viewModel.showControls {
+                                resetControlsTimer()
+                            }
                         }
                     )
                     .transition(.opacity)
@@ -286,6 +343,10 @@ struct PlayerView: View {
                 dismissPlayer()
                 return .handled
             }
+            #if os(tvOS)
+            // E8: tvOS has no close control — the Menu button was a dead end.
+            .onExitCommand { dismissPlayer() }
+            #endif
             #if !os(tvOS)
             .gesture(
                 DragGesture(minimumDistance: 30)
@@ -310,17 +371,27 @@ struct PlayerView: View {
             // Restore/close observers for THIS mount — detached on disappear.
             viewModel.attachPipHandlers()
             Self.presentedCount += 1
+            if isRestoring {
+                // Adopted the floating VM: its engine already plays and its
+                // reporting is configured — release the session so the root
+                // stops hosting the layer (this bridge takes it over).
+                PipCoordinator.shared.releaseFloating()
+            }
             #endif
             PlayerTeardown.reset()
             configureEpisode()
             // Start the track/report timer FIRST — before any async work — so a
             // slow stream prepare can never leave us without polls.
             viewModel.startUpdating()
-            startPlayback()
+            // Restored sessions are already playing at their position: a second
+            // prepareStream would tear down the item the PiP window just closed.
+            if !isRestoring {
+                startPlayback()
+            }
             resetControlsTimer()
         }
         .onChange(of: streamURL) { _, newURL in
-            // Episode swap: stay mounted and hand VLC the new stream — the
+            // Episode swap: stay mounted and hand the engine the new stream — the
             // player never drops back out to the episode list.
             wireNextEpisode()
             episodeSwapTask = Task {
@@ -348,12 +419,6 @@ struct PlayerView: View {
             // keeps its own permanent pair for restore/close.
             viewModel.detachPipHandlers()
             Self.presentedCount = max(0, Self.presentedCount - 1)
-            // A warm/resolve chain launched by scenePhase must not outlive the
-            // view (it could start a floating window nobody owns).
-            pipLeaveTask?.cancel()
-            pipLeaveTask = nil
-            pipStagingTask?.cancel()
-            pipStagingTask = nil
             #endif
             // Drop any playback work still in flight BEFORE stopping: a task
             // resuming after teardown would call play()/seek() on a dead engine.
@@ -364,12 +429,9 @@ struct PlayerView: View {
             controlsTimer?.invalidate()
             viewModel.stopUpdating()
             if allowStop {
-                // Detach drawable first so VLC's render thread stops accessing
-                // the view (prevents the vlc_gl_filter_ApplyOutputSize crash).
                 // Leaving the player must NOT cut playback: handleViewExit
                 // hands the running item to the floating PiP window when
-                // possible and only stops VLC when nothing can carry it.
-                viewModel.detachDrawable()
+                // possible and only stops the engine when nothing can carry it.
                 // Read the teardown reason AT disappearance time: a plain Bool
                 // parameter would carry the value of the last render, which
                 // pre-dates a failure written in the same update (SwiftUI
@@ -409,122 +471,6 @@ struct PlayerView: View {
             activity.isEligibleForSearch  = false
             activity.userInfo           = built.userInfo
         }
-        #if os(iOS)
-        .onChange(of: scenePhase) { oldPhase, newPhase in
-            // Every transition is evidence: the swipe-up handoff used to fail
-            // with ZERO log output, so a device repro told us nothing.
-            TJFLog("pip: scenePhase → \(newPhase) appState=\(UIApplication.shared.applicationState.rawValue)")
-            if newPhase == .active {
-                leavingApp = false
-                pipLeaveTask?.cancel()
-                pipLeaveTask = nil
-                // A staging chain suspended in its resolve would otherwise
-                // resume and arm a session on an app the user just came
-                // back to (it holds the start latch, so nobody could undo
-                // it until it finished).
-                pipStagingTask?.cancel()
-                pipStagingTask = nil
-                if viewModel.pipState == .active {
-                    if PipSession.shared.windowStarted {
-                        // Foregrounded without tapping the window (app switcher) —
-                        // pull playback back into fullscreen. The tap path is driven
-                        // by the PiP delegate instead.
-                        Task { await viewModel.resumeFromPictureInPicture() }
-                    } else {
-                        // Staged on the way out but the system never opened a
-                        // window (Control Centre / switcher peek): drop it and
-                        // keep watching fullscreen.
-                        viewModel.cancelPreparedPictureInPicture()
-                    }
-                }
-            } else if newPhase == .inactive {
-                // iOS also reports .inactive for notification centre, Control
-                // Centre, screenshots, incoming calls and the app switcher peek
-                // — so this phase NEVER opens the window itself (that regression
-                // popped it over the video the user was still watching).
-                if oldPhase == .active {
-                    // First half of leaving: STAGE the whole apparatus now,
-                    // while the scene is still alive. iOS opens PiP itself at
-                    // the background transition
-                    // (`canStartPictureInPictureAutomaticallyFromInline`) —
-                    // a manual startPictureInPicture() issued after the scene
-                    // is backgrounded was rejected on device (failedToStart).
-                    guard viewModel.canAutoHandoffToPiP else {
-                        TJFLog("pip: staging skipped — playing=\(viewModel.isPlaying) pausedByUser=\(viewModel.userPaused) pos=\(String(format: "%.1f", viewModel.currentTime))s err=\(viewModel.errorMessage != nil)")
-                        return
-                    }
-                    pipStagingTask?.cancel()
-                    pipStagingTask = Task {
-                        await viewModel.warmPictureInPicture()
-                        guard !Task.isCancelled else {
-                            TJFLog("pip: staging cancelled at warm")
-                            return
-                        }
-                        await viewModel.preparePictureInPicture()
-                    }
-                } else {
-                    // background → inactive: the user is coming BACK — abort
-                    // the pending handoff before it can open over them.
-                    leavingApp = false
-                    pipLeaveTask?.cancel()
-                    pipLeaveTask = nil
-                    pipStagingTask?.cancel()
-                    pipStagingTask = nil
-                }
-            } else if newPhase == .background {
-                // The definitive "user left" signal — and only when playback
-                // may hand off: a player the USER paused must not float itself
-                // away, but VLCKit's `isPlaying` lie (false while time still
-                // advances) must not silently skip a playing item either —
-                // that was the swipe-up "no me persigue" bug.
-                guard viewModel.canAutoHandoffToPiP else {
-                    TJFLog("pip: background handoff skipped — playing=\(viewModel.isPlaying) pausedByUser=\(viewModel.userPaused) pos=\(String(format: "%.1f", viewModel.currentTime))s/\(String(format: "%.1f", viewModel.duration))s err=\(viewModel.errorMessage != nil)")
-                    // A staged apparatus must not outlive this gate: with the
-                    // auto-start flag armed, iOS would float it away anyway.
-                    viewModel.cancelPreparedPictureInPicture()
-                    return
-                }
-                leavingApp = true
-                let staging = pipStagingTask
-                pipStagingTask = nil
-                pipLeaveTask?.cancel()
-                pipLeaveTask = Task {
-                    // Keep the process alive past suspension: a cold playlist
-                    // resolve (PlaybackInfo + 3 playlist GETs) can outlast the
-                    // transition, and iOS suspending us mid-chain is why the
-                    // window never appeared.
-                    let app = UIApplication.shared
-                    var bgTask: UIBackgroundTaskIdentifier = .invalid
-                    bgTask = app.beginBackgroundTask(withName: "tjf.pipHandoff") {
-                        // Out of time: abandon the handoff instead of risking
-                        // termination for a task left running (the `defer`
-                        // below may never execute while suspended).
-                        TJFLog("pip: background time expired → abandoning handoff")
-                        leavingApp = false
-                        if bgTask != .invalid {
-                            app.endBackgroundTask(bgTask)
-                            bgTask = .invalid
-                        }
-                    }
-                    defer {
-                        if bgTask != .invalid { app.endBackgroundTask(bgTask) }
-                        bgTask = .invalid
-                    }
-                    // The staging chain (warm + stage 1) must finish first:
-                    // it owns the apparatus the system may auto-start at any
-                    // moment, and it holds the start latch while resolving.
-                    await staging?.value
-                    guard leavingApp, !Task.isCancelled else {
-                        TJFLog("pip: background start aborted after staging — leavingApp=\(leavingApp) cancelled=\(Task.isCancelled)")
-                        return
-                    }
-                    // No-op when the system already opened the window itself;
-                    // safety net (manual start + retries) when it did not.
-                    await viewModel.startPictureInPicture()
-                }
-            }
-        }
-        #endif
         .sheet(isPresented: $viewModel.showAudioPicker) {
             AudioPickerSheet(
                 tracks: viewModel.availableAudioTracks,
@@ -607,12 +553,12 @@ struct PlayerView: View {
                 .compactMap { $0 as? UIWindowScene }
             .first
 
+            // Supported API only: the old UIDevice.setValue(_, forKey:
+            // "orientation") KVC hack is rejected (E17) — geometry update +
+            // rotation re-evaluation is the sanctioned path.
             if let windowScene {
                 windowScene.requestGeometryUpdate(.iOS(interfaceOrientations: .landscapeRight))
             }
-
-            // Fallback: force via UIDevice (works on all iOS versions)
-            UIDevice.current.setValue(UIInterfaceOrientation.landscapeRight.rawValue, forKey: "orientation")
             UINavigationController.attemptRotationToDeviceOrientation()
         }
     }
@@ -622,14 +568,10 @@ struct PlayerView: View {
         UIApplication.shared.tjf_orientationLock = .all
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
-            // Primary: request portrait via geometry
             let windowScene = UIApplication.shared.connectedScenes
                 .compactMap { $0 as? UIWindowScene }
                 .first
             windowScene?.requestGeometryUpdate(.iOS(interfaceOrientations: .portrait))
-
-            // Fallback: force via UIDevice
-            UIDevice.current.setValue(UIInterfaceOrientation.portrait.rawValue, forKey: "orientation")
             UINavigationController.attemptRotationToDeviceOrientation()
         }
 
@@ -665,95 +607,187 @@ extension UIApplication {
 // }
 #endif
 
-// MARK: - VLC Player Bridge (Cross-platform)
+// MARK: - AVPlayer Layer Bridge (Cross-platform)
+
+// The engine owns one AVPlayerLayer; these containers only parent it while a
+// fullscreen mount exists. CALayers never intercept pointer events, so no
+// hit-testing pass-through tricks are needed (that was a VLC drawable thing).
 
 #if os(macOS)
-private struct VLCPlayerBridge: NSViewRepresentable {
+private struct PlayerLayerBridge: NSViewRepresentable {
     let viewModel: PlayerViewModel
 
-    func makeNSView(context: Context) -> PassThroughContainer {
-        PassThroughContainer()
+    func makeNSView(context: Context) -> PlayerLayerContainer {
+        PlayerLayerContainer()
     }
 
-    func updateNSView(_ nsView: PassThroughContainer, context: Context) {
-        viewModel.attachDrawable(nsView.videoView)
+    func updateNSView(_ nsView: PlayerLayerContainer, context: Context) {
+        nsView.host(viewModel.engine.renderingLayer)
     }
 }
 
-/// Container that wraps VLCVideoView and blocks ALL hit testing.
-/// The key: returning nil from the container's hitTest prevents AppKit from
-/// ever traversing into descendant subviews (VLC's internal rendering views).
-/// Without this, VLC's internal NSViews capture mouse events through AppKit's
-/// native event dispatch, bypassing SwiftUI's gesture system entirely.
-private class PassThroughContainer: NSView {
-    let videoView: VLCVideoView
-
+private class PlayerLayerContainer: NSView {
     override init(frame frameRect: NSRect) {
-        videoView = VLCVideoView()
         super.init(frame: frameRect)
-        setupVideoView()
+        wantsLayer = true
     }
 
     required init?(coder: NSCoder) {
-        videoView = VLCVideoView()
         super.init(coder: coder)
-        setupVideoView()
-    }
-
-    private func setupVideoView() {
-        // Aspect is driven by mediaPlayer.videoFitMode (fit/fill toggle);
-        // fillScreen here would force-fill and break fit mode.
-        videoView.fillScreen = false
-        videoView.translatesAutoresizingMaskIntoConstraints = false
-        addSubview(videoView)
-        NSLayoutConstraint.activate([
-            videoView.leadingAnchor.constraint(equalTo: leadingAnchor),
-            videoView.trailingAnchor.constraint(equalTo: trailingAnchor),
-            videoView.topAnchor.constraint(equalTo: topAnchor),
-            videoView.bottomAnchor.constraint(equalTo: bottomAnchor),
-        ])
+        wantsLayer = true
     }
 
     override func hitTest(_ point: NSPoint) -> NSView? {
         // Return nil so ALL mouse events pass through to SwiftUI views on top.
-        // This prevents VLC's internal rendering subviews from capturing events.
         nil
     }
+
+    override func layout() {
+        super.layout()
+        layer?.sublayers?.forEach { $0.frame = bounds }
+    }
+
+    func host(_ layer: CALayer?) {
+        guard let layer else { return }
+        if layer.superlayer !== self.layer {
+            layer.removeFromSuperlayer()
+            self.layer?.addSublayer(layer)
+        }
+        layer.frame = bounds
+    }
 }
-#elseif os(iOS) || os(tvOS)
-private struct VLCPlayerBridge: UIViewRepresentable {
+#else
+private struct PlayerLayerBridge: UIViewRepresentable {
     let viewModel: PlayerViewModel
 
-    func makeUIView(context: Context) -> VLCPlayerUIView {
-        let view = VLCPlayerUIView()
-        return view
+    func makeUIView(context: Context) -> PlayerLayerContainerView {
+        PlayerLayerContainerView()
     }
 
-    func updateUIView(_ uiView: VLCPlayerUIView, context: Context) {
-        viewModel.attachDrawable(uiView)
+    func updateUIView(_ uiView: PlayerLayerContainerView, context: Context) {
+        uiView.host(viewModel.engine.renderingLayer)
     }
 }
 
-private class VLCPlayerUIView: UIView {}
+private class PlayerLayerContainerView: UIView {
+    override func layoutSubviews() {
+        super.layoutSubviews()
+        layer.sublayers?.forEach { $0.frame = bounds }
+    }
+
+    func host(_ layer: CALayer?) {
+        guard let layer else { return }
+        if layer.superlayer !== self.layer {
+            layer.removeFromSuperlayer()
+            self.layer.addSublayer(layer)
+        }
+        layer.frame = bounds
+    }
+}
 #endif
 
 // MARK: - Controls Overlay
+
+/// System AirPlay route picker (AVKit). Native glyph, opens the receiver
+/// list — picking an Apple TV hands video+audio over through AVPlayer's
+/// built-in external playback.
+#if os(iOS)
+private struct AirPlayRoutePicker: UIViewRepresentable {
+    /// true when the system route sheet is up — the caller must keep the
+    /// controls alive (unmounting this view mid-presentation kills the
+    /// picker: every later tap does nothing).
+    var onPresentingChanged: (Bool) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onPresentingChanged: onPresentingChanged)
+    }
+
+    func makeUIView(context: Context) -> AVRoutePickerView {
+        let view = AVRoutePickerView()
+        view.tintColor = .white
+        view.activeTintColor = .systemBlue
+        view.prioritizesVideoDevices = true
+        view.delegate = context.coordinator
+        return view
+    }
+
+    func updateUIView(_ uiView: AVRoutePickerView, context: Context) {
+        context.coordinator.onPresentingChanged = onPresentingChanged
+    }
+
+    final class Coordinator: NSObject, AVRoutePickerViewDelegate {
+        var onPresentingChanged: (Bool) -> Void
+
+        init(onPresentingChanged: @escaping (Bool) -> Void) {
+            self.onPresentingChanged = onPresentingChanged
+        }
+
+        func routePickerViewWillBeginPresentingRoutes(_ routePickerView: AVRoutePickerView) {
+            onPresentingChanged(true)
+        }
+
+        func routePickerViewDidEndPresentingRoutes(_ routePickerView: AVRoutePickerView) {
+            onPresentingChanged(false)
+        }
+    }
+}
+#endif
+
+#if os(macOS)
+private struct AirPlayRoutePicker: NSViewRepresentable {
+    var onPresentingChanged: (Bool) -> Void
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(onPresentingChanged: onPresentingChanged)
+    }
+
+    func makeNSView(context: Context) -> AVRoutePickerView {
+        let view = AVRoutePickerView()
+        // macOS has no tintColor — per-state button colors instead.
+        view.setRoutePickerButtonColor(.white, for: .normal)
+        view.setRoutePickerButtonColor(.white, for: .normalHighlighted)
+        view.setRoutePickerButtonColor(.systemBlue, for: .active)
+        view.setRoutePickerButtonColor(.systemBlue, for: .activeHighlighted)
+        view.isRoutePickerButtonBordered = false
+        view.delegate = context.coordinator
+        return view
+    }
+
+    func updateNSView(_ nsView: AVRoutePickerView, context: Context) {
+        context.coordinator.onPresentingChanged = onPresentingChanged
+    }
+
+    final class Coordinator: NSObject, AVRoutePickerViewDelegate {
+        var onPresentingChanged: (Bool) -> Void
+
+        init(onPresentingChanged: @escaping (Bool) -> Void) {
+            self.onPresentingChanged = onPresentingChanged
+        }
+
+        func routePickerViewWillBeginPresentingRoutes(_ routePickerView: AVRoutePickerView) {
+            onPresentingChanged(true)
+        }
+
+        func routePickerViewDidEndPresentingRoutes(_ routePickerView: AVRoutePickerView) {
+            onPresentingChanged(false)
+        }
+    }
+}
+#endif
 
 private struct ControlsOverlay: View {
     let title: String
     let viewModel: PlayerViewModel
     let onDismiss: () -> Void
     let onToggleFullscreen: () -> Void
-    #if os(iOS)
-    /// The PiP button is resolving the HLS playlist before it can open the
-    /// window — show progress instead of a dead-looking tap.
-    @State private var pipStarting = false
-    #endif
+    /// AirPlay route sheet presentation state — the caller freezes the
+    /// controls auto-hide while it's up.
+    let onAirPlayPresenting: (Bool) -> Void
 
     var body: some View {
         VStack {
             HStack {
-                #if os(iOS)
+                #if !os(macOS)
                 Button(action: onDismiss) {
                     Image(systemName: "xmark")
                         .font(.title2)
@@ -778,7 +812,7 @@ private struct ControlsOverlay: View {
                 }
                 #endif
                 #if os(iOS)
-                if viewModel.pipState == .active {
+                if viewModel.isPipWindowActive {
                     // Floating already — pull playback back into fullscreen.
                     Button {
                         Task { await viewModel.resumeFromPictureInPicture() }
@@ -790,34 +824,27 @@ private struct ControlsOverlay: View {
                             .background(.black.opacity(0.5), in: Circle())
                     }
                 } else {
-                    // Always offered (4.9): a slow or failed HLS prefetch is
-                    // retried ON TAP instead of hiding the control, and the
-                    // button shows progress while the playlist resolves so the
-                    // wait is visible instead of looking like a dead tap.
+                    // Native PiP: no playlist resolve — startPictureInPicture is
+                    // a thin call over the shared AVPlayerLayer, so the control
+                    // never needs a warm-up state.
                     Button {
-                        Task {
-                            pipStarting = true
-                            await viewModel.startPictureInPicture()
-                            pipStarting = false
-                        }
+                        Task { await viewModel.startPictureInPicture() }
                     } label: {
-                        Group {
-                            if pipStarting {
-                                ProgressView().tint(.white).scaleEffect(0.7)
-                            } else {
-                                Image(systemName: "pip")
-                            }
-                        }
-                        .font(.title3)
-                        .foregroundStyle(.white)
-                        .frame(width: 34, height: 34)
-                        .background(.black.opacity(0.5), in: Circle())
+                        Image(systemName: "pip")
+                            .font(.title3)
+                            .foregroundStyle(.white)
+                            .frame(width: 34, height: 34)
+                            .background(.black.opacity(0.5), in: Circle())
                     }
-                    // Enable as soon as playback has a position: VLCKit can
-                    // report `isPlaying == false` while time advances, and that
-                    // lie kept the control disabled until the user "waited".
                     .disabled(!viewModel.isPlaying && viewModel.currentTime <= 0)
                 }
+                #endif
+                #if os(iOS) || os(macOS)
+                // AirPlay route picker — sends video/audio to Apple TV and
+                // other receivers (previously no UI entry point at all).
+                AirPlayRoutePicker(onPresentingChanged: onAirPlayPresenting)
+                    .frame(width: 44, height: 44)
+                    .background(.black.opacity(0.5), in: Circle())
                 #endif
             }
             .padding(.horizontal, 16)
@@ -1393,11 +1420,12 @@ private struct CloseButtonWindowRepresentable: NSViewRepresentable {
 // MARK: - PiP Layer Host (iOS)
 
 #if os(iOS)
-/// Embeds the `AVPlayerLayer` of the active `PipSession` into the ROOT view's
-/// hierarchy (always alive) so the system PiP window keeps a layer inside the
-/// window even after the fullscreen player was dismissed. The system window
-/// takes over rendering once it starts; while the app is foregrounded the layer
-/// mirrors the floating window's content (the fullscreen VLC frame is paused).
+/// Embeds the `AVPlayerLayer` of the active `PipCoordinator` session into the
+/// ROOT view's hierarchy (always alive) so the system PiP window keeps a layer
+/// inside the window even after the fullscreen player was dismissed. The system
+/// window takes over rendering once it starts; while the app is foregrounded the
+/// layer mirrors the floating window's content (same AVPlayer — nothing is
+/// paused or re-prepared).
 struct PipLayerHostView: UIViewRepresentable {
     let isActive: Bool
 
@@ -1405,15 +1433,15 @@ struct PipLayerHostView: UIViewRepresentable {
         let view = UIView()
         view.backgroundColor = .clear
         view.isUserInteractionEnabled = false
-        // Registered up front: PipSession attaches the layer synchronously when
-        // a session starts, so the host must already be known by then.
-        PipSession.shared.hostView = view
+        // Registered up front: the coordinator attaches the layer synchronously
+        // when a session floats, so the host must already be known by then.
+        PipCoordinator.shared.hostView = view
         return view
     }
 
     func updateUIView(_ uiView: UIView, context: Context) {
-        PipSession.shared.hostView = uiView
-        guard isActive, let layer = PipSession.shared.currentLayer else {
+        PipCoordinator.shared.hostView = uiView
+        guard isActive, let layer = PipCoordinator.shared.currentLayer else {
             uiView.layer.sublayers?.forEach { $0.removeFromSuperlayer() }
             return
         }

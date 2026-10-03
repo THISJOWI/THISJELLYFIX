@@ -105,7 +105,8 @@ struct DirectPlayer: View {
                 userId: userId,
                 serverURL: serverURL,
                 token: token,
-                itemId: currentItemId
+                itemId: currentItemId,
+                deviceProfile: .avPlayer
             )
 
             guard let source = info.mediaSources.first else {
@@ -116,10 +117,9 @@ struct DirectPlayer: View {
             playSessionId = info.playSessionId
             mediaStreams = source.mediaStreams
 
-            // Shared resolution: relative paths + ApiKey on every branch.
+            // AVPlayer ladder (direct → remux → HLS) + relative paths + ApiKey.
             let url = StreamURLResolver.playbackURL(
-                directStreamUrl: source.directStreamUrl,
-                transcodingUrl: source.transcodingUrl,
+                source: source,
                 serverURL: serverURL,
                 itemId: currentItemId,
                 token: token

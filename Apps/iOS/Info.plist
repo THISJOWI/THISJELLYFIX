@@ -24,6 +24,8 @@
 		<string>_http._tcp</string>
 		<string>_bonjour._tcp</string>
 		<string>_lnp._tcp.</string>
+		<!-- AirPlay receiver discovery (AVRoutePickerView / external playback). -->
+		<string>_airplay._tcp</string>
 	</array>
 
 	<!-- Radarr/Sonarr on http://192.168.x.x:7878 speak plain HTTP: ATS

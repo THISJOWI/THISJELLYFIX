@@ -114,6 +114,55 @@ public struct PlaybackDeviceProfile: Codable, Sendable, Equatable {
         self.subtitleProfiles = subtitleProfiles
     }
 
+    /// AVPlayer profile for the main player: direct play first (mp4/mov/mkv
+    /// containers with codecs AVPlayer actually decodes), HLS h264+aac as the
+    /// transcoding fallback. Subtitle delivery mirrors the hybrid strategy:
+    /// text subs external (client renders), mov_text embedded (AVPlayer
+    /// media selection), bitmap subs burned in by the server (Encode).
+    public static let avPlayer = PlaybackDeviceProfile(
+        name: "thisjellyfix-avplayer",
+        maxStaticBitrate: 140_000_000,
+        maxStreamingBitrate: 140_000_000,
+        // Conservative on purpose: only declare what AVPlayer decodes on
+        // every supported OS version. AV1/VP9 are hardware-gated — undeclared
+        // here so the server remuxes/transcodes instead of failing at runtime.
+        // mkv is NOT listed: AVPlayer cannot open it, so an mkv source gets
+        // remuxed to mp4 (DirectStreamUrl) or HLS-transcoded by the server.
+        directPlayProfiles: [
+            DirectPlayProfile(
+                container: "mp4,m4v,mov",
+                type: "Video",
+                videoCodec: "h264,hevc,mpeg4",
+                audioCodec: "aac,mp3,ac3,eac3,alac,flac"
+            ),
+            DirectPlayProfile(container: "mp3,m4a,flac", type: "Audio", videoCodec: "", audioCodec: "aac,mp3,flac,alac")
+        ],
+        transcodingProfiles: [
+            TranscodingProfile(
+                container: "ts",
+                type: "Video",
+                streamingProtocol: "hls",
+                videoCodec: "h264",
+                audioCodec: "aac",
+                context: "Streaming",
+                maxAudioChannels: "6"
+            )
+        ],
+        subtitleProfiles: [
+            SubtitleProfile(format: "srt", deliveryMethod: "External"),
+            SubtitleProfile(format: "subrip", deliveryMethod: "External"),
+            SubtitleProfile(format: "webvtt", deliveryMethod: "External"),
+            // ASS/SSA can't be rendered client-side by AVPlayer → server burns.
+            SubtitleProfile(format: "ass", deliveryMethod: "Encode"),
+            SubtitleProfile(format: "ssa", deliveryMethod: "Encode"),
+            SubtitleProfile(format: "mov_text", deliveryMethod: "Embed"),
+            SubtitleProfile(format: "tx3g", deliveryMethod: "Embed"),
+            SubtitleProfile(format: "pgssub", deliveryMethod: "Encode"),
+            SubtitleProfile(format: "dvdsub", deliveryMethod: "Encode"),
+            SubtitleProfile(format: "dvb_subtitle", deliveryMethod: "Encode")
+        ]
+    )
+
     /// HLS-only profile: no direct play allowed, single h264+aac HLS
     /// transcoding profile → server always returns a TranscodingUrl.
     public static let pipHLS = PlaybackDeviceProfile(

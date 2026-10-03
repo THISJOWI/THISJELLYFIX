@@ -33,8 +33,10 @@ public struct ThisJellyFixRootView: View {
     /// Everything needed to rebuild the fullscreen player at `position`.
     private struct RestoredPlayback: Identifiable {
         let id = UUID()
-        let context: PipSession.Context
+        let context: PipContext
         let position: Double
+        /// The floating VM itself — same AVPlayer, no re-prepare.
+        let viewModel: PlayerViewModel
     }
     #endif
 
@@ -56,13 +58,13 @@ public struct ThisJellyFixRootView: View {
         ZStack {
             #if os(iOS)
             // Layer host for the floating PiP session. It must be alive for the
-            // WHOLE app lifetime: PipSession attaches the layer synchronously
-            // the moment a session starts, and starting PiP a render early (with
+            // WHOLE app lifetime: the coordinator attaches the layer synchronously
+            // the moment a session floats, and starting PiP a render early (with
             // `superlayer == nil`) is what made the window never appear. It sits
             // BEHIND the opaque gradient so an active session can never paint
             // over Home (the black box that was covering the rows); `cleanup()`
             // detaches the layer when the session ends.
-            PipLayerHostView(isActive: PipSession.shared.isActive)
+            PipLayerHostView(isActive: PipCoordinator.shared.isActive)
                 .allowsHitTesting(false)
             #endif
             LinearGradient(
@@ -121,7 +123,7 @@ public struct ThisJellyFixRootView: View {
         // floating window and no player is alive to claim the request.
         .fullScreenCover(item: $restoredPlayback) { restored in
             PlayerView(
-                streamURL: restored.context.streamURL ?? fallbackStreamURL(restored.context),
+                streamURL: restored.context.streamURL,
                 title: restored.context.title,
                 startPosition: restored.position,
                 onDismiss: {
@@ -133,7 +135,8 @@ public struct ThisJellyFixRootView: View {
                 token: restored.context.token,
                 userId: restored.context.userId,
                 playSessionId: restored.context.playSessionId,
-                mediaStreams: restored.context.mediaStreams
+                mediaStreams: restored.context.mediaStreams,
+                restoredViewModel: restored.viewModel
             )
         }
         .onChange(of: selectedTab) { _, tab in
@@ -170,13 +173,17 @@ public struct ThisJellyFixRootView: View {
         }
         // Detail: navigate to the item's detail screen.
         .onContinueUserActivity(HandoffActivity.detail) { activity in
+            TJFLog("handoff: received 'detail' keys=\(activity.userInfo.map { Array($0.keys) } ?? [])")
             guard let info       = activity.userInfo,
                   let itemId     = info[HandoffActivity.Key.itemId]     as? String,
                   let serverStr  = info[HandoffActivity.Key.serverURL]  as? String,
                   let serverURL  = URL(string: serverStr),
                   let title      = info[HandoffActivity.Key.title]      as? String,
                   let mediaType  = info[HandoffActivity.Key.mediaType]  as? String
-            else { return }
+            else {
+                TJFLog("handoff: 'detail' payload DECODE FAILED info=\(String(describing: activity.userInfo))")
+                return
+            }
 
             pendingHandoff = HandoffPayload(
                 itemId: itemId,
@@ -192,14 +199,19 @@ public struct ThisJellyFixRootView: View {
         // Playing: open the detail screen (or the player directly if possible)
         // at the stored position so the user picks up right where they left off.
         .onContinueUserActivity(HandoffActivity.playing) { activity in
+            TJFLog("handoff: received 'playing' act=\(activity.activityType ?? "-") keys=\(activity.userInfo.map { Array($0.keys) } ?? [])")
             guard let info       = activity.userInfo,
                   let itemId     = info[HandoffActivity.Key.itemId]     as? String,
                   let serverStr  = info[HandoffActivity.Key.serverURL]  as? String,
                   let serverURL  = URL(string: serverStr),
                   let title      = info[HandoffActivity.Key.title]      as? String
-            else { return }
+            else {
+                TJFLog("handoff: 'playing' payload DECODE FAILED info=\(String(describing: activity.userInfo))")
+                return
+            }
 
             let position = info[HandoffActivity.Key.position] as? Double
+            TJFLog("handoff: 'playing' itemId=\(itemId) pos=\(String(describing: position)) server=\(serverURL)")
 
             pendingHandoff = HandoffPayload(
                 itemId: itemId,
@@ -246,9 +258,8 @@ public struct ThisJellyFixRootView: View {
     }
 
     #if os(iOS)
-    /// Static stream URL (4.3): the app only ever let VLCKit / PipSession set
-    /// up the session implicitly — background audio then depended on whoever
-    /// happened to configure it first. Category is set once, up front;
+    /// Static stream URL (4.3): the app used to let whichever player started
+    /// first configure the session implicitly. Category is set once, up front;
     /// activation stays with the players (activating on the login screen would
     /// silence whatever else is playing).
     private func configureAudioSession() {
@@ -266,13 +277,13 @@ public struct ThisJellyFixRootView: View {
     /// restore request had NO owner once the cover closed → PiP died (4.5).
     private func registerPipHandlers() {
         if let id = Self.pipRestoreHandlerId {
-            PipSession.shared.removeRestoreHandler(id)
+            PipCoordinator.shared.removeRestoreHandler(id)
         }
         if let id = Self.pipClosedHandlerId {
-            PipSession.shared.removeClosedHandler(id)
+            PipCoordinator.shared.removeClosedHandler(id)
         }
 
-        Self.pipRestoreHandlerId = PipSession.shared.addRestoreHandler { [self] position in
+        Self.pipRestoreHandlerId = PipCoordinator.shared.addRestoreHandler { [self] position in
             // Another fullscreen player already owns the UI (Home's direct
             // player, DetailView's cover): presenting a SECOND one on top
             // fails silently — the system had already been told "yes", so the
@@ -282,17 +293,19 @@ public struct ThisJellyFixRootView: View {
                 TJFLog("pip: root refuses restore — \(PlayerView.presentedCount) fullscreen player(s) on screen")
                 return false
             }
-            guard let request = PipSession.shared.restoreRequest,
-                  request.context.streamURL != nil
+            // The coordinator holds the floating VM + context until the
+            // restored view adopts them (releaseFloating on appear).
+            guard let ctx = PipCoordinator.shared.floatingContext,
+                  let vm = PipCoordinator.shared.floatingVM
             else {
-                TJFLog("pip: root cannot restore — request=\(PipSession.shared.restoreRequest != nil)")
+                TJFLog("pip: root cannot restore — floating session gone")
                 return false
             }
             TJFLog("pip: root re-presenting fullscreen player at \(String(format: "%.1f", position))s")
-            restoredPlayback = RestoredPlayback(context: request.context, position: position)
+            restoredPlayback = RestoredPlayback(context: ctx, position: position, viewModel: vm)
             return true
         }
-        Self.pipClosedHandlerId = PipSession.shared.addClosedHandler { [self] in
+        Self.pipClosedHandlerId = PipCoordinator.shared.addClosedHandler { [self] in
             // Floating window closed while root owned the player: the session
             // reported the stop, so the row must reflect it right now.
             restoredPlayback = nil
@@ -310,13 +323,6 @@ public struct ThisJellyFixRootView: View {
             try? await Task.sleep(for: .seconds(2))
             await lib.refreshResume(force: true)
         }
-    }
-
-    /// Defensive: a context without a stream URL would crash the restored
-    /// player — the handler refuses the restore instead, but keep a value for
-    /// the memberwise parameter so the call stays total.
-    private func fallbackStreamURL(_ context: PipSession.Context) -> URL {
-        context.serverURL.appendingPathComponent("Videos/\(context.itemId)/stream")
     }
     #endif
 
@@ -433,7 +439,10 @@ public struct ThisJellyFixRootView: View {
     /// a dedicated @State property; all platforms share the same logic path).
     private func resolveHandoffIfReady() {
         guard let payload = pendingHandoff,
-              let lib = libraryModel else { return }
+              let lib = libraryModel else {
+            TJFLog("handoff: resolve deferred payload=\(pendingHandoff != nil) library=\(libraryModel != nil)")
+            return
+        }
 
         // Find the item in the already-loaded library rows.
         let match = lib.allItems.first { $0.id == payload.itemId }
@@ -445,9 +454,11 @@ public struct ThisJellyFixRootView: View {
         guard let item = match else {
             // Item not in the local library yet (e.g. library still loading).
             // Could try a direct API call here in a future iteration.
+            TJFLog("handoff: item \(payload.itemId) NOT in library (\(lib.allItems.count) items) — no navigation")
             return
         }
 
+        TJFLog("handoff: → pendingNavigationItem \(item.name) pos=\(String(describing: payload.position))")
         // For iOS: switch to home tab and inject the item for NavigationLink.
         // The navigation is handled by the NavigationStack in HomeView, so we
         // store it in LibraryModel as a pending navigation target.

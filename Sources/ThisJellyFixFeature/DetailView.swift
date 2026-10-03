@@ -51,6 +51,16 @@ struct DetailView: View {
                 .navigationTitle("")
                 .navigationBarBackButtonHidden(showPlayer)
                 .toolbar(showPlayer ? .hidden : .visible, for: .windowToolbar)
+                // Action pill: own overlay instead of a toolbar item — no
+                // system platter behind it (the "double pill") and exact
+                // control of the drop from the titlebar.
+                .overlay(alignment: .topTrailing) {
+                    if !showPlayer {
+                        actionPill
+                            .padding(.trailing, 24)
+                            .padding(.top, 60)
+                    }
+                }
                 .task { await loadDetail() }
                 .onChange(of: showPlayer) { _, showing in
                     if !showing { onPlayerDismiss?() }
@@ -190,12 +200,11 @@ struct DetailView: View {
         .toolbarBackground(.hidden, for: .navigationBar)
         #endif
         .toolbar {
+            // macOS: pill lives in an overlay (see below) — inside the toolbar
+            // macOS draws its OWN platter behind the item and the padding to
+            // lower it was ignored → "double pill", still glued to the top.
             #if os(iOS) || os(tvOS) || os(visionOS)
             ToolbarItem(placement: .topBarTrailing) {
-                actionPill
-            }
-            #else
-            ToolbarItem(placement: .primaryAction) {
                 actionPill
             }
             #endif
@@ -573,7 +582,8 @@ struct DetailView: View {
                 userId: userId,
                 serverURL: serverURL,
                 token: token,
-                itemId: itemId
+                itemId: itemId,
+                deviceProfile: .avPlayer
             )
 
             guard let source = info.mediaSources.first else {
@@ -584,10 +594,9 @@ struct DetailView: View {
             currentPlaySessionId = info.playSessionId
             currentMediaStreams = source.mediaStreams
 
-            // Shared resolution: relative paths + ApiKey on every branch.
+            // AVPlayer ladder (direct → remux → HLS) + relative paths + ApiKey.
             let url = StreamURLResolver.playbackURL(
-                directStreamUrl: source.directStreamUrl,
-                transcodingUrl: source.transcodingUrl,
+                source: source,
                 serverURL: serverURL,
                 itemId: itemId,
                 token: token

@@ -38,6 +38,8 @@
 		<string>_http._tcp</string>
 		<string>_bonjour._tcp</string>
 		<string>_lnp._tcp.</string>
+		<!-- AirPlay receiver discovery (AVRoutePickerView / external playback). -->
+		<string>_airplay._tcp</string>
 	</array>
 
 	<key>NSUserActivityTypes</key>

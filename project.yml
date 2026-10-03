@@ -6,10 +6,6 @@ options:
     macOS: "14.0"
     tvOS: "17.0"
     visionOS: "1.0"
-packages:
-  VLCKitSPM:
-    url: https://github.com/virtualox/vlckit-spm.git
-    from: 4.0.0-alpha.21
 settings:
   base:
     SWIFT_VERSION: "5.10"
@@ -42,7 +38,6 @@ targets:
     sources: [Sources/ThisJellyFixPlayback]
     dependencies:
       - target: Core-iOS
-      - package: VLCKitSPM
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixPlayback, PRODUCT_NAME: ThisJellyFixPlayback } }
   Feature-iOS:
     type: framework
@@ -71,8 +66,6 @@ targets:
         embed: true
       - target: Discovery-iOS
         embed: true
-      - package: VLCKitSPM
-        product: VLCKitSPM
     settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.ios, INFOPLIST_FILE: Apps/iOS/Info.plist, CODE_SIGN_ENTITLEMENTS: Apps/iOS/ThisJellyfix.entitlements } }
 
   Core-macOS:
@@ -100,7 +93,6 @@ targets:
     sources: [Sources/ThisJellyFixPlayback]
     dependencies:
       - target: Core-macOS
-      - package: VLCKitSPM
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixPlayback, PRODUCT_NAME: ThisJellyFixPlayback } }
   Feature-macOS:
     type: framework
@@ -129,8 +121,6 @@ targets:
         embed: true
       - target: Discovery-macOS
         embed: true
-      - package: VLCKitSPM
-        product: VLCKitSPM
     settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.macos, ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon-macOS, GENERATE_INFOPLIST_FILE: NO, INFOPLIST_FILE: Apps/macOS/Info.plist, CODE_SIGN_ENTITLEMENTS: Apps/macOS/ThisJellyfix.entitlements } }
 
   Core-tvOS:
@@ -158,7 +148,6 @@ targets:
     sources: [Sources/ThisJellyFixPlayback]
     dependencies:
       - target: Core-tvOS
-      - package: VLCKitSPM
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixPlayback, PRODUCT_NAME: ThisJellyFixPlayback } }
   Feature-tvOS:
     type: framework
@@ -187,8 +176,6 @@ targets:
         embed: true
       - target: Discovery-tvOS
         embed: true
-      - package: VLCKitSPM
-        product: VLCKitSPM
     settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.tvos, CODE_SIGN_ENTITLEMENTS: Apps/tvOS/ThisJellyfix.entitlements } }
 
   Core-visionOS:
@@ -216,7 +203,6 @@ targets:
     sources: [Sources/ThisJellyFixPlayback]
     dependencies:
       - target: Core-visionOS
-      - package: VLCKitSPM
     settings: { base: { PRODUCT_MODULE_NAME: ThisJellyFixPlayback, PRODUCT_NAME: ThisJellyFixPlayback } }
   Feature-visionOS:
     type: framework
@@ -245,6 +231,4 @@ targets:
         embed: true
       - target: Discovery-visionOS
         embed: true
-      - package: VLCKitSPM
-        product: VLCKitSPM
     settings: { base: { PRODUCT_BUNDLE_IDENTIFIER: com.thisjellyfix.visionos, CODE_SIGN_ENTITLEMENTS: Apps/visionOS/ThisJellyfix.entitlements } }

@@ -1,4 +1,5 @@
 import Foundation
+import ThisJellyFixCore
 
 /// Builds the final playback URL from the strings PlaybackInfo returns
 /// (`DirectStreamUrl`, `TranscodingUrl`).
@@ -53,6 +54,29 @@ public enum StreamURLResolver {
     /// True when a query item name denotes the API key.
     public static func isApiKey(_ name: String) -> Bool {
         name.lowercased().replacingOccurrences(of: "_", with: "") == "apikey"
+    }
+
+    /// AVPlayer-aware variant: picks direct → remux → HLS through
+    /// `AVPlayerCapability` (a mkv direct URL would fail in AVPlayer), then
+    /// resolves relative paths and authenticates. Falls back to the static
+    /// stream endpoint when the source carries no usable URL.
+    public static func playbackURL(
+        source: MediaSource,
+        serverURL: URL,
+        itemId: String,
+        token: String
+    ) -> URL? {
+        if let pick = AVPlayerCapability.chooseURL(source, serverURL: serverURL),
+           let url = resolve(pick.url.absoluteString, serverURL: serverURL, token: token) {
+            return url
+        }
+        return playbackURL(
+            directStreamUrl: nil,
+            transcodingUrl: nil,
+            serverURL: serverURL,
+            itemId: itemId,
+            token: token
+        )
     }
 
     /// Full playback URL for a PlaybackInfo media source: preferred

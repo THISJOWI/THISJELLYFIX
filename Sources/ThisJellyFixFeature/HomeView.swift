@@ -101,13 +101,27 @@ struct HomeView: View {
                 .id(selectedTab)
         }
         .navigationSplitViewStyle(.balanced)
+        // React to a Handoff-resolved item: push it into the mac home stack.
+        // (The iOS branch has its own copy inside NavigationStack; mac had NONE
+        // — accepting a Handoff on the Mac navigated nowhere.)
+        .onChange(of: libraryModel.pendingNavigationItem) { _, item in
+            guard let item else { return }
+            // Only the home detail stack is bound to navigationPath.
+            selectedTab = .home
+            navigationPath.append(item)
+            libraryModel.pendingNavigationItem = nil
+            TJFLog("handoff: mac pushed \(item.name) onto navigationPath")
+        }
     }
 
     @ViewBuilder
     private func macTabContent(_ tab: MareaTab) -> some View {
         switch tab {
         case .home:
-            NavigationStack {
+            // Programmatic path so the mac handoff can push DetailView too —
+            // the consumer lives on sidebarLayout (mac used to drop
+            // pendingNavigationItem on the floor: nothing navigated).
+            NavigationStack(path: $navigationPath) {
                 scrollContent
                     .navigationDestination(for: JellyfinMediaItem.self) { item in
                         DetailView(
